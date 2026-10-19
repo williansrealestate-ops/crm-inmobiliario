@@ -1,0 +1,27 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    # Ignorar warnings de print (útil para debugging)
+    avoid_print: ignore
+    
+    # Ignorar warnings de dart:html (necesario para localStorage en Flutter Web)
+    deprecated_member_use: ignore
+    avoid_web_libraries_in_flutter: ignore
+    
+    # Ignorar warnings de BuildContext en async (ya manejamos con mounted)
+    use_build_context_synchronously: ignore
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
+
+linter:
+  rules:
+    avoid_print: false
+    avoid_web_libraries_in_flutter: false
+    use_build_context_synchronously: false
