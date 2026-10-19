@@ -3,9 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class AsesoresService {
   static final SupabaseClient _client = Supabase.instance.client;
 
-  // ==========================================
-  // OBTENER LISTA DE ASESORES
-  // ==========================================
+  // ✅ Obtener todos los asesores (SIN filtros problemáticos)
   static Future<List<Map<String, dynamic>>> getAsesores() async {
     try {
       final response = await _client
@@ -13,10 +11,11 @@ class AsesoresService {
           .select('*')
           .order('nombre', ascending: true);
       
-      // Mapear 'comision_porcentaje' a 'comisionPorcentaje' para la UI
+      // Mapear campos para compatibilidad
       return response.map((asesor) {
-        asesor['comisionPorcentaje'] = asesor['comision_porcentaje'] ?? 3.0;
-        return asesor;
+        final mapped = Map<String, dynamic>.from(asesor);
+        mapped['comisionPorcentaje'] = mapped['comision_porcentaje'] ?? 3.0;
+        return mapped;
       }).toList();
     } catch (e) {
       print('❌ Error al obtener asesores: $e');
@@ -24,9 +23,7 @@ class AsesoresService {
     }
   }
 
-  // ==========================================
-  // OBTENER GRUPOS ÚNICOS
-  // ==========================================
+  // ✅ Obtener grupos únicos
   static Future<List<String>> getGrupos() async {
     try {
       final response = await _client
@@ -34,7 +31,10 @@ class AsesoresService {
           .select('grupo')
           .not('grupo', 'is', null);
       
-      final grupos = response.map((a) => a['grupo'] as String).toSet().toList();
+      final grupos = response
+          .map((a) => a['grupo'] as String)
+          .toSet()
+          .toList();
       grupos.sort();
       return grupos;
     } catch (e) {
@@ -43,22 +43,31 @@ class AsesoresService {
     }
   }
 
-  // ==========================================
-  // OBTENER ESTADÍSTICAS (VERSIÓN COMPATIBLE)
-  // ==========================================
+  // ✅ Obtener estadísticas (CORREGIDO: sin filtros problemáticos)
   static Future<Map<String, dynamic>> getEstadisticas() async {
     try {
-      // Obtener todos los asesores y contar en memoria
+      // Obtener TODOS los asesores sin filtros
       final todosAsesores = await _client.from('asesores').select('*');
       final total = todosAsesores.length;
 
-      // Filtrar activos en memoria
-      final activos = todosAsesores.where((a) => a['activo'] == true).length;
-
-      // Sumar ventas
+      // Contar activos (manejar si la columna no existe)
+      int activos = 0;
       int totalVentas = 0;
-      for (var row in todosAsesores) {
-        totalVentas += (row['ventas'] as int? ?? 0);
+      
+      for (var asesor in todosAsesores) {
+        // Verificar si existe la columna 'activo' y si es true
+        if (asesor.containsKey('activo')) {
+          final activo = asesor['activo'];
+          if (activo == true || activo == 'true' || activo == 'True') {
+            activos++;
+          }
+        } else {
+          // Si no existe la columna, contar todos como activos
+          activos = total;
+        }
+        
+        // Sumar ventas
+        totalVentas += (asesor['ventas'] as int? ?? 0);
       }
 
       return {
@@ -68,13 +77,17 @@ class AsesoresService {
       };
     } catch (e) {
       print('❌ Error al obtener estadísticas: $e');
-      return {'total': 0, 'activos': 0, 'totalVentas': 0};
+      // Si falla, devolver todos como activos
+      try {
+        final count = await _client.from('asesores').count();
+        return {'total': count, 'activos': count, 'totalVentas': 0};
+      } catch (e2) {
+        return {'total': 0, 'activos': 0, 'totalVentas': 0};
+      }
     }
   }
 
-  // ==========================================
-  // AGREGAR NUEVO ASESOR
-  // ==========================================
+  // ✅ Agregar nuevo asesor
   static Future<void> agregarAsesor(Map<String, dynamic> datos) async {
     try {
       if (!datos.containsKey('id') || datos['id'] == null) {
@@ -93,9 +106,7 @@ class AsesoresService {
     }
   }
 
-  // ==========================================
-  // ACTUALIZAR ASESOR EXISTENTE
-  // ==========================================
+  // ✅ Actualizar asesor existente
   static Future<void> actualizarAsesor(String id, Map<String, dynamic> datos) async {
     try {
       if (datos.containsKey('comisionPorcentaje')) {
@@ -110,9 +121,7 @@ class AsesoresService {
     }
   }
 
-  // ==========================================
-  // ELIMINAR ASESOR
-  // ==========================================
+  // ✅ Eliminar asesor
   static Future<void> eliminarAsesor(String id) async {
     try {
       await _client.from('asesores').delete().eq('id', id);
@@ -122,9 +131,7 @@ class AsesoresService {
     }
   }
 
-  // ==========================================
-  // IMPORTAR MÚLTIPLES ASESORES
-  // ==========================================
+  // ✅ Importar múltiples asesores
   static Future<void> guardarAsesores(List<Map<String, dynamic>> asesores) async {
     try {
       final datosLimpios = asesores.map((a) {
@@ -142,9 +149,7 @@ class AsesoresService {
     }
   }
 
-  // ==========================================
-  // GESTIÓN DE GRUPOS
-  // ==========================================
+  // ✅ Gestión de grupos
   static Future<void> agregarGrupo(String nombreGrupo) async {
     print('Grupo registrado: $nombreGrupo');
   }
@@ -153,7 +158,7 @@ class AsesoresService {
     try {
       await _client.from('asesores').update({'grupo': 'Sin grupo'}).eq('grupo', nombreGrupo);
     } catch (e) {
-      print('❌ Error al eliminar grupo: $e');
+      print(' Error al eliminar grupo: $e');
     }
   }
 }
