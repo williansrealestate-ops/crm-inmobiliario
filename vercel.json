@@ -3,6 +3,34 @@
   "outputDirectory": "build/web",
   "rewrites": [
     {
+      "source": "/favicon.ico",
+      "destination": "/favicon.ico"
+    },
+    {
+      "source": "/manifest.json",
+      "destination": "/manifest.json"
+    },
+    {
+      "source": "/main.dart.js",
+      "destination": "/main.dart.js"
+    },
+    {
+      "source": "/flutter.js",
+      "destination": "/flutter.js"
+    },
+    {
+      "source": "/assets/:path*",
+      "destination": "/assets/:path*"
+    },
+    {
+      "source": "/icons/:path*",
+      "destination": "/icons/:path*"
+    },
+    {
+      "source": "/canvaskit/:path*",
+      "destination": "/canvaskit/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
