@@ -77,7 +77,8 @@ void main() async {
 
   registrarMapViewFactory();
 
-  final esVitrinaPublica = html.window.location.hash == '#/vitrina';
+  final esVitrinaPublica = html.window.location.hash == '#/vitrina' || 
+                           html.window.location.pathname.contains('vitrina');
 
   if (esVitrinaPublica) {
     runApp(const VitrinaPublicaScreen());
