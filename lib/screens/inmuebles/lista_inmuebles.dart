@@ -79,6 +79,7 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
           IconButton(icon: const Icon(Icons.add, color: Colors.white), onPressed: () => _openForm()),
         ],
       ),
+      // ❌ SIN floatingActionButton - No hay botón de WhatsApp aquí
       body: Column(
         children: [
           Padding(
@@ -130,14 +131,13 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
                 ? const Center(child: CircularProgressIndicator())
                 : _filtered.isEmpty
                     ? const Center(child: Text('No hay inmuebles', style: TextStyle(color: Colors.grey)))
-                    : SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        physics: const AlwaysScrollableScrollPhysics(),
+                    : ScrollConfiguration(
+                        behavior: ScrollConfiguration.of(context).copyWith(scrollbars: true),
                         child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
+                          scrollDirection: Axis.vertical,
                           physics: const AlwaysScrollableScrollPhysics(),
-                          child: Container(
-                            width: 2000,
+                          child: SizedBox(
+                            width: 1300,
                             child: Column(
                               children: [
                                 _buildHeader(),
