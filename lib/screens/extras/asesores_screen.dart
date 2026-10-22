@@ -75,11 +75,8 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
           IconButton(icon: const Icon(Icons.add, color: Colors.white), onPressed: () => _openForm()),
         ],
       ),
-      // ✅ BOTÓN DE WHATSAPP INTEGRADO (Sin imports externos)
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Aquí puedes agregar la lógica para abrir WhatsApp
-        },
+        onPressed: () {},
         backgroundColor: const Color(0xFF25D366),
         child: const Icon(Icons.message, color: Colors.white, size: 28),
       ),
@@ -112,8 +109,7 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Container(
-            height: 500,
+          Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _filtered.isEmpty

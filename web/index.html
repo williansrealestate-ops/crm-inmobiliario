@@ -1,60 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="/">
-
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="CRM Inmobiliario - Gestión de clientes, inmuebles y ventas">
-
-  <!-- iOS meta tags & icons -->
+  <meta name="description" content="CRM Inmobiliario">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="CRM Inmobiliario">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
-
   <title>CRM Inmobiliario</title>
   <link rel="manifest" href="manifest.json">
-
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: #0A0A0A;
-    }
-    .loading {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      color: #ffffff;
-      font-family: Arial, sans-serif;
-    }
-  </style>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
 </head>
 <body>
-  <div class="loading">Cargando aplicación...</div>
-
-  <!-- ✅ MODIFICADO: Parámetro de versión para invalidar caché del Service Worker -->
-  <script src="flutter_service_worker.js?v=20261022001" type="application/javascript"></script>
-
-  <!-- ✅ MODIFICADO: Parámetro de versión para invalidar caché del main.dart.js -->
-  <script src="main.dart.js?v=20261022001" type="application/javascript"></script>
+  <script>
+    // Forzar limpieza de caché en cada carga
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        for (let name of names) caches.delete(name);
+      });
+    }
+    // Registrar service worker con versión única
+    var version = 'v=' + Date.now();
+    var serviceWorkerUrl = 'flutter_service_worker.js?' + version;
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register(serviceWorkerUrl).catch(function(err) {
+        console.log('SW registration failed:', err);
+      });
+    }
+  </script>
+  <script src="main.dart.js" type="application/javascript"></script>
 </body>
 </html>

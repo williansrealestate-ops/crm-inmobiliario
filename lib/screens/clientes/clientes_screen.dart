@@ -83,13 +83,9 @@ class _ClientesScreenState extends State<ClientesScreen> {
           IconButton(icon: const Icon(Icons.add, color: Colors.white), onPressed: () => _openForm()),
         ],
       ),
-      // ✅ BOTÓN DE WHATSAPP INTEGRADO (Sin imports externos)
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Aquí puedes agregar la lógica para abrir WhatsApp
-          // Ejemplo: launchUrl(Uri.parse('https://wa.me/521234567890'));
-        },
-        backgroundColor: const Color(0xFF25D366), // Color verde oficial de WhatsApp
+        onPressed: () {},
+        backgroundColor: const Color(0xFF25D366),
         child: const Icon(Icons.message, color: Colors.white, size: 28),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -138,8 +134,7 @@ class _ClientesScreenState extends State<ClientesScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Container(
-            height: 500,
+          Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _filtered.isEmpty

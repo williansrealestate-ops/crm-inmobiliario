@@ -79,7 +79,6 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
           IconButton(icon: const Icon(Icons.add, color: Colors.white), onPressed: () => _openForm()),
         ],
       ),
-      // ❌ SIN floatingActionButton - No hay botón de WhatsApp aquí
       body: Column(
         children: [
           Padding(
@@ -125,8 +124,7 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
             ),
           ),
           const SizedBox(height: 12),
-          Container(
-            height: 500,
+          Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _filtered.isEmpty
