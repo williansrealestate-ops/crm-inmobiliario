@@ -21,7 +21,6 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
   bool _loading = false;
 
   final _nombreController = TextEditingController();
-  final _emailController = TextEditingController();
   final _telefonoController = TextEditingController();
   final _ubicacionController = TextEditingController();
   final _paisController = TextEditingController();
@@ -57,7 +56,6 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
     super.initState();
     if (_esEditar) {
       _nombreController.text = widget.cliente?['nombre'] ?? '';
-      _emailController.text = widget.cliente?['email'] ?? '';
       _telefonoController.text = widget.cliente?['telefono'] ?? '';
       _ubicacionController.text = widget.cliente?['ubicacion'] ?? '';
       _paisController.text = widget.cliente?['pais'] ?? 'México';
@@ -75,7 +73,6 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
   @override
   void dispose() {
     _nombreController.dispose();
-    _emailController.dispose();
     _telefonoController.dispose();
     _ubicacionController.dispose();
     _paisController.dispose();
@@ -95,7 +92,6 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
     try {
       final data = {
         'nombre': _nombreController.text.trim(),
-        'email': _emailController.text.trim(),
         'telefono': _telefonoController.text.trim(),
         'ubicacion': _ubicacionController.text.trim(),
         'pais': _paisController.text.trim(),
@@ -109,17 +105,13 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
         'activo': _activo,
       };
 
-      print('📤 Datos a guardar: $data');
-
       if (_esEditar) {
         await _supabase
             .from('clientes')
             .update(data)
             .eq('id', widget.cliente!['id']);
-        print('✅ Actualizado correctamente');
       } else {
         await _supabase.from('clientes').insert(data);
-        print('✅ Insertado correctamente');
       }
 
       if (mounted) {
@@ -132,9 +124,7 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
         widget.onClienteCreado?.call();
         Navigator.pop(context);
       }
-    } catch (e, stackTrace) {
-      print('❌ Error al guardar: $e');
-      print('📍 Stack: $stackTrace');
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -170,9 +160,6 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
                   children: [
                     _buildTextField(_nombreController, 'Nombre *', Icons.person, 
                         validator: (v) => v!.isEmpty ? 'Requerido' : null),
-                    const SizedBox(height: 16),
-                    _buildTextField(_emailController, 'Email', Icons.email, 
-                        keyboardType: TextInputType.emailAddress),
                     const SizedBox(height: 16),
                     _buildTextField(_telefonoController, 'Teléfono', Icons.phone, 
                         keyboardType: TextInputType.phone),

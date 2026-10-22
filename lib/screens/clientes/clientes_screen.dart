@@ -16,7 +16,23 @@ class _ClientesScreenState extends State<ClientesScreen> {
   bool _loading = true;
   String _search = '';
   String _tipoFilter = 'Todos';
-  String _asesorFilter = 'Todos';
+  String _interesFilter = 'Todos';
+
+  final List<String> _tiposInteres = [
+    'Todos',
+    'Casa',
+    'Departamento',
+    'Terreno',
+    'Local',
+    'Oficina',
+    'Hotel',
+    'Hacienda',
+    'Gasolinera',
+    'Combustible',
+    'Refinería',
+    'Mina',
+    'Minerales',
+  ];
 
   @override
   void initState() {
@@ -47,11 +63,10 @@ class _ClientesScreenState extends State<ClientesScreen> {
       final s = _search.toLowerCase();
       final matchSearch = s.isEmpty ||
           (c['nombre']?.toString().toLowerCase().contains(s) ?? false) ||
-          (c['email']?.toString().toLowerCase().contains(s) ?? false) ||
           (c['telefono']?.toString().contains(s) ?? false);
       final matchTipo = _tipoFilter == 'Todos' || c['tipo'] == _tipoFilter;
-      final matchAsesor = _asesorFilter == 'Todos' || c['asesor'] == _asesorFilter;
-      return matchSearch && matchTipo && matchAsesor;
+      final matchInteres = _interesFilter == 'Todos' || c['catalogo_interes'] == _interesFilter;
+      return matchSearch && matchTipo && matchInteres;
     }).toList();
     if (mounted) setState(() {});
   }
@@ -122,12 +137,12 @@ class _ClientesScreenState extends State<ClientesScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _asesorFilter,
-                    decoration: const InputDecoration(labelText: 'Asesor', labelStyle: TextStyle(color: Colors.grey, fontSize: 12), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
+                    value: _interesFilter,
+                    decoration: const InputDecoration(labelText: 'Interés', labelStyle: TextStyle(color: Colors.grey, fontSize: 12), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
                     dropdownColor: const Color(0xFF1A1A1A),
                     style: const TextStyle(color: Colors.white, fontSize: 13),
-                    items: ['Todos'].map((a) => DropdownMenuItem(value: a, child: Text(a))).toList(),
-                    onChanged: (v) { _asesorFilter = v ?? 'Todos'; _applyFilters(); },
+                    items: _tiposInteres.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                    onChanged: (v) { _interesFilter = v ?? 'Todos'; _applyFilters(); },
                   ),
                 ),
               ],
@@ -170,13 +185,12 @@ class _ClientesScreenState extends State<ClientesScreen> {
           SizedBox(width: 60, child: Text('', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
           SizedBox(width: 220, child: Text('NOMBRE', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
           SizedBox(width: 120, child: Text('TIPO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 180, child: Text('EMAIL', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
           SizedBox(width: 140, child: Text('TELÉFONO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
           SizedBox(width: 180, child: Text('UBICACIÓN', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
           SizedBox(width: 100, child: Text('PAÍS', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
           SizedBox(width: 120, child: Text('ESTADO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
           SizedBox(width: 140, child: Text('PRESUPUESTO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 140, child: Text('CATÁLOGO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 140, child: Text('INTERÉS', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
           SizedBox(width: 180, child: Text('ASESOR', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
           SizedBox(width: 120, child: Text('ESTADO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
           SizedBox(width: 180, child: Text('NOTAS', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
@@ -188,13 +202,12 @@ class _ClientesScreenState extends State<ClientesScreen> {
   Widget _buildRow(Map<String, dynamic> c) {
     final nombre = c['nombre'] ?? 'Sin nombre';
     final tipo = c['tipo'] ?? 'Comprador';
-    final email = c['email'] ?? '---';
     final tel = c['telefono'] ?? '---';
     final ubicacion = c['ubicacion'] ?? '---';
     final pais = c['pais'] ?? 'México';
     final estado = c['estado'] ?? '---';
     final presupuesto = c['presupuesto'] ?? 0;
-    final catalogo = c['catalogo_interes'] ?? '---';
+    final interes = c['catalogo_interes'] ?? '---';
     final asesor = c['asesor'] ?? '---';
     final activo = c['activo'] ?? true;
     final notas = c['notas'] ?? '---';
@@ -221,13 +234,12 @@ class _ClientesScreenState extends State<ClientesScreen> {
             SizedBox(width: 60, child: Container(width: 36, height: 36, decoration: BoxDecoration(color: Colors.orange.shade700, borderRadius: BorderRadius.circular(4)), child: Center(child: Text(inicial, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold))))),
             SizedBox(width: 220, child: Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
             SizedBox(width: 120, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: tipoColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(tipo, style: TextStyle(color: tipoColor, fontSize: 11, fontWeight: FontWeight.w500)))),
-            SizedBox(width: 180, child: Text(email, style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
             SizedBox(width: 140, child: Text(tel, style: const TextStyle(color: Colors.grey, fontSize: 12))),
             SizedBox(width: 180, child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
             SizedBox(width: 100, child: Text(pais, style: const TextStyle(color: Colors.grey, fontSize: 12))),
             SizedBox(width: 120, child: Text(estado, style: const TextStyle(color: Colors.grey, fontSize: 12))),
             SizedBox(width: 140, child: Text(presupuesto > 0 ? '\$${(presupuesto / 1000000).toStringAsFixed(1)} M' : '---', style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.w500))),
-            SizedBox(width: 140, child: Text(catalogo, style: const TextStyle(color: Colors.amber, fontSize: 12), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 140, child: Text(interes, style: const TextStyle(color: Colors.amber, fontSize: 12, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
             SizedBox(width: 180, child: Text(asesor, style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
             SizedBox(width: 120, child: Row(children: [Container(width: 10, height: 10, decoration: BoxDecoration(color: activo ? Colors.green : Colors.red, shape: BoxShape.circle)), const SizedBox(width: 6), Text(activo ? 'Activo' : 'Inactivo', style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 11, fontWeight: FontWeight.w500))])),
             SizedBox(width: 180, child: Text(notas, style: const TextStyle(color: Colors.grey, fontSize: 11), overflow: TextOverflow.ellipsis)),
@@ -270,13 +282,12 @@ class _ClientesScreenState extends State<ClientesScreen> {
               const SizedBox(height: 20),
               const Divider(color: Color(0xFF333333)),
               const SizedBox(height: 16),
-              _detailRow(Icons.email, 'Email', c['email'] ?? '---'),
               _detailRow(Icons.phone, 'Teléfono', c['telefono'] ?? '---'),
               _detailRow(Icons.location_on, 'Ubicación', c['ubicacion'] ?? '---'),
               _detailRow(Icons.flag, 'País', c['pais'] ?? 'México'),
               _detailRow(Icons.map, 'Estado', c['estado'] ?? '---'),
               _detailRow(Icons.attach_money, 'Presupuesto', '\$${c['presupuesto'] ?? 0} MXN'),
-              _detailRow(Icons.folder, 'Catálogo de interés', c['catalogo_interes'] ?? '---'),
+              _detailRow(Icons.folder, 'Interés', c['catalogo_interes'] ?? '---'),
               _detailRow(Icons.person, 'Asesor', c['asesor'] ?? '---'),
               _detailRow(Icons.handshake, 'Estado de negociación', c['estado_negociacion'] ?? 'Inicial'),
               const SizedBox(height: 16),
