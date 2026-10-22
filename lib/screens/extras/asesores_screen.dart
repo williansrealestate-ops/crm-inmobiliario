@@ -114,21 +114,26 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : _filtered.isEmpty
                     ? const Center(child: Text('No hay asesores', style: TextStyle(color: Colors.grey, fontSize: 14)))
-                    : ScrollConfiguration(
-                        behavior: ScrollConfiguration.of(context).copyWith(scrollbars: true),
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.vertical,
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          child: SizedBox(
-                            width: 1400,
-                            child: Column(
-                              children: [
-                                _buildHeader(),
-                                ..._filtered.map((a) => _buildRow(a)),
-                              ],
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          final totalWidth = constraints.maxWidth;
+                          return ScrollConfiguration(
+                            behavior: ScrollConfiguration.of(context).copyWith(scrollbars: true),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.vertical,
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              child: SizedBox(
+                                width: totalWidth > 1300 ? totalWidth : 1300,
+                                child: Column(
+                                  children: [
+                                    _buildHeader(),
+                                    ..._filtered.map((a) => _buildRow(a)),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
           ),
         ],
@@ -142,17 +147,17 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
       color: const Color(0xFF111111),
       child: Row(
         children: [
-          SizedBox(width: 60, child: Text('', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 220, child: Text('NOMBRE', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 120, child: Text('GRUPO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 140, child: Text('TELÉFONO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 180, child: Text('UBICACIÓN', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 100, child: Text('PAÍS', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 120, child: Text('ESTADO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 100, child: Text('COMISIÓN', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 140, child: Text('CATÁLOGO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 120, child: Text('ESTADO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 180, child: Text('NOTAS', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 60, child: Text('', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 240, child: Text('NOMBRE', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 130, child: Text('GRUPO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 150, child: Text('TELÉFONO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 200, child: Text('UBICACIÓN', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 110, child: Text('PAÍS', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 130, child: Text('ESTADO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 110, child: Text('COMISIÓN', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 140, child: Text('CATÁLOGO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 110, child: Text('ESTADO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 200, child: Text('NOTAS', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
         ],
       ),
     );
@@ -180,17 +185,17 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
         ),
         child: Row(
           children: [
-            SizedBox(width: 60, child: Container(width: 36, height: 36, decoration: BoxDecoration(color: Colors.blue.shade700, borderRadius: BorderRadius.circular(4)), child: Center(child: Text(inicial, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold))))),
-            SizedBox(width: 220, child: Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 120, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.blue.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(grupo, style: TextStyle(color: Colors.blue, fontSize: 11, fontWeight: FontWeight.w500)))),
-            SizedBox(width: 140, child: Text(tel, style: const TextStyle(color: Colors.grey, fontSize: 12))),
-            SizedBox(width: 180, child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 100, child: Text(pais, style: const TextStyle(color: Colors.grey, fontSize: 12))),
-            SizedBox(width: 120, child: Text(estado, style: const TextStyle(color: Colors.grey, fontSize: 12))),
-            SizedBox(width: 100, child: Text('$comision%', style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold))),
-            SizedBox(width: 140, child: Text(catalogo, style: const TextStyle(color: Colors.amber, fontSize: 12), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 120, child: Row(children: [Container(width: 10, height: 10, decoration: BoxDecoration(color: activo ? Colors.green : Colors.red, shape: BoxShape.circle)), const SizedBox(width: 6), Text(activo ? 'Activo' : 'Inactivo', style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 11, fontWeight: FontWeight.w500))])),
-            SizedBox(width: 180, child: Text(notas, style: const TextStyle(color: Colors.grey, fontSize: 11), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 60, child: Container(width: 38, height: 38, decoration: BoxDecoration(color: Colors.blue.shade700, borderRadius: BorderRadius.circular(4)), child: Center(child: Text(inicial, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold))))),
+            SizedBox(width: 240, child: Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 130, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.blue.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(grupo, style: TextStyle(color: Colors.blue, fontSize: 12, fontWeight: FontWeight.w500)))),
+            SizedBox(width: 150, child: Text(tel, style: const TextStyle(color: Colors.grey, fontSize: 13))),
+            SizedBox(width: 200, child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 13), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 110, child: Text(pais, style: const TextStyle(color: Colors.grey, fontSize: 13))),
+            SizedBox(width: 130, child: Text(estado, style: const TextStyle(color: Colors.grey, fontSize: 13))),
+            SizedBox(width: 110, child: Text('$comision%', style: const TextStyle(color: Colors.green, fontSize: 13, fontWeight: FontWeight.bold))),
+            SizedBox(width: 140, child: Text(catalogo, style: const TextStyle(color: Colors.amber, fontSize: 13), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 110, child: Row(children: [Container(width: 10, height: 10, decoration: BoxDecoration(color: activo ? Colors.green : Colors.red, shape: BoxShape.circle)), const SizedBox(width: 6), Text(activo ? 'Activo' : 'Inactivo', style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 12, fontWeight: FontWeight.w500))])),
+            SizedBox(width: 200, child: Text(notas, style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
           ],
         ),
       ),

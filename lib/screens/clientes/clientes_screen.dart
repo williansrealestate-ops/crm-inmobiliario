@@ -19,19 +19,8 @@ class _ClientesScreenState extends State<ClientesScreen> {
   String _interesFilter = 'Todos';
 
   final List<String> _tiposInteres = [
-    'Todos',
-    'Casa',
-    'Departamento',
-    'Terreno',
-    'Local',
-    'Oficina',
-    'Hotel',
-    'Hacienda',
-    'Gasolinera',
-    'Combustible',
-    'Refinería',
-    'Mina',
-    'Minerales',
+    'Todos', 'Casa', 'Departamento', 'Terreno', 'Local', 'Oficina',
+    'Hotel', 'Hacienda', 'Gasolinera', 'Combustible', 'Refinería', 'Mina', 'Minerales',
   ];
 
   @override
@@ -154,21 +143,26 @@ class _ClientesScreenState extends State<ClientesScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : _filtered.isEmpty
                     ? const Center(child: Text('No hay clientes', style: TextStyle(color: Colors.grey, fontSize: 14)))
-                    : ScrollConfiguration(
-                        behavior: ScrollConfiguration.of(context).copyWith(scrollbars: true),
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.vertical,
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          child: SizedBox(
-                            width: 1600,
-                            child: Column(
-                              children: [
-                                _buildHeader(),
-                                ..._filtered.map((c) => _buildRow(c)),
-                              ],
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          final totalWidth = constraints.maxWidth;
+                          return ScrollConfiguration(
+                            behavior: ScrollConfiguration.of(context).copyWith(scrollbars: true),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.vertical,
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              child: SizedBox(
+                                width: totalWidth > 1400 ? totalWidth : 1400,
+                                child: Column(
+                                  children: [
+                                    _buildHeader(),
+                                    ..._filtered.map((c) => _buildRow(c)),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
           ),
         ],
@@ -182,18 +176,18 @@ class _ClientesScreenState extends State<ClientesScreen> {
       color: const Color(0xFF111111),
       child: Row(
         children: [
-          SizedBox(width: 60, child: Text('', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 220, child: Text('NOMBRE', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 120, child: Text('TIPO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 140, child: Text('TELÉFONO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 180, child: Text('UBICACIÓN', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 100, child: Text('PAÍS', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 120, child: Text('ESTADO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 140, child: Text('PRESUPUESTO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 140, child: Text('INTERÉS', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 180, child: Text('ASESOR', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 120, child: Text('ESTADO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 180, child: Text('NOTAS', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 60, child: Text('', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 240, child: Text('NOMBRE', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 130, child: Text('TIPO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 150, child: Text('TELÉFONO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 200, child: Text('UBICACIÓN', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 110, child: Text('PAÍS', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 130, child: Text('ESTADO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 140, child: Text('PRESUPUESTO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 140, child: Text('INTERÉS', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 200, child: Text('ASESOR', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 110, child: Text('ESTADO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 200, child: Text('NOTAS', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
         ],
       ),
     );
@@ -231,18 +225,18 @@ class _ClientesScreenState extends State<ClientesScreen> {
         ),
         child: Row(
           children: [
-            SizedBox(width: 60, child: Container(width: 36, height: 36, decoration: BoxDecoration(color: Colors.orange.shade700, borderRadius: BorderRadius.circular(4)), child: Center(child: Text(inicial, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold))))),
-            SizedBox(width: 220, child: Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 120, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: tipoColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(tipo, style: TextStyle(color: tipoColor, fontSize: 11, fontWeight: FontWeight.w500)))),
-            SizedBox(width: 140, child: Text(tel, style: const TextStyle(color: Colors.grey, fontSize: 12))),
-            SizedBox(width: 180, child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 100, child: Text(pais, style: const TextStyle(color: Colors.grey, fontSize: 12))),
-            SizedBox(width: 120, child: Text(estado, style: const TextStyle(color: Colors.grey, fontSize: 12))),
-            SizedBox(width: 140, child: Text(presupuesto > 0 ? '\$${(presupuesto / 1000000).toStringAsFixed(1)} M' : '---', style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.w500))),
-            SizedBox(width: 140, child: Text(interes, style: const TextStyle(color: Colors.amber, fontSize: 12, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 180, child: Text(asesor, style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 120, child: Row(children: [Container(width: 10, height: 10, decoration: BoxDecoration(color: activo ? Colors.green : Colors.red, shape: BoxShape.circle)), const SizedBox(width: 6), Text(activo ? 'Activo' : 'Inactivo', style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 11, fontWeight: FontWeight.w500))])),
-            SizedBox(width: 180, child: Text(notas, style: const TextStyle(color: Colors.grey, fontSize: 11), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 60, child: Container(width: 38, height: 38, decoration: BoxDecoration(color: Colors.orange.shade700, borderRadius: BorderRadius.circular(4)), child: Center(child: Text(inicial, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold))))),
+            SizedBox(width: 240, child: Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 130, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: tipoColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(tipo, style: TextStyle(color: tipoColor, fontSize: 12, fontWeight: FontWeight.w500)))),
+            SizedBox(width: 150, child: Text(tel, style: const TextStyle(color: Colors.grey, fontSize: 13))),
+            SizedBox(width: 200, child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 13), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 110, child: Text(pais, style: const TextStyle(color: Colors.grey, fontSize: 13))),
+            SizedBox(width: 130, child: Text(estado, style: const TextStyle(color: Colors.grey, fontSize: 13))),
+            SizedBox(width: 140, child: Text(presupuesto > 0 ? '\$${(presupuesto / 1000000).toStringAsFixed(1)} M' : '---', style: const TextStyle(color: Colors.green, fontSize: 13, fontWeight: FontWeight.w500))),
+            SizedBox(width: 140, child: Text(interes, style: const TextStyle(color: Colors.amber, fontSize: 13, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 200, child: Text(asesor, style: const TextStyle(color: Colors.grey, fontSize: 13), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 110, child: Row(children: [Container(width: 10, height: 10, decoration: BoxDecoration(color: activo ? Colors.green : Colors.red, shape: BoxShape.circle)), const SizedBox(width: 6), Text(activo ? 'Activo' : 'Inactivo', style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 12, fontWeight: FontWeight.w500))])),
+            SizedBox(width: 200, child: Text(notas, style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
           ],
         ),
       ),
