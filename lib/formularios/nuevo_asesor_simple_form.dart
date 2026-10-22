@@ -24,9 +24,12 @@ class _NuevoAsesorSimpleFormState extends State<NuevoAsesorSimpleForm> {
   final _emailController = TextEditingController();
   final _telefonoController = TextEditingController();
   final _ubicacionController = TextEditingController();
+  final _paisController = TextEditingController();
+  final _estadoController = TextEditingController();
   final _grupoController = TextEditingController();
   final _catalogoController = TextEditingController();
   final _comisionController = TextEditingController();
+  final _notasController = TextEditingController();
 
   bool _activo = true;
 
@@ -40,9 +43,12 @@ class _NuevoAsesorSimpleFormState extends State<NuevoAsesorSimpleForm> {
       _emailController.text = widget.asesor?['email'] ?? '';
       _telefonoController.text = widget.asesor?['telefono'] ?? '';
       _ubicacionController.text = widget.asesor?['ubicacion'] ?? '';
+      _paisController.text = widget.asesor?['pais'] ?? 'México';
+      _estadoController.text = widget.asesor?['estado'] ?? '';
       _grupoController.text = widget.asesor?['grupo'] ?? '';
       _catalogoController.text = widget.asesor?['catalogo'] ?? '';
       _comisionController.text = widget.asesor?['comision']?.toString() ?? '0';
+      _notasController.text = widget.asesor?['notas'] ?? '';
       _activo = widget.asesor?['activo'] ?? true;
     }
   }
@@ -53,9 +59,12 @@ class _NuevoAsesorSimpleFormState extends State<NuevoAsesorSimpleForm> {
     _emailController.dispose();
     _telefonoController.dispose();
     _ubicacionController.dispose();
+    _paisController.dispose();
+    _estadoController.dispose();
     _grupoController.dispose();
     _catalogoController.dispose();
     _comisionController.dispose();
+    _notasController.dispose();
     super.dispose();
   }
 
@@ -70,9 +79,12 @@ class _NuevoAsesorSimpleFormState extends State<NuevoAsesorSimpleForm> {
         'email': _emailController.text.trim(),
         'telefono': _telefonoController.text.trim(),
         'ubicacion': _ubicacionController.text.trim(),
+        'pais': _paisController.text.trim(),
+        'estado': _estadoController.text.trim(),
         'grupo': _grupoController.text.trim(),
         'catalogo': _catalogoController.text.trim(),
         'comision': double.tryParse(_comisionController.text) ?? 0,
+        'notas': _notasController.text.trim(),
         'activo': _activo,
       };
 
@@ -126,11 +138,17 @@ class _NuevoAsesorSimpleFormState extends State<NuevoAsesorSimpleForm> {
                     const SizedBox(height: 16),
                     _buildTextField(_ubicacionController, 'Ubicación', Icons.location_on),
                     const SizedBox(height: 16),
+                    _buildTextField(_paisController, 'País', Icons.flag),
+                    const SizedBox(height: 16),
+                    _buildTextField(_estadoController, 'Estado', Icons.map),
+                    const SizedBox(height: 16),
                     _buildTextField(_grupoController, 'Grupo', Icons.group),
                     const SizedBox(height: 16),
                     _buildTextField(_catalogoController, 'Catálogo', Icons.folder),
                     const SizedBox(height: 16),
                     _buildTextField(_comisionController, 'Comisión (%)', Icons.percent, keyboardType: TextInputType.number),
+                    const SizedBox(height: 16),
+                    _buildTextField(_notasController, 'Notas', Icons.note, maxLines: 4),
                     const SizedBox(height: 16),
                     SwitchListTile(
                       title: const Text('Asesor activo', style: TextStyle(color: Colors.white)),

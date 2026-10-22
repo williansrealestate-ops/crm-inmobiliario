@@ -24,6 +24,8 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
   final _emailController = TextEditingController();
   final _telefonoController = TextEditingController();
   final _ubicacionController = TextEditingController();
+  final _paisController = TextEditingController();
+  final _estadoController = TextEditingController();
   final _presupuestoController = TextEditingController();
   final _catalogoController = TextEditingController();
   final _asesorController = TextEditingController();
@@ -43,6 +45,8 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
       _emailController.text = widget.cliente?['email'] ?? '';
       _telefonoController.text = widget.cliente?['telefono'] ?? '';
       _ubicacionController.text = widget.cliente?['ubicacion'] ?? '';
+      _paisController.text = widget.cliente?['pais'] ?? 'México';
+      _estadoController.text = widget.cliente?['estado'] ?? '';
       _presupuestoController.text = widget.cliente?['presupuesto']?.toString() ?? '0';
       _catalogoController.text = widget.cliente?['catalogo_interes'] ?? '';
       _asesorController.text = widget.cliente?['asesor'] ?? '';
@@ -59,6 +63,8 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
     _emailController.dispose();
     _telefonoController.dispose();
     _ubicacionController.dispose();
+    _paisController.dispose();
+    _estadoController.dispose();
     _presupuestoController.dispose();
     _catalogoController.dispose();
     _asesorController.dispose();
@@ -78,6 +84,8 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
         'email': _emailController.text.trim(),
         'telefono': _telefonoController.text.trim(),
         'ubicacion': _ubicacionController.text.trim(),
+        'pais': _paisController.text.trim(),
+        'estado': _estadoController.text.trim(),
         'presupuesto': double.tryParse(_presupuestoController.text) ?? 0,
         'catalogo_interes': _catalogoController.text.trim(),
         'asesor': _asesorController.text.trim(),
@@ -150,6 +158,10 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(_ubicacionController, 'Ubicación', Icons.location_on),
+                    const SizedBox(height: 16),
+                    _buildTextField(_paisController, 'País', Icons.flag),
+                    const SizedBox(height: 16),
+                    _buildTextField(_estadoController, 'Estado', Icons.map),
                     const SizedBox(height: 16),
                     _buildTextField(_presupuestoController, 'Presupuesto (MXN)', Icons.attach_money, keyboardType: TextInputType.number),
                     const SizedBox(height: 16),

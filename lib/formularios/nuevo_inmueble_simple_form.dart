@@ -22,6 +22,8 @@ class _NuevoInmuebleSimpleFormState extends State<NuevoInmuebleSimpleForm> {
 
   final _tituloController = TextEditingController();
   final _ubicacionController = TextEditingController();
+  final _paisController = TextEditingController();
+  final _estadoController = TextEditingController();
   final _precioController = TextEditingController();
   final _superficieController = TextEditingController();
   final _recamarasController = TextEditingController();
@@ -29,6 +31,7 @@ class _NuevoInmuebleSimpleFormState extends State<NuevoInmuebleSimpleForm> {
   final _asesorController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _catalogoController = TextEditingController();
+  final _notasController = TextEditingController();
 
   String _tipo = 'Casa';
   bool _activo = true;
@@ -41,6 +44,8 @@ class _NuevoInmuebleSimpleFormState extends State<NuevoInmuebleSimpleForm> {
     if (_esEditar) {
       _tituloController.text = widget.inmueble?['titulo'] ?? '';
       _ubicacionController.text = widget.inmueble?['ubicacion'] ?? '';
+      _paisController.text = widget.inmueble?['pais'] ?? 'México';
+      _estadoController.text = widget.inmueble?['estado'] ?? '';
       _precioController.text = widget.inmueble?['precio']?.toString() ?? '0';
       _superficieController.text = widget.inmueble?['superficie']?.toString() ?? '0';
       _recamarasController.text = widget.inmueble?['recamaras']?.toString() ?? '0';
@@ -48,6 +53,7 @@ class _NuevoInmuebleSimpleFormState extends State<NuevoInmuebleSimpleForm> {
       _asesorController.text = widget.inmueble?['asesor'] ?? '';
       _descripcionController.text = widget.inmueble?['descripcion'] ?? '';
       _catalogoController.text = widget.inmueble?['catalogo'] ?? '';
+      _notasController.text = widget.inmueble?['notas'] ?? '';
       _tipo = widget.inmueble?['tipo'] ?? 'Casa';
       _activo = widget.inmueble?['activo'] ?? true;
     }
@@ -57,6 +63,8 @@ class _NuevoInmuebleSimpleFormState extends State<NuevoInmuebleSimpleForm> {
   void dispose() {
     _tituloController.dispose();
     _ubicacionController.dispose();
+    _paisController.dispose();
+    _estadoController.dispose();
     _precioController.dispose();
     _superficieController.dispose();
     _recamarasController.dispose();
@@ -64,6 +72,7 @@ class _NuevoInmuebleSimpleFormState extends State<NuevoInmuebleSimpleForm> {
     _asesorController.dispose();
     _descripcionController.dispose();
     _catalogoController.dispose();
+    _notasController.dispose();
     super.dispose();
   }
 
@@ -77,6 +86,8 @@ class _NuevoInmuebleSimpleFormState extends State<NuevoInmuebleSimpleForm> {
         'titulo': _tituloController.text.trim(),
         'tipo': _tipo,
         'ubicacion': _ubicacionController.text.trim(),
+        'pais': _paisController.text.trim(),
+        'estado': _estadoController.text.trim(),
         'precio': double.tryParse(_precioController.text) ?? 0,
         'superficie': double.tryParse(_superficieController.text) ?? 0,
         'recamaras': int.tryParse(_recamarasController.text) ?? 0,
@@ -84,6 +95,7 @@ class _NuevoInmuebleSimpleFormState extends State<NuevoInmuebleSimpleForm> {
         'asesor': _asesorController.text.trim(),
         'descripcion': _descripcionController.text.trim(),
         'catalogo': _catalogoController.text.trim(),
+        'notas': _notasController.text.trim(),
         'activo': _activo,
       };
 
@@ -136,6 +148,10 @@ class _NuevoInmuebleSimpleFormState extends State<NuevoInmuebleSimpleForm> {
                     const SizedBox(height: 16),
                     _buildTextField(_ubicacionController, 'Ubicación', Icons.location_on),
                     const SizedBox(height: 16),
+                    _buildTextField(_paisController, 'País', Icons.flag),
+                    const SizedBox(height: 16),
+                    _buildTextField(_estadoController, 'Estado', Icons.map),
+                    const SizedBox(height: 16),
                     _buildTextField(_precioController, 'Precio (MXN)', Icons.attach_money, keyboardType: TextInputType.number),
                     const SizedBox(height: 16),
                     _buildTextField(_superficieController, 'Superficie (m²)', Icons.square_foot, keyboardType: TextInputType.number),
@@ -153,6 +169,8 @@ class _NuevoInmuebleSimpleFormState extends State<NuevoInmuebleSimpleForm> {
                     _buildTextField(_catalogoController, 'Catálogo', Icons.folder),
                     const SizedBox(height: 16),
                     _buildTextField(_descripcionController, 'Descripción', Icons.description, maxLines: 4),
+                    const SizedBox(height: 16),
+                    _buildTextField(_notasController, 'Notas', Icons.note, maxLines: 4),
                     const SizedBox(height: 16),
                     SwitchListTile(
                       title: const Text('Inmueble activo', style: TextStyle(color: Colors.white)),
