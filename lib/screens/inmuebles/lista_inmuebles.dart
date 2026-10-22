@@ -129,15 +129,26 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
                 ? const Center(child: CircularProgressIndicator())
                 : _filtered.isEmpty
                     ? const Center(child: Text('No hay inmuebles', style: TextStyle(color: Colors.grey)))
-                    : SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Container(
-                          width: 1500,
-                          child: Column(
-                            children: [
-                              _buildHeader(),
-                              ..._filtered.map((i) => _buildRow(i)),
-                            ],
+                    : ScrollConfiguration(
+                        behavior: ScrollConfiguration.of(context).copyWith(scrollbars: true),
+                        child: Scrollbar(
+                          thumbVisibility: true,
+                          trackVisibility: true,
+                          thickness: 12,
+                          radius: const Radius.circular(8),
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: Container(
+                              width: 1500,
+                              padding: const EdgeInsets.all(8),
+                              child: Column(
+                                children: [
+                                  _buildHeader(),
+                                  ..._filtered.map((i) => _buildRow(i)),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ),
