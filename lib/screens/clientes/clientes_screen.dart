@@ -128,24 +128,19 @@ class _ClientesScreenState extends State<ClientesScreen> {
             ),
           ),
           const SizedBox(height: 12),
+          // ✅ SOLUCIÓN: LayoutBuilder para obtener ancho real
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _filtered.isEmpty
                     ? const Center(child: Text('No hay clientes', style: TextStyle(color: Colors.grey)))
-                    : ScrollConfiguration(
-                        behavior: ScrollConfiguration.of(context).copyWith(scrollbars: true),
-                        child: Scrollbar(
-                          thumbVisibility: true,
-                          trackVisibility: true,
-                          thickness: 12,
-                          radius: const Radius.circular(8),
-                          child: SingleChildScrollView(
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          return SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             physics: const AlwaysScrollableScrollPhysics(),
-                            child: Container(
-                              width: 1500,
-                              padding: const EdgeInsets.all(8),
+                            child: SizedBox(
+                              width: constraints.maxWidth + 500, // 500px más ancho que la pantalla
                               child: Column(
                                 children: [
                                   _buildHeader(),
@@ -153,8 +148,8 @@ class _ClientesScreenState extends State<ClientesScreen> {
                                 ],
                               ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
           ),
         ],

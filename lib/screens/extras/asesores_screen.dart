@@ -108,19 +108,13 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : _filtered.isEmpty
                     ? const Center(child: Text('No hay asesores', style: TextStyle(color: Colors.grey)))
-                    : ScrollConfiguration(
-                        behavior: ScrollConfiguration.of(context).copyWith(scrollbars: true),
-                        child: Scrollbar(
-                          thumbVisibility: true,
-                          trackVisibility: true,
-                          thickness: 12,
-                          radius: const Radius.circular(8),
-                          child: SingleChildScrollView(
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          return SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             physics: const AlwaysScrollableScrollPhysics(),
-                            child: Container(
-                              width: 1500,
-                              padding: const EdgeInsets.all(8),
+                            child: SizedBox(
+                              width: constraints.maxWidth + 500,
                               child: Column(
                                 children: [
                                   _buildHeader(),
@@ -128,8 +122,8 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
                                 ],
                               ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
           ),
         ],
