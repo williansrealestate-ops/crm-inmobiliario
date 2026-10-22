@@ -18,21 +18,13 @@
 </head>
 <body>
   <script>
-    // Forzar limpieza de caché en cada carga
     if ('caches' in window) {
       caches.keys().then(function(names) {
         for (let name of names) caches.delete(name);
       });
     }
-    // Registrar service worker con versión única
-    var version = 'v=' + Date.now();
-    var serviceWorkerUrl = 'flutter_service_worker.js?' + version;
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register(serviceWorkerUrl).catch(function(err) {
-        console.log('SW registration failed:', err);
-      });
-    }
   </script>
-  <script src="main.dart.js" type="application/javascript"></script>
+  <script src="flutter_service_worker.js?v=20261023001" type="application/javascript"></script>
+  <script src="main.dart.js?v=20261023001" type="application/javascript"></script>
 </body>
 </html>
