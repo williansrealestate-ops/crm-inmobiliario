@@ -124,27 +124,28 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
             ),
           ),
           const SizedBox(height: 12),
-          Expanded(
+          Container(
+            height: 500,
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _filtered.isEmpty
                     ? const Center(child: Text('No hay inmuebles', style: TextStyle(color: Colors.grey)))
-                    : LayoutBuilder(
-                        builder: (context, constraints) {
-                          return SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            child: SizedBox(
-                              width: constraints.maxWidth + 500,
-                              child: Column(
-                                children: [
-                                  _buildHeader(),
-                                  ..._filtered.map((i) => _buildRow(i)),
-                                ],
-                              ),
+                    : SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: Container(
+                            width: 2000,
+                            child: Column(
+                              children: [
+                                _buildHeader(),
+                                ..._filtered.map((i) => _buildRow(i)),
+                              ],
                             ),
-                          );
-                        },
+                          ),
+                        ),
                       ),
           ),
         ],

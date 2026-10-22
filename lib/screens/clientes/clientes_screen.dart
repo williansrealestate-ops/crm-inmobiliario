@@ -128,28 +128,29 @@ class _ClientesScreenState extends State<ClientesScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          // ✅ SOLUCIÓN: LayoutBuilder para obtener ancho real
-          Expanded(
+          // ✅ SOLUCIÓN: Container con altura fija + doble scroll
+          Container(
+            height: 500, // Altura fija para la tabla
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _filtered.isEmpty
                     ? const Center(child: Text('No hay clientes', style: TextStyle(color: Colors.grey)))
-                    : LayoutBuilder(
-                        builder: (context, constraints) {
-                          return SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            child: SizedBox(
-                              width: constraints.maxWidth + 500, // 500px más ancho que la pantalla
-                              child: Column(
-                                children: [
-                                  _buildHeader(),
-                                  ..._filtered.map((c) => _buildRow(c)),
-                                ],
-                              ),
+                    : SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: Container(
+                            width: 2000, // Ancho fijo muy grande
+                            child: Column(
+                              children: [
+                                _buildHeader(),
+                                ..._filtered.map((c) => _buildRow(c)),
+                              ],
                             ),
-                          );
-                        },
+                          ),
+                        ),
                       ),
           ),
         ],
