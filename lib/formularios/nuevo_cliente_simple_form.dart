@@ -27,13 +27,28 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
   final _paisController = TextEditingController();
   final _estadoController = TextEditingController();
   final _presupuestoController = TextEditingController();
-  final _catalogoController = TextEditingController();
   final _asesorController = TextEditingController();
   final _estadoNegociacionController = TextEditingController();
   final _notasController = TextEditingController();
 
   String _tipo = 'Comprador';
+  String _interes = 'Casa';
   bool _activo = true;
+
+  final List<String> _tiposInteres = [
+    'Casa',
+    'Departamento',
+    'Terreno',
+    'Local',
+    'Oficina',
+    'Hotel',
+    'Hacienda',
+    'Gasolinera',
+    'Combustible',
+    'Refinería',
+    'Mina',
+    'Minerales',
+  ];
 
   bool get _esEditar => widget.cliente != null;
 
@@ -48,11 +63,11 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
       _paisController.text = widget.cliente?['pais'] ?? 'México';
       _estadoController.text = widget.cliente?['estado'] ?? '';
       _presupuestoController.text = widget.cliente?['presupuesto']?.toString() ?? '0';
-      _catalogoController.text = widget.cliente?['catalogo_interes'] ?? '';
       _asesorController.text = widget.cliente?['asesor'] ?? '';
       _estadoNegociacionController.text = widget.cliente?['estado_negociacion'] ?? 'Inicial';
       _notasController.text = widget.cliente?['notas'] ?? '';
       _tipo = widget.cliente?['tipo'] ?? 'Comprador';
+      _interes = widget.cliente?['catalogo_interes'] ?? 'Casa';
       _activo = widget.cliente?['activo'] ?? true;
     }
   }
@@ -66,7 +81,6 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
     _paisController.dispose();
     _estadoController.dispose();
     _presupuestoController.dispose();
-    _catalogoController.dispose();
     _asesorController.dispose();
     _estadoNegociacionController.dispose();
     _notasController.dispose();
@@ -87,7 +101,7 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
         'pais': _paisController.text.trim(),
         'estado': _estadoController.text.trim(),
         'presupuesto': double.tryParse(_presupuestoController.text) ?? 0,
-        'catalogo_interes': _catalogoController.text.trim(),
+        'catalogo_interes': _interes,
         'asesor': _asesorController.text.trim(),
         'estado_negociacion': _estadoNegociacionController.text.trim(),
         'notas': _notasController.text.trim(),
@@ -95,29 +109,39 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
         'activo': _activo,
       };
 
+      print('📤 Datos a guardar: $data');
+
       if (_esEditar) {
         await _supabase
             .from('clientes')
             .update(data)
             .eq('id', widget.cliente!['id']);
+        print('✅ Actualizado correctamente');
       } else {
         await _supabase.from('clientes').insert(data);
+        print('✅ Insertado correctamente');
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_esEditar ? 'Cliente actualizado' : 'Cliente creado'),
+            content: Text(_esEditar ? '✅ Cliente actualizado' : '✅ Cliente creado'),
             backgroundColor: Colors.green,
           ),
         );
         widget.onClienteCreado?.call();
         Navigator.pop(context);
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ Error al guardar: $e');
+      print('📍 Stack: $stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     } finally {
@@ -144,11 +168,14 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildTextField(_nombreController, 'Nombre *', Icons.person, validator: (v) => v!.isEmpty ? 'Requerido' : null),
+                    _buildTextField(_nombreController, 'Nombre *', Icons.person, 
+                        validator: (v) => v!.isEmpty ? 'Requerido' : null),
                     const SizedBox(height: 16),
-                    _buildTextField(_emailController, 'Email', Icons.email, keyboardType: TextInputType.emailAddress),
+                    _buildTextField(_emailController, 'Email', Icons.email, 
+                        keyboardType: TextInputType.emailAddress),
                     const SizedBox(height: 16),
-                    _buildTextField(_telefonoController, 'Teléfono', Icons.phone, keyboardType: TextInputType.phone),
+                    _buildTextField(_telefonoController, 'Teléfono', Icons.phone, 
+                        keyboardType: TextInputType.phone),
                     const SizedBox(height: 16),
                     _buildDropdownField(
                       'Tipo',
@@ -157,15 +184,21 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
                       (v) => setState(() => _tipo = v!),
                     ),
                     const SizedBox(height: 16),
+                    _buildDropdownField(
+                      'Interés',
+                      _interes,
+                      _tiposInteres,
+                      (v) => setState(() => _interes = v!),
+                    ),
+                    const SizedBox(height: 16),
                     _buildTextField(_ubicacionController, 'Ubicación', Icons.location_on),
                     const SizedBox(height: 16),
                     _buildTextField(_paisController, 'País', Icons.flag),
                     const SizedBox(height: 16),
                     _buildTextField(_estadoController, 'Estado', Icons.map),
                     const SizedBox(height: 16),
-                    _buildTextField(_presupuestoController, 'Presupuesto (MXN)', Icons.attach_money, keyboardType: TextInputType.number),
-                    const SizedBox(height: 16),
-                    _buildTextField(_catalogoController, 'Catálogo de interés', Icons.folder),
+                    _buildTextField(_presupuestoController, 'Presupuesto (MXN)', Icons.attach_money, 
+                        keyboardType: TextInputType.number),
                     const SizedBox(height: 16),
                     _buildTextField(_asesorController, 'Asesor', Icons.person),
                     const SizedBox(height: 16),
@@ -222,13 +255,16 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
         filled: true,
         fillColor: const Color(0xFF1A1A1A),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF333333))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF0066FF))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), 
+            borderSide: const BorderSide(color: Color(0xFF333333))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), 
+            borderSide: const BorderSide(color: Color(0xFF0066FF))),
       ),
     );
   }
 
-  Widget _buildDropdownField(String label, String value, List<String> items, void Function(String?) onChanged) {
+  Widget _buildDropdownField(String label, String value, List<String> items, 
+      void Function(String?) onChanged) {
     return DropdownButtonFormField<String>(
       value: items.contains(value) ? value : items.first,
       decoration: InputDecoration(
@@ -237,8 +273,10 @@ class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
         filled: true,
         fillColor: const Color(0xFF1A1A1A),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF333333))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF0066FF))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), 
+            borderSide: const BorderSide(color: Color(0xFF333333))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), 
+            borderSide: const BorderSide(color: Color(0xFF0066FF))),
       ),
       dropdownColor: const Color(0xFF1A1A1A),
       style: const TextStyle(color: Colors.white),
