@@ -75,6 +75,15 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
           IconButton(icon: const Icon(Icons.add, color: Colors.white), onPressed: () => _openForm()),
         ],
       ),
+      // ✅ BOTÓN DE WHATSAPP INTEGRADO (Sin imports externos)
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Aquí puedes agregar la lógica para abrir WhatsApp
+        },
+        backgroundColor: const Color(0xFF25D366),
+        child: const Icon(Icons.message, color: Colors.white, size: 28),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: Column(
         children: [
           Padding(
@@ -109,14 +118,13 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : _filtered.isEmpty
                     ? const Center(child: Text('No hay asesores', style: TextStyle(color: Colors.grey)))
-                    : SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        physics: const AlwaysScrollableScrollPhysics(),
+                    : ScrollConfiguration(
+                        behavior: ScrollConfiguration.of(context).copyWith(scrollbars: true),
                         child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
+                          scrollDirection: Axis.vertical,
                           physics: const AlwaysScrollableScrollPhysics(),
-                          child: Container(
-                            width: 2000,
+                          child: SizedBox(
+                            width: 1300,
                             child: Column(
                               children: [
                                 _buildHeader(),

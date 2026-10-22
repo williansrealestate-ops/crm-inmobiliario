@@ -83,6 +83,16 @@ class _ClientesScreenState extends State<ClientesScreen> {
           IconButton(icon: const Icon(Icons.add, color: Colors.white), onPressed: () => _openForm()),
         ],
       ),
+      // ✅ BOTÓN DE WHATSAPP INTEGRADO (Sin imports externos)
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Aquí puedes agregar la lógica para abrir WhatsApp
+          // Ejemplo: launchUrl(Uri.parse('https://wa.me/521234567890'));
+        },
+        backgroundColor: const Color(0xFF25D366), // Color verde oficial de WhatsApp
+        child: const Icon(Icons.message, color: Colors.white, size: 28),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: Column(
         children: [
           Padding(
@@ -128,21 +138,19 @@ class _ClientesScreenState extends State<ClientesScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          // ✅ SOLUCIÓN: Container con altura fija + doble scroll
           Container(
-            height: 500, // Altura fija para la tabla
+            height: 500,
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _filtered.isEmpty
                     ? const Center(child: Text('No hay clientes', style: TextStyle(color: Colors.grey)))
-                    : SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        physics: const AlwaysScrollableScrollPhysics(),
+                    : ScrollConfiguration(
+                        behavior: ScrollConfiguration.of(context).copyWith(scrollbars: true),
                         child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
+                          scrollDirection: Axis.vertical,
                           physics: const AlwaysScrollableScrollPhysics(),
-                          child: Container(
-                            width: 2000, // Ancho fijo muy grande
+                          child: SizedBox(
+                            width: 1300,
                             child: Column(
                               children: [
                                 _buildHeader(),
