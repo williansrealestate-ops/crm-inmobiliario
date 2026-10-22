@@ -77,10 +77,10 @@ class _ClientesScreenState extends State<ClientesScreen> {
         title: const Row(children: [
           Icon(Icons.people, color: Colors.white),
           SizedBox(width: 8),
-          Text('Clientes', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          Text('Clientes', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
         ]),
         actions: [
-          IconButton(icon: const Icon(Icons.add, color: Colors.white), onPressed: () => _openForm()),
+          IconButton(icon: const Icon(Icons.add, color: Colors.white, size: 28), onPressed: () => _openForm()),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -96,12 +96,12 @@ class _ClientesScreenState extends State<ClientesScreen> {
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Buscar clientes...',
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 22),
                 filled: true,
                 fillColor: const Color(0xFF1A1A1A),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
               ),
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.white, fontSize: 14),
               onChanged: (v) { _search = v; _applyFilters(); },
             ),
           ),
@@ -112,9 +112,9 @@ class _ClientesScreenState extends State<ClientesScreen> {
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     value: _tipoFilter,
-                    decoration: const InputDecoration(labelText: 'Tipo', labelStyle: TextStyle(color: Colors.grey, fontSize: 11), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
+                    decoration: const InputDecoration(labelText: 'Tipo', labelStyle: TextStyle(color: Colors.grey, fontSize: 12), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
                     dropdownColor: const Color(0xFF1A1A1A),
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
                     items: ['Todos', 'Comprador', 'Vendedor', 'Inversionista', 'Rentador'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
                     onChanged: (v) { _tipoFilter = v ?? 'Todos'; _applyFilters(); },
                   ),
@@ -123,9 +123,9 @@ class _ClientesScreenState extends State<ClientesScreen> {
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     value: _asesorFilter,
-                    decoration: const InputDecoration(labelText: 'Asesor', labelStyle: TextStyle(color: Colors.grey, fontSize: 11), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
+                    decoration: const InputDecoration(labelText: 'Asesor', labelStyle: TextStyle(color: Colors.grey, fontSize: 12), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
                     dropdownColor: const Color(0xFF1A1A1A),
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
                     items: ['Todos'].map((a) => DropdownMenuItem(value: a, child: Text(a))).toList(),
                     onChanged: (v) { _asesorFilter = v ?? 'Todos'; _applyFilters(); },
                   ),
@@ -138,14 +138,14 @@ class _ClientesScreenState extends State<ClientesScreen> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _filtered.isEmpty
-                    ? const Center(child: Text('No hay clientes', style: TextStyle(color: Colors.grey)))
+                    ? const Center(child: Text('No hay clientes', style: TextStyle(color: Colors.grey, fontSize: 14)))
                     : ScrollConfiguration(
                         behavior: ScrollConfiguration.of(context).copyWith(scrollbars: true),
                         child: SingleChildScrollView(
                           scrollDirection: Axis.vertical,
                           physics: const AlwaysScrollableScrollPhysics(),
                           child: SizedBox(
-                            width: 1300,
+                            width: 1600,
                             child: Column(
                               children: [
                                 _buildHeader(),
@@ -163,20 +163,23 @@ class _ClientesScreenState extends State<ClientesScreen> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
       color: const Color(0xFF111111),
       child: Row(
         children: [
-          SizedBox(width: 50, child: Text('', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-          SizedBox(width: 200, child: Text('NOMBRE', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-          SizedBox(width: 100, child: Text('TIPO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-          SizedBox(width: 150, child: Text('EMAIL', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-          SizedBox(width: 120, child: Text('TELÉFONO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-          SizedBox(width: 150, child: Text('UBICACIÓN', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-          SizedBox(width: 120, child: Text('PRESUPUESTO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-          SizedBox(width: 120, child: Text('CATÁLOGO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-          SizedBox(width: 150, child: Text('ASESOR', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-          SizedBox(width: 100, child: Text('ESTADO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 60, child: Text('', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 220, child: Text('NOMBRE', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 120, child: Text('TIPO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 180, child: Text('EMAIL', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 140, child: Text('TELÉFONO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 180, child: Text('UBICACIÓN', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 100, child: Text('PAÍS', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 120, child: Text('ESTADO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 140, child: Text('PRESUPUESTO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 140, child: Text('CATÁLOGO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 180, child: Text('ASESOR', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 120, child: Text('ESTADO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 180, child: Text('NOTAS', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
         ],
       ),
     );
@@ -188,10 +191,13 @@ class _ClientesScreenState extends State<ClientesScreen> {
     final email = c['email'] ?? '---';
     final tel = c['telefono'] ?? '---';
     final ubicacion = c['ubicacion'] ?? '---';
+    final pais = c['pais'] ?? 'México';
+    final estado = c['estado'] ?? '---';
     final presupuesto = c['presupuesto'] ?? 0;
     final catalogo = c['catalogo_interes'] ?? '---';
     final asesor = c['asesor'] ?? '---';
     final activo = c['activo'] ?? true;
+    final notas = c['notas'] ?? '---';
     final inicial = nombre.toString().isNotEmpty ? nombre.toString().substring(0, 1).toUpperCase() : 'S';
 
     Color tipoColor;
@@ -206,22 +212,25 @@ class _ClientesScreenState extends State<ClientesScreen> {
     return InkWell(
       onTap: () => _showDetails(c),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
           border: Border(bottom: BorderSide(color: Colors.grey.shade900, width: 0.5)),
         ),
         child: Row(
           children: [
-            SizedBox(width: 50, child: Container(width: 32, height: 32, decoration: BoxDecoration(color: Colors.orange.shade700, borderRadius: BorderRadius.circular(4)), child: Center(child: Text(inicial, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))))),
-            SizedBox(width: 200, child: Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 12), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 100, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: tipoColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(tipo, style: TextStyle(color: tipoColor, fontSize: 10)))),
-            SizedBox(width: 150, child: Text(email, style: const TextStyle(color: Colors.grey, fontSize: 11), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 120, child: Text(tel, style: const TextStyle(color: Colors.grey, fontSize: 11))),
-            SizedBox(width: 150, child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 11), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 120, child: Text(presupuesto > 0 ? '\$${(presupuesto / 1000000).toStringAsFixed(1)} M' : '---', style: const TextStyle(color: Colors.green, fontSize: 11))),
-            SizedBox(width: 120, child: Text(catalogo, style: const TextStyle(color: Colors.amber, fontSize: 11), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 150, child: Text(asesor, style: const TextStyle(color: Colors.grey, fontSize: 11), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 100, child: Row(children: [Container(width: 8, height: 8, decoration: BoxDecoration(color: activo ? Colors.green : Colors.red, shape: BoxShape.circle)), const SizedBox(width: 4), Text(activo ? 'Activo' : 'Inactivo', style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 10))])),
+            SizedBox(width: 60, child: Container(width: 36, height: 36, decoration: BoxDecoration(color: Colors.orange.shade700, borderRadius: BorderRadius.circular(4)), child: Center(child: Text(inicial, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold))))),
+            SizedBox(width: 220, child: Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 120, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: tipoColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(tipo, style: TextStyle(color: tipoColor, fontSize: 11, fontWeight: FontWeight.w500)))),
+            SizedBox(width: 180, child: Text(email, style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 140, child: Text(tel, style: const TextStyle(color: Colors.grey, fontSize: 12))),
+            SizedBox(width: 180, child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 100, child: Text(pais, style: const TextStyle(color: Colors.grey, fontSize: 12))),
+            SizedBox(width: 120, child: Text(estado, style: const TextStyle(color: Colors.grey, fontSize: 12))),
+            SizedBox(width: 140, child: Text(presupuesto > 0 ? '\$${(presupuesto / 1000000).toStringAsFixed(1)} M' : '---', style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.w500))),
+            SizedBox(width: 140, child: Text(catalogo, style: const TextStyle(color: Colors.amber, fontSize: 12), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 180, child: Text(asesor, style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 120, child: Row(children: [Container(width: 10, height: 10, decoration: BoxDecoration(color: activo ? Colors.green : Colors.red, shape: BoxShape.circle)), const SizedBox(width: 6), Text(activo ? 'Activo' : 'Inactivo', style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 11, fontWeight: FontWeight.w500))])),
+            SizedBox(width: 180, child: Text(notas, style: const TextStyle(color: Colors.grey, fontSize: 11), overflow: TextOverflow.ellipsis)),
           ],
         ),
       ),
@@ -264,12 +273,14 @@ class _ClientesScreenState extends State<ClientesScreen> {
               _detailRow(Icons.email, 'Email', c['email'] ?? '---'),
               _detailRow(Icons.phone, 'Teléfono', c['telefono'] ?? '---'),
               _detailRow(Icons.location_on, 'Ubicación', c['ubicacion'] ?? '---'),
+              _detailRow(Icons.flag, 'País', c['pais'] ?? 'México'),
+              _detailRow(Icons.map, 'Estado', c['estado'] ?? '---'),
               _detailRow(Icons.attach_money, 'Presupuesto', '\$${c['presupuesto'] ?? 0} MXN'),
               _detailRow(Icons.folder, 'Catálogo de interés', c['catalogo_interes'] ?? '---'),
               _detailRow(Icons.person, 'Asesor', c['asesor'] ?? '---'),
               _detailRow(Icons.handshake, 'Estado de negociación', c['estado_negociacion'] ?? 'Inicial'),
               const SizedBox(height: 16),
-              const Text('Notas', style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
+              const Text('Notas', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Container(width: double.infinity, padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF0A0A0A), borderRadius: BorderRadius.circular(8)), child: Text(c['notas'] ?? 'Sin notas', style: const TextStyle(color: Colors.white, fontSize: 13))),
               const SizedBox(height: 20),

@@ -69,10 +69,10 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
         title: const Row(children: [
           Icon(Icons.person, color: Colors.white),
           SizedBox(width: 8),
-          Text('Asesores', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          Text('Asesores', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
         ]),
         actions: [
-          IconButton(icon: const Icon(Icons.add, color: Colors.white), onPressed: () => _openForm()),
+          IconButton(icon: const Icon(Icons.add, color: Colors.white, size: 28), onPressed: () => _openForm()),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -88,12 +88,12 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Buscar asesores...',
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 22),
                 filled: true,
                 fillColor: const Color(0xFF1A1A1A),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
               ),
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.white, fontSize: 14),
               onChanged: (v) { _search = v; _applyFilters(); },
             ),
           ),
@@ -101,9 +101,9 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: DropdownButtonFormField<String>(
               value: _grupoFilter,
-              decoration: const InputDecoration(labelText: 'Grupo', labelStyle: TextStyle(color: Colors.grey, fontSize: 11), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
+              decoration: const InputDecoration(labelText: 'Grupo', labelStyle: TextStyle(color: Colors.grey, fontSize: 12), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
               dropdownColor: const Color(0xFF1A1A1A),
-              style: const TextStyle(color: Colors.white, fontSize: 12),
+              style: const TextStyle(color: Colors.white, fontSize: 13),
               items: ['Todos'].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
               onChanged: (v) { _grupoFilter = v ?? 'Todos'; _applyFilters(); },
             ),
@@ -113,14 +113,14 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _filtered.isEmpty
-                    ? const Center(child: Text('No hay asesores', style: TextStyle(color: Colors.grey)))
+                    ? const Center(child: Text('No hay asesores', style: TextStyle(color: Colors.grey, fontSize: 14)))
                     : ScrollConfiguration(
                         behavior: ScrollConfiguration.of(context).copyWith(scrollbars: true),
                         child: SingleChildScrollView(
                           scrollDirection: Axis.vertical,
                           physics: const AlwaysScrollableScrollPhysics(),
                           child: SizedBox(
-                            width: 1300,
+                            width: 1500,
                             child: Column(
                               children: [
                                 _buildHeader(),
@@ -138,19 +138,22 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
       color: const Color(0xFF111111),
       child: Row(
         children: [
-          SizedBox(width: 50, child: Text('', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-          SizedBox(width: 200, child: Text('NOMBRE', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-          SizedBox(width: 100, child: Text('GRUPO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-          SizedBox(width: 150, child: Text('EMAIL', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-          SizedBox(width: 120, child: Text('TELÉFONO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-          SizedBox(width: 150, child: Text('UBICACIÓN', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-          SizedBox(width: 100, child: Text('COMISIÓN', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-          SizedBox(width: 120, child: Text('CATÁLOGO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-          SizedBox(width: 100, child: Text('ESTADO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 60, child: Text('', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 220, child: Text('NOMBRE', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 120, child: Text('GRUPO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 180, child: Text('EMAIL', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 140, child: Text('TELÉFONO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 180, child: Text('UBICACIÓN', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 100, child: Text('PAÍS', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 120, child: Text('ESTADO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 100, child: Text('COMISIÓN', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 140, child: Text('CATÁLOGO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 120, child: Text('ESTADO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
+          SizedBox(width: 180, child: Text('NOTAS', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
         ],
       ),
     );
@@ -158,33 +161,39 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
 
   Widget _buildRow(Map<String, dynamic> a) {
     final nombre = a['nombre'] ?? 'Sin nombre';
-    final grupo = a['grupo'] ?? 'Independiente';
+    final grupo = a['grupo'] ?? 'Sin grupo';
     final email = a['email'] ?? '---';
     final tel = a['telefono'] ?? '---';
     final ubicacion = a['ubicacion'] ?? '---';
+    final pais = a['pais'] ?? 'México';
+    final estado = a['estado'] ?? '---';
     final comision = a['comision'] ?? 0;
-    final catalogo = a['catalogo'] ?? 'General';
+    final catalogo = a['catalogo'] ?? '---';
     final activo = a['activo'] ?? true;
+    final notas = a['notas'] ?? '---';
     final inicial = nombre.toString().isNotEmpty ? nombre.toString().substring(0, 1).toUpperCase() : 'A';
 
     return InkWell(
       onTap: () => _showDetails(a),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
           border: Border(bottom: BorderSide(color: Colors.grey.shade900, width: 0.5)),
         ),
         child: Row(
           children: [
-            SizedBox(width: 50, child: Container(width: 32, height: 32, decoration: BoxDecoration(color: Colors.blue.shade700, borderRadius: BorderRadius.circular(4)), child: Center(child: Text(inicial, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))))),
-            SizedBox(width: 200, child: Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 12), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 100, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: Colors.blue.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(grupo, style: TextStyle(color: Colors.blue, fontSize: 10)))),
-            SizedBox(width: 150, child: Text(email, style: const TextStyle(color: Colors.grey, fontSize: 11), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 120, child: Text(tel, style: const TextStyle(color: Colors.grey, fontSize: 11))),
-            SizedBox(width: 150, child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 11), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 100, child: Text('$comision%', style: const TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold))),
-            SizedBox(width: 120, child: Text(catalogo, style: const TextStyle(color: Colors.amber, fontSize: 11), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 100, child: Row(children: [Container(width: 8, height: 8, decoration: BoxDecoration(color: activo ? Colors.green : Colors.red, shape: BoxShape.circle)), const SizedBox(width: 4), Text(activo ? 'Activo' : 'Inactivo', style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 10))])),
+            SizedBox(width: 60, child: Container(width: 36, height: 36, decoration: BoxDecoration(color: Colors.blue.shade700, borderRadius: BorderRadius.circular(4)), child: Center(child: Text(inicial, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold))))),
+            SizedBox(width: 220, child: Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 120, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.blue.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(grupo, style: TextStyle(color: Colors.blue, fontSize: 11, fontWeight: FontWeight.w500)))),
+            SizedBox(width: 180, child: Text(email, style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 140, child: Text(tel, style: const TextStyle(color: Colors.grey, fontSize: 12))),
+            SizedBox(width: 180, child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 100, child: Text(pais, style: const TextStyle(color: Colors.grey, fontSize: 12))),
+            SizedBox(width: 120, child: Text(estado, style: const TextStyle(color: Colors.grey, fontSize: 12))),
+            SizedBox(width: 100, child: Text('$comision%', style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold))),
+            SizedBox(width: 140, child: Text(catalogo, style: const TextStyle(color: Colors.amber, fontSize: 12), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 120, child: Row(children: [Container(width: 10, height: 10, decoration: BoxDecoration(color: activo ? Colors.green : Colors.red, shape: BoxShape.circle)), const SizedBox(width: 6), Text(activo ? 'Activo' : 'Inactivo', style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 11, fontWeight: FontWeight.w500))])),
+            SizedBox(width: 180, child: Text(notas, style: const TextStyle(color: Colors.grey, fontSize: 11), overflow: TextOverflow.ellipsis)),
           ],
         ),
       ),
@@ -216,7 +225,7 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
                   const SizedBox(width: 12),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(a['nombre'] ?? 'Sin nombre', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text(a['grupo'] ?? 'Independiente', style: TextStyle(color: Colors.blue.shade300, fontSize: 14)),
+                    Text(a['grupo'] ?? 'Sin grupo', style: TextStyle(color: Colors.blue.shade300, fontSize: 14)),
                   ])),
                   IconButton(icon: const Icon(Icons.edit, color: Colors.blue), onPressed: () { Navigator.pop(ctx); _openForm(asesor: a); }),
                 ],
@@ -227,8 +236,14 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
               _detailRow(Icons.phone, 'Teléfono', a['telefono'] ?? '---'),
               _detailRow(Icons.email, 'Email', a['email'] ?? '---'),
               _detailRow(Icons.location_on, 'Ubicación', a['ubicacion'] ?? '---'),
+              _detailRow(Icons.flag, 'País', a['pais'] ?? 'México'),
+              _detailRow(Icons.map, 'Estado', a['estado'] ?? '---'),
               _detailRow(Icons.percent, 'Comisión', '${a['comision'] ?? 0}%'),
-              _detailRow(Icons.folder, 'Catálogo', a['catalogo'] ?? 'General'),
+              _detailRow(Icons.folder, 'Catálogo', a['catalogo'] ?? '---'),
+              const SizedBox(height: 16),
+              const Text('Notas', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Container(width: double.infinity, padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF0A0A0A), borderRadius: BorderRadius.circular(8)), child: Text(a['notas'] ?? 'Sin notas', style: const TextStyle(color: Colors.white, fontSize: 13))),
               const SizedBox(height: 20),
               Row(children: [Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx), style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.grey)), child: const Text('Cerrar', style: TextStyle(color: Colors.white))))]),
             ],
