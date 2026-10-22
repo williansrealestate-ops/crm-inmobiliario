@@ -120,7 +120,7 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
                           scrollDirection: Axis.vertical,
                           physics: const AlwaysScrollableScrollPhysics(),
                           child: SizedBox(
-                            width: 1500,
+                            width: 1400,
                             child: Column(
                               children: [
                                 _buildHeader(),
@@ -145,7 +145,6 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
           SizedBox(width: 60, child: Text('', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
           SizedBox(width: 220, child: Text('NOMBRE', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
           SizedBox(width: 120, child: Text('GRUPO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
-          SizedBox(width: 180, child: Text('EMAIL', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
           SizedBox(width: 140, child: Text('TELÉFONO', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
           SizedBox(width: 180, child: Text('UBICACIÓN', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
           SizedBox(width: 100, child: Text('PAÍS', style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold))),
@@ -162,7 +161,6 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
   Widget _buildRow(Map<String, dynamic> a) {
     final nombre = a['nombre'] ?? 'Sin nombre';
     final grupo = a['grupo'] ?? 'Sin grupo';
-    final email = a['email'] ?? '---';
     final tel = a['telefono'] ?? '---';
     final ubicacion = a['ubicacion'] ?? '---';
     final pais = a['pais'] ?? 'México';
@@ -185,7 +183,6 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
             SizedBox(width: 60, child: Container(width: 36, height: 36, decoration: BoxDecoration(color: Colors.blue.shade700, borderRadius: BorderRadius.circular(4)), child: Center(child: Text(inicial, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold))))),
             SizedBox(width: 220, child: Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
             SizedBox(width: 120, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.blue.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(grupo, style: TextStyle(color: Colors.blue, fontSize: 11, fontWeight: FontWeight.w500)))),
-            SizedBox(width: 180, child: Text(email, style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
             SizedBox(width: 140, child: Text(tel, style: const TextStyle(color: Colors.grey, fontSize: 12))),
             SizedBox(width: 180, child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
             SizedBox(width: 100, child: Text(pais, style: const TextStyle(color: Colors.grey, fontSize: 12))),
@@ -234,7 +231,6 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
               const Divider(color: Color(0xFF333333)),
               const SizedBox(height: 16),
               _detailRow(Icons.phone, 'Teléfono', a['telefono'] ?? '---'),
-              _detailRow(Icons.email, 'Email', a['email'] ?? '---'),
               _detailRow(Icons.location_on, 'Ubicación', a['ubicacion'] ?? '---'),
               _detailRow(Icons.flag, 'País', a['pais'] ?? 'México'),
               _detailRow(Icons.map, 'Estado', a['estado'] ?? '---'),
