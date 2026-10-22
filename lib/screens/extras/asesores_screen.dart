@@ -111,23 +111,12 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
                     : SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Container(
-                          width: 2000,
-                          padding: const EdgeInsets.all(8),
-                          child: DataTable(
-                            headingRowColor: WidgetStateProperty.all(const Color(0xFF111111)),
-                            dataRowMinHeight: 50,
-                            columns: const [
-                              DataColumn(label: SizedBox(width: 40, child: Text('', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold)))),
-                              DataColumn(label: Text('NOMBRE', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('GRUPO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('EMAIL', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('TELÉFONO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('UBICACIÓN', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('COMISIÓN', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('CATÁLOGO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-                              DataColumn(label: SizedBox(width: 60, child: Text('ESTADO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold), textAlign: TextAlign.center))),
+                          width: 1500,
+                          child: Column(
+                            children: [
+                              _buildHeader(),
+                              ..._filtered.map((a) => _buildRow(a)),
                             ],
-                            rows: _filtered.map((a) => _buildDataRow(a)).toList(),
                           ),
                         ),
                       ),
@@ -137,7 +126,27 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
     );
   }
 
-  DataRow _buildDataRow(Map<String, dynamic> a) {
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      color: const Color(0xFF111111),
+      child: Row(
+        children: [
+          SizedBox(width: 50, child: Text('', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 200, child: Text('NOMBRE', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 100, child: Text('GRUPO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 150, child: Text('EMAIL', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 120, child: Text('TELÉFONO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 150, child: Text('UBICACIÓN', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 100, child: Text('COMISIÓN', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 120, child: Text('CATÁLOGO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 100, child: Text('ESTADO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRow(Map<String, dynamic> a) {
     final nombre = a['nombre'] ?? 'Sin nombre';
     final grupo = a['grupo'] ?? 'Independiente';
     final email = a['email'] ?? '---';
@@ -148,21 +157,27 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
     final activo = a['activo'] ?? true;
     final inicial = nombre.toString().isNotEmpty ? nombre.toString().substring(0, 1).toUpperCase() : 'A';
 
-    return DataRow(
-      cells: [
-        DataCell(Container(width: 32, height: 32, decoration: BoxDecoration(color: Colors.blue.shade700, borderRadius: BorderRadius.circular(4)), child: Center(child: Text(inicial, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))))),
-        DataCell(Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 12), overflow: TextOverflow.ellipsis)),
-        DataCell(Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: Colors.blue.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(grupo, style: TextStyle(color: Colors.blue, fontSize: 10)))),
-        DataCell(Text(email, style: const TextStyle(color: Colors.grey, fontSize: 11), overflow: TextOverflow.ellipsis)),
-        DataCell(Text(tel, style: const TextStyle(color: Colors.grey, fontSize: 11))),
-        DataCell(SizedBox(width: 150, child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 11), overflow: TextOverflow.ellipsis))),
-        DataCell(Text('$comision%', style: const TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold))),
-        DataCell(SizedBox(width: 100, child: Text(catalogo, style: const TextStyle(color: Colors.amber, fontSize: 11), overflow: TextOverflow.ellipsis))),
-        DataCell(Container(width: 50, child: Row(children: [Container(width: 8, height: 8, decoration: BoxDecoration(color: activo ? Colors.green : Colors.red, shape: BoxShape.circle)), const SizedBox(width: 4), Text(activo ? 'Activo' : 'Inactivo', style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 10))]))),
-      ],
-      onSelectChanged: (selected) {
-        if (selected == true) _showDetails(a);
-      },
+    return InkWell(
+      onTap: () => _showDetails(a),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: Colors.grey.shade900, width: 0.5)),
+        ),
+        child: Row(
+          children: [
+            SizedBox(width: 50, child: Container(width: 32, height: 32, decoration: BoxDecoration(color: Colors.blue.shade700, borderRadius: BorderRadius.circular(4)), child: Center(child: Text(inicial, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))))),
+            SizedBox(width: 200, child: Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 12), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 100, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: Colors.blue.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(grupo, style: TextStyle(color: Colors.blue, fontSize: 10)))),
+            SizedBox(width: 150, child: Text(email, style: const TextStyle(color: Colors.grey, fontSize: 11), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 120, child: Text(tel, style: const TextStyle(color: Colors.grey, fontSize: 11))),
+            SizedBox(width: 150, child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 11), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 100, child: Text('$comision%', style: const TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold))),
+            SizedBox(width: 120, child: Text(catalogo, style: const TextStyle(color: Colors.amber, fontSize: 11), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 100, child: Row(children: [Container(width: 8, height: 8, decoration: BoxDecoration(color: activo ? Colors.green : Colors.red, shape: BoxShape.circle)), const SizedBox(width: 4), Text(activo ? 'Activo' : 'Inactivo', style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 10))])),
+          ],
+        ),
+      ),
     );
   }
 

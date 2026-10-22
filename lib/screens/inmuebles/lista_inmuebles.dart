@@ -132,24 +132,12 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
                     : SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Container(
-                          width: 2000,
-                          padding: const EdgeInsets.all(8),
-                          child: DataTable(
-                            headingRowColor: WidgetStateProperty.all(const Color(0xFF111111)),
-                            dataRowMinHeight: 50,
-                            columns: const [
-                              DataColumn(label: SizedBox(width: 40, child: Text('', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold)))),
-                              DataColumn(label: Text('TÍTULO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('TIPO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('UBICACIÓN', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('PRECIO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('SUPERFICIE', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('REC.', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('BAÑOS', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-                              DataColumn(label: Text('ASESOR', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
-                              DataColumn(label: SizedBox(width: 60, child: Text('ESTADO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold), textAlign: TextAlign.center))),
+                          width: 1500,
+                          child: Column(
+                            children: [
+                              _buildHeader(),
+                              ..._filtered.map((i) => _buildRow(i)),
                             ],
-                            rows: _filtered.map((i) => _buildDataRow(i)).toList(),
                           ),
                         ),
                       ),
@@ -159,7 +147,28 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
     );
   }
 
-  DataRow _buildDataRow(Map<String, dynamic> i) {
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      color: const Color(0xFF111111),
+      child: Row(
+        children: [
+          SizedBox(width: 50, child: Text('', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 200, child: Text('TÍTULO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 100, child: Text('TIPO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 150, child: Text('UBICACIÓN', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 120, child: Text('PRECIO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 100, child: Text('SUPERFICIE', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 60, child: Text('REC.', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 60, child: Text('BAÑOS', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 150, child: Text('ASESOR', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+          SizedBox(width: 100, child: Text('ESTADO', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRow(Map<String, dynamic> i) {
     final titulo = i['titulo'] ?? 'Sin título';
     final tipo = i['tipo'] ?? 'Casa';
     final ubicacion = i['ubicacion'] ?? '---';
@@ -184,22 +193,28 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
       default: tipoColor = Colors.blue;
     }
 
-    return DataRow(
-      cells: [
-        DataCell(Container(width: 32, height: 32, decoration: BoxDecoration(color: tipoColor.withOpacity(0.8), borderRadius: BorderRadius.circular(4)), child: Center(child: Text(inicial, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))))),
-        DataCell(Text(titulo, style: const TextStyle(color: Colors.white, fontSize: 12), overflow: TextOverflow.ellipsis)),
-        DataCell(Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: tipoColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(tipo, style: TextStyle(color: tipoColor, fontSize: 10)))),
-        DataCell(SizedBox(width: 150, child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 11), overflow: TextOverflow.ellipsis))),
-        DataCell(Text('\$${(precio / 1000000).toStringAsFixed(2)} MDP', style: const TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold))),
-        DataCell(Text(superficie > 0 ? '$superficie m²' : '---', style: const TextStyle(color: Colors.grey, fontSize: 11))),
-        DataCell(Text(recamaras > 0 ? '$recamaras' : '-', style: const TextStyle(color: Colors.grey, fontSize: 11))),
-        DataCell(Text(banos > 0 ? '$banos' : '-', style: const TextStyle(color: Colors.grey, fontSize: 11))),
-        DataCell(Text(asesor, style: const TextStyle(color: Colors.grey, fontSize: 11), overflow: TextOverflow.ellipsis)),
-        DataCell(Container(width: 50, child: Row(children: [Container(width: 8, height: 8, decoration: BoxDecoration(color: activo ? Colors.green : Colors.red, shape: BoxShape.circle)), const SizedBox(width: 4), Text(activo ? 'Activo' : 'Inactivo', style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 10))]))),
-      ],
-      onSelectChanged: (selected) {
-        if (selected == true) _showDetails(i);
-      },
+    return InkWell(
+      onTap: () => _showDetails(i),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: Colors.grey.shade900, width: 0.5)),
+        ),
+        child: Row(
+          children: [
+            SizedBox(width: 50, child: Container(width: 32, height: 32, decoration: BoxDecoration(color: tipoColor.withOpacity(0.8), borderRadius: BorderRadius.circular(4)), child: Center(child: Text(inicial, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))))),
+            SizedBox(width: 200, child: Text(titulo, style: const TextStyle(color: Colors.white, fontSize: 12), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 100, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: tipoColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(tipo, style: TextStyle(color: tipoColor, fontSize: 10)))),
+            SizedBox(width: 150, child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 11), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 120, child: Text('\$${(precio / 1000000).toStringAsFixed(2)} MDP', style: const TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold))),
+            SizedBox(width: 100, child: Text(superficie > 0 ? '$superficie m²' : '---', style: const TextStyle(color: Colors.grey, fontSize: 11))),
+            SizedBox(width: 60, child: Text(recamaras > 0 ? '$recamaras' : '-', style: const TextStyle(color: Colors.grey, fontSize: 11))),
+            SizedBox(width: 60, child: Text(banos > 0 ? '$banos' : '-', style: const TextStyle(color: Colors.grey, fontSize: 11))),
+            SizedBox(width: 150, child: Text(asesor, style: const TextStyle(color: Colors.grey, fontSize: 11), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 100, child: Row(children: [Container(width: 8, height: 8, decoration: BoxDecoration(color: activo ? Colors.green : Colors.red, shape: BoxShape.circle)), const SizedBox(width: 4), Text(activo ? 'Activo' : 'Inactivo', style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 10))])),
+          ],
+        ),
+      ),
     );
   }
 
