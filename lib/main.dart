@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// ✅ IMPORTS DE TUS PANTALLAS
+// ✅ IMPORTS DE TODAS TUS PANTALLAS REALES
+import 'screens/guiones/guiones_screen.dart';
+import 'screens/dashboard/dashboard_asesores.dart';
+import 'screens/reportes/reportes_screen.dart';
+import 'screens/academia/academia_screen.dart';
+import 'screens/chat_ia/chat_ia_screen.dart';
+import 'screens/calculadoras/calculadoras_screen.dart';
+import 'screens/finanzas/finanzas_screen.dart';
+import 'screens/extras/backup_screen.dart';
+import 'screens/dashboard/dashboard_negocios.dart';
 import 'screens/clientes/clientes_screen.dart';
 import 'screens/extras/asesores_screen.dart';
 import 'screens/inmuebles/lista_inmuebles.dart';
-import 'screens/finanzas/finanzas_screen.dart';
-import 'screens/extras/backup_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,52 +67,19 @@ class _MainScreenState extends State<MainScreen> {
     {'icon': Icons.home, 'label': 'Inmuebles', 'color': const Color(0xFF00BCD4)},
   ];
 
-  // ✅ TODAS LAS PANTALLAS CON FONDO NEGRO EXPLÍCITO
+  // ✅ AQUÍ ESTÁN CONECTADAS TODAS TUS PANTALLAS REALES
   final List<Widget> _screens = [
-    // Guiones - Placeholder con fondo negro
-    Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
-      body: const Center(child: Text('Guiones', style: TextStyle(color: Colors.white, fontSize: 20))),
-    ),
-    // Dashboard Asesores - Placeholder con fondo negro
-    Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
-      body: const Center(child: Text('Dashboard Asesores', style: TextStyle(color: Colors.white, fontSize: 20))),
-    ),
-    // Reportes - Placeholder con fondo negro
-    Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
-      body: const Center(child: Text('Reportes', style: TextStyle(color: Colors.white, fontSize: 20))),
-    ),
-    // Academia - Placeholder con fondo negro
-    Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
-      body: const Center(child: Text('Academia', style: TextStyle(color: Colors.white, fontSize: 20))),
-    ),
-    // Chat IA - Placeholder con fondo negro
-    Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
-      body: const Center(child: Text('Chat IA', style: TextStyle(color: Colors.white, fontSize: 20))),
-    ),
-    // Calculadoras - Placeholder con fondo negro
-    Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
-      body: const Center(child: Text('Calculadoras', style: TextStyle(color: Colors.white, fontSize: 20))),
-    ),
-    // Finanzas - FUNCIONAL ✅
+    const GuionesScreen(),
+    const DashboardAsesores(),
+    const ReportesScreen(),
+    const AcademiaScreen(),
+    const ChatIAScreen(), // ✅ CORREGIDO: "IA" en mayúsculas
+    const CalculadorasScreen(),
     const FinanzasScreen(),
-    // Respaldo - FUNCIONAL ✅
     const BackupScreen(),
-    // Dashboard Negocios - Placeholder con fondo negro
-    Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
-      body: const Center(child: Text('Dashboard Negocios', style: TextStyle(color: Colors.white, fontSize: 20))),
-    ),
-    // Clientes - FUNCIONAL ✅
+    const DashboardNegociosScreen(),
     const ClientesScreen(),
-    // Asesores - FUNCIONAL ✅
     const AsesoresScreen(),
-    // Inmuebles - FUNCIONAL ✅
     const ListaInmuebles(),
   ];
 
@@ -182,7 +156,7 @@ class _MainScreenState extends State<MainScreen> {
                     },
                   ),
                 ),
-                // Perfil de usuario
+                // Perfil de usuario en la parte inferior
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: const BoxDecoration(
