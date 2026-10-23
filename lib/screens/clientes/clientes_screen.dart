@@ -176,7 +176,7 @@ class _ClientesScreenState extends State<ClientesScreen> {
       color: const Color(0xFF111111),
       child: Row(
         children: [
-          SizedBox(width: 60, child: Text('', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 70, child: Text('', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
           SizedBox(width: 240, child: Text('NOMBRE', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
           SizedBox(width: 130, child: Text('TIPO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
           SizedBox(width: 150, child: Text('TELÉFONO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
@@ -193,6 +193,36 @@ class _ClientesScreenState extends State<ClientesScreen> {
     );
   }
 
+  Widget _buildAvatar(String nombre, Color color) {
+    final inicial = nombre.toString().isNotEmpty ? nombre.toString().substring(0, 1).toUpperCase() : 'S';
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.4),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          inicial,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildRow(Map<String, dynamic> c) {
     final nombre = c['nombre'] ?? 'Sin nombre';
     final tipo = c['tipo'] ?? 'Comprador';
@@ -205,7 +235,6 @@ class _ClientesScreenState extends State<ClientesScreen> {
     final asesor = c['asesor'] ?? '---';
     final activo = c['activo'] ?? true;
     final notas = c['notas'] ?? '---';
-    final inicial = nombre.toString().isNotEmpty ? nombre.toString().substring(0, 1).toUpperCase() : 'S';
 
     Color tipoColor;
     switch (tipo) {
@@ -225,7 +254,7 @@ class _ClientesScreenState extends State<ClientesScreen> {
         ),
         child: Row(
           children: [
-            SizedBox(width: 60, child: Container(width: 38, height: 38, decoration: BoxDecoration(color: Colors.orange.shade700, borderRadius: BorderRadius.circular(4)), child: Center(child: Text(inicial, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold))))),
+            SizedBox(width: 70, child: _buildAvatar(nombre, Colors.orange.shade700)),
             SizedBox(width: 240, child: Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
             SizedBox(width: 130, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: tipoColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(tipo, style: TextStyle(color: tipoColor, fontSize: 12, fontWeight: FontWeight.w500)))),
             SizedBox(width: 150, child: Text(tel, style: const TextStyle(color: Colors.grey, fontSize: 13))),
