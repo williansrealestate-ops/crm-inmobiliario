@@ -7,13 +7,12 @@ class FinanzasService {
   static const String _keyMetas = 'finanzas_metas';
   static const String _keyNegocios = 'finanzas_negocios';
 
-  // Negocios por defecto
   static final List<Map<String, dynamic>> _negociosDefault = [
     {'id': 'inmobiliario', 'nombre': 'Inmobiliario', 'icono': 'home', 'color': '0xFF3B82F6', 'presupuesto': 50000},
-    {'id': 'minerales', 'nombre': 'Minerales', 'icono': 'mineral', 'color': '0xFF64748B', 'presupuesto': 30000},
-    {'id': 'combustible', 'nombre': 'Combustible', 'icono': 'local_gas_station', 'color': '0xFFEF4444', 'presupuesto': 40000},
-    {'id': 'agropecuario', 'nombre': 'Agropecuario', 'icono': 'agriculture', 'color': '0xFF10B981', 'presupuesto': 20000},
-    {'id': 'proyectos', 'nombre': 'Proyectos', 'icono': 'engineering', 'color': '0xFFF59E0B', 'presupuesto': 60000},
+    {'id': 'minerales', 'nombre': 'Minerales', 'icono': 'mineral', 'color': '0xFFF59E0B', 'presupuesto': 30000},
+    {'id': 'combustible', 'nombre': 'Combustible', 'icono': 'local_gas_station', 'color': '0xFF10B981', 'presupuesto': 40000},
+    {'id': 'agropecuario', 'nombre': 'Agropecuario', 'icono': 'agriculture', 'color': '0xFF22C55E', 'presupuesto': 20000},
+    {'id': 'proyectos', 'nombre': 'Proyectos', 'icono': 'engineering', 'color': '0xFF8B5CF6', 'presupuesto': 60000},
     {'id': 'otros', 'nombre': 'Otros', 'icono': 'more_horiz', 'color': '0xFF6366F1', 'presupuesto': 10000},
   ];
 
@@ -69,6 +68,28 @@ class FinanzasService {
     gastos.insert(0, gasto);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyGastos, jsonEncode(gastos));
+  }
+
+  // ✅ NUEVO: Actualizar ingreso
+  static Future<void> actualizarIngreso(Map<String, dynamic> ingreso) async {
+    final ingresos = await getIngresos();
+    final index = ingresos.indexWhere((i) => i['id'] == ingreso['id']);
+    if (index != -1) {
+      ingresos[index] = {...ingresos[index], ...ingreso};
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_keyIngresos, jsonEncode(ingresos));
+    }
+  }
+
+  // ✅ NUEVO: Actualizar gasto
+  static Future<void> actualizarGasto(Map<String, dynamic> gasto) async {
+    final gastos = await getGastos();
+    final index = gastos.indexWhere((g) => g['id'] == gasto['id']);
+    if (index != -1) {
+      gastos[index] = {...gastos[index], ...gasto};
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_keyGastos, jsonEncode(gastos));
+    }
   }
 
   static Future<void> eliminarIngreso(String id) async {
