@@ -95,6 +95,7 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
       ),
       body: Column(
         children: [
+          // 🔒 SECCIÓN FIJA: Búsqueda y filtros
           Padding(
             padding: const EdgeInsets.all(12),
             child: TextField(
@@ -138,6 +139,12 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
             ),
           ),
           const SizedBox(height: 12),
+          // 🔒 HEADER FIJO DE LA TABLA
+          Container(
+            color: const Color(0xFF111111),
+            child: _buildHeader(),
+          ),
+          // 📜 SOLO LAS FILAS HACEN SCROLL
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
@@ -154,10 +161,7 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
                               child: SizedBox(
                                 width: totalWidth > 1400 ? totalWidth : 1400,
                                 child: Column(
-                                  children: [
-                                    _buildHeader(),
-                                    ..._filtered.map((i) => _buildRow(i)),
-                                  ],
+                                  children: _filtered.map((i) => _buildRow(i)).toList(),
                                 ),
                               ),
                             ),
