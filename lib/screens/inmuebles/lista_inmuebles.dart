@@ -13,6 +13,7 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
   final _supabase = Supabase.instance.client;
   List<Map<String, dynamic>> _inmuebles = [];
   List<Map<String, dynamic>> _filtered = [];
+  List<String> _asesoresList = ['Todos'];
   bool _loading = true;
   String _search = '';
   String _tipoFilter = 'Todos';
@@ -22,6 +23,7 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
   void initState() {
     super.initState();
     _load();
+    _loadAsesores();
   }
 
   Future<void> _load() async {
@@ -36,6 +38,18 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
       });
     } catch (e) {
       setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _loadAsesores() async {
+    try {
+      final res = await _supabase.from('asesores').select('nombre').order('nombre');
+      final data = List<Map<String, dynamic>>.from(res);
+      setState(() {
+        _asesoresList = ['Todos'] + data.map((a) => a['nombre'].toString()).toList();
+      });
+    } catch (e) {
+      print('Error cargando asesores: $e');
     }
   }
 
@@ -116,7 +130,7 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
                     decoration: const InputDecoration(labelText: 'Asesor', labelStyle: TextStyle(color: Colors.grey, fontSize: 12), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
                     dropdownColor: const Color(0xFF1A1A1A),
                     style: const TextStyle(color: Colors.white, fontSize: 13),
-                    items: ['Todos'].map((a) => DropdownMenuItem(value: a, child: Text(a))).toList(),
+                    items: _asesoresList.map((a) => DropdownMenuItem(value: a, child: Text(a))).toList(),
                     onChanged: (v) { _asesorFilter = v ?? 'Todos'; _applyFilters(); },
                   ),
                 ),
@@ -162,7 +176,7 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
       color: const Color(0xFF111111),
       child: Row(
         children: [
-          SizedBox(width: 70, child: Text('', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
+          SizedBox(width: 80, child: Text('', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
           SizedBox(width: 240, child: Text('TÍTULO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
           SizedBox(width: 130, child: Text('TIPO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
           SizedBox(width: 200, child: Text('UBICACIÓN', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
@@ -183,15 +197,15 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
   Widget _buildAvatar(String titulo, Color color) {
     final inicial = titulo.toString().isNotEmpty ? titulo.toString().substring(0, 1).toUpperCase() : 'I';
     return Container(
-      width: 42,
-      height: 42,
+      width: 38,
+      height: 38,
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.4),
-            blurRadius: 6,
+            color: color.withOpacity(0.3),
+            blurRadius: 4,
             offset: const Offset(0, 2),
           ),
         ],
@@ -201,7 +215,7 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
           inicial,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 16,
+            fontSize: 14,
             fontWeight: FontWeight.bold,
             letterSpacing: 0.5,
           ),
@@ -246,7 +260,7 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
         ),
         child: Row(
           children: [
-            SizedBox(width: 70, child: _buildAvatar(titulo, tipoColor.withOpacity(0.8))),
+            SizedBox(width: 80, child: Padding(padding: const EdgeInsets.only(right: 8), child: _buildAvatar(titulo, tipoColor.withOpacity(0.8)))),
             SizedBox(width: 240, child: Text(titulo, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
             SizedBox(width: 130, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: tipoColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(tipo, style: TextStyle(color: tipoColor, fontSize: 12, fontWeight: FontWeight.w500)))),
             SizedBox(width: 200, child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 13), overflow: TextOverflow.ellipsis)),
