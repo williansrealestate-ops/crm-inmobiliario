@@ -28,12 +28,15 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'CRM Inmobiliario',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+      theme: ThemeData.dark().copyWith(
+        primaryColor: const Color(0xFF0066FF),
         scaffoldBackgroundColor: const Color(0xFF0A0A0A),
+        cardColor: const Color(0xFF111111),
+        dividerColor: const Color(0xFF222222),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF0066FF),
           foregroundColor: Colors.white,
+          elevation: 0,
         ),
       ),
       home: const MainScreen(),
@@ -67,21 +70,29 @@ class _MainScreenState extends State<MainScreen> {
     {'icon': Icons.home, 'label': 'Inmuebles', 'color': const Color(0xFF00BCD4)},
   ];
 
-  // ✅ AQUÍ ESTÁN CONECTADAS TODAS TUS PANTALLAS REALES
+  // ✅ ENVOLVER CADA PANTALLA CON FONDO OSCURO
   final List<Widget> _screens = [
-    const GuionesScreen(),
-    const DashboardAsesores(),
-    const ReportesScreen(),
-    const AcademiaScreen(),
-    const ChatIAScreen(), // ✅ CORREGIDO: "IA" en mayúsculas
-    const CalculadorasScreen(),
-    const FinanzasScreen(),
-    const BackupScreen(),
-    const DashboardNegociosScreen(),
-    const ClientesScreen(),
-    const AsesoresScreen(),
-    const ListaInmuebles(),
+    _wrapWithDarkBackground(const GuionesScreen()),
+    _wrapWithDarkBackground(const DashboardAsesores()),
+    _wrapWithDarkBackground(const ReportesScreen()),
+    _wrapWithDarkBackground(const AcademiaScreen()),
+    _wrapWithDarkBackground(const ChatIAScreen()),
+    _wrapWithDarkBackground(const CalculadorasScreen()),
+    _wrapWithDarkBackground(const FinanzasScreen()),
+    _wrapWithDarkBackground(const BackupScreen()),
+    _wrapWithDarkBackground(const DashboardNegociosScreen()),
+    _wrapWithDarkBackground(const ClientesScreen()),
+    _wrapWithDarkBackground(const AsesoresScreen()),
+    _wrapWithDarkBackground(const ListaInmuebles()),
   ];
+
+  // ✅ FUNCIÓN PARA FORZAR FONDO OSCURO
+  Widget _wrapWithDarkBackground(Widget child) {
+    return Container(
+      color: const Color(0xFF0A0A0A),
+      child: child,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -156,7 +167,7 @@ class _MainScreenState extends State<MainScreen> {
                     },
                   ),
                 ),
-                // Perfil de usuario en la parte inferior
+                // Perfil de usuario
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: const BoxDecoration(
@@ -207,7 +218,7 @@ class _MainScreenState extends State<MainScreen> {
               ],
             ),
           ),
-          // ✅ CONTENIDO PRINCIPAL
+          // ✅ CONTENIDO PRINCIPAL (con fondo oscuro forzado)
           Expanded(
             child: _screens[_selectedIndex],
           ),
