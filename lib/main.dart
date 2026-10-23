@@ -60,18 +60,52 @@ class _MainScreenState extends State<MainScreen> {
     {'icon': Icons.home, 'label': 'Inmuebles', 'color': const Color(0xFF00BCD4)},
   ];
 
+  // ✅ TODAS LAS PANTALLAS CON FONDO NEGRO EXPLÍCITO
   final List<Widget> _screens = [
-    const Center(child: Text('Guiones', style: TextStyle(color: Colors.white, fontSize: 20))),
-    const Center(child: Text('Dashboard Asesores', style: TextStyle(color: Colors.white, fontSize: 20))),
-    const Center(child: Text('Reportes', style: TextStyle(color: Colors.white, fontSize: 20))),
-    const Center(child: Text('Academia', style: TextStyle(color: Colors.white, fontSize: 20))),
-    const Center(child: Text('Chat IA', style: TextStyle(color: Colors.white, fontSize: 20))),
-    const Center(child: Text('Calculadoras', style: TextStyle(color: Colors.white, fontSize: 20))),
+    // Guiones - Placeholder con fondo negro
+    Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
+      body: const Center(child: Text('Guiones', style: TextStyle(color: Colors.white, fontSize: 20))),
+    ),
+    // Dashboard Asesores - Placeholder con fondo negro
+    Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
+      body: const Center(child: Text('Dashboard Asesores', style: TextStyle(color: Colors.white, fontSize: 20))),
+    ),
+    // Reportes - Placeholder con fondo negro
+    Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
+      body: const Center(child: Text('Reportes', style: TextStyle(color: Colors.white, fontSize: 20))),
+    ),
+    // Academia - Placeholder con fondo negro
+    Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
+      body: const Center(child: Text('Academia', style: TextStyle(color: Colors.white, fontSize: 20))),
+    ),
+    // Chat IA - Placeholder con fondo negro
+    Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
+      body: const Center(child: Text('Chat IA', style: TextStyle(color: Colors.white, fontSize: 20))),
+    ),
+    // Calculadoras - Placeholder con fondo negro
+    Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
+      body: const Center(child: Text('Calculadoras', style: TextStyle(color: Colors.white, fontSize: 20))),
+    ),
+    // Finanzas - FUNCIONAL ✅
     const FinanzasScreen(),
+    // Respaldo - FUNCIONAL ✅
     const BackupScreen(),
-    const Center(child: Text('Dashboard Negocios', style: TextStyle(color: Colors.white, fontSize: 20))),
+    // Dashboard Negocios - Placeholder con fondo negro
+    Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
+      body: const Center(child: Text('Dashboard Negocios', style: TextStyle(color: Colors.white, fontSize: 20))),
+    ),
+    // Clientes - FUNCIONAL ✅
     const ClientesScreen(),
+    // Asesores - FUNCIONAL ✅
     const AsesoresScreen(),
+    // Inmuebles - FUNCIONAL ✅
     const ListaInmuebles(),
   ];
 
@@ -148,7 +182,7 @@ class _MainScreenState extends State<MainScreen> {
                     },
                   ),
                 ),
-                // Perfil de usuario en la parte inferior
+                // Perfil de usuario
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: const BoxDecoration(
