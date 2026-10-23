@@ -8,44 +8,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CRM Inmobiliario</title>
   <style>
-    /* ✅ FORZAR FONDO NEGRO EN TODO EL HTML */
     html, body {
       margin: 0;
       padding: 0;
       width: 100%;
       height: 100%;
-      background-color: #0A0A0A !important;
+      background-color: #0A0A0A;
       overflow: hidden;
-    }
-    
-    /* Eliminar cualquier espacio en blanco */
-    body {
-      display: flex;
-    }
-    
-    /* Asegurar que el contenedor de Flutter ocupe todo */
-    #flutter-container {
-      width: 100%;
-      height: 100%;
-      background-color: #0A0A0A !important;
     }
   </style>
 </head>
-<body style="background-color: #0A0A0A;">
-  <script src="flutter.js" defer></script>
-  <script>
-    window.addEventListener('load', function(ev) {
-      _flutter.loader.loadEntrypoint({
-        serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
-        },
-        onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine().then(function(appRunner) {
-            appRunner.runApp();
-          });
-        }
-      });
-    });
-  </script>
+<body>
+  <script src="main.dart.js" type="application/javascript"></script>
 </body>
 </html>
