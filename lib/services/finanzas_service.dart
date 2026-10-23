@@ -25,6 +25,57 @@ class FinanzasService {
     {'id': 'administracion', 'nombre': 'Administración', 'icono': 'admin_panel_settings', 'color': '0xFF06B6D4', 'presupuesto': 40000},
   ];
 
+  // ============ MIGRACIÓN AUTOMÁTICA DE DATOS ANTIGUOS ============
+  
+  // Normaliza un ingreso antiguo al nuevo formato
+  static Map<String, dynamic> _normalizarIngreso(Map<String, dynamic> ing) {
+    // Copia para no modificar el original
+    final normalizado = Map<String, dynamic>.from(ing);
+    
+    // Campos obligatorios con valores por defecto si no existen
+    normalizado.putIfAbsent('id', () => DateTime.now().millisecondsSinceEpoch.toString());
+    normalizado.putIfAbsent('fecha', () => DateTime.now().toIso8601String());
+    normalizado.putIfAbsent('monto', () => 0.0);
+    normalizado.putIfAbsent('concepto', () => 'Sin concepto');
+    normalizado.putIfAbsent('negocioId', () => 'otros');
+    normalizado.putIfAbsent('operacionId', () => '');
+    normalizado.putIfAbsent('categoria', () => '');
+    normalizado.putIfAbsent('asunto', () => '');
+    normalizado.putIfAbsent('tipo', () => 'ingreso');
+    
+    // Normalizar monto a double
+    if (normalizado['monto'] is int) {
+      normalizado['monto'] = (normalizado['monto'] as int).toDouble();
+    } else if (normalizado['monto'] is String) {
+      normalizado['monto'] = double.tryParse(normalizado['monto']) ?? 0.0;
+    }
+    
+    return normalizado;
+  }
+
+  // Normaliza un gasto antiguo al nuevo formato
+  static Map<String, dynamic> _normalizarGasto(Map<String, dynamic> gas) {
+    final normalizado = Map<String, dynamic>.from(gas);
+    
+    normalizado.putIfAbsent('id', () => DateTime.now().millisecondsSinceEpoch.toString());
+    normalizado.putIfAbsent('fecha', () => DateTime.now().toIso8601String());
+    normalizado.putIfAbsent('monto', () => 0.0);
+    normalizado.putIfAbsent('concepto', () => 'Sin concepto');
+    normalizado.putIfAbsent('negocioId', () => 'otros');
+    normalizado.putIfAbsent('operacionId', () => '');
+    normalizado.putIfAbsent('categoria', () => '');
+    normalizado.putIfAbsent('asunto', () => '');
+    normalizado.putIfAbsent('tipo', () => 'gasto');
+    
+    if (normalizado['monto'] is int) {
+      normalizado['monto'] = (normalizado['monto'] as int).toDouble();
+    } else if (normalizado['monto'] is String) {
+      normalizado['monto'] = double.tryParse(normalizado['monto']) ?? 0.0;
+    }
+    
+    return normalizado;
+  }
+
   // ============ NEGOCIOS ============
   static Future<List<Map<String, dynamic>>> getNegocios() async {
     final prefs = await SharedPreferences.getInstance();
@@ -33,7 +84,15 @@ class FinanzasService {
       await prefs.setString(_keyNegocios, jsonEncode(_negociosDefault));
       return _negociosDefault;
     }
-    return List<Map<String, dynamic>>.from(jsonDecode(data));
+    try {
+      final decoded = jsonDecode(data);
+      if (decoded is List) {
+        return List<Map<String, dynamic>>.from(decoded);
+      }
+    } catch (e) {
+      print('Error al cargar negocios: $e');
+    }
+    return _negociosDefault;
   }
 
   static Future<void> actualizarPresupuestoNegocio(String negocioId, double nuevoPresupuesto) async {
@@ -54,7 +113,15 @@ class FinanzasService {
       await prefs.setString(_keyOperaciones, jsonEncode(_operacionesDefault));
       return _operacionesDefault;
     }
-    return List<Map<String, dynamic>>.from(jsonDecode(data));
+    try {
+      final decoded = jsonDecode(data);
+      if (decoded is List) {
+        return List<Map<String, dynamic>>.from(decoded);
+      }
+    } catch (e) {
+      print('Error al cargar operaciones: $e');
+    }
+    return _operacionesDefault;
   }
 
   static Future<void> agregarOperacion(Map<String, dynamic> operacion) async {
@@ -92,20 +159,31 @@ class FinanzasService {
     }
   }
 
-  // ============ INGRESOS ============
+  // ============ INGRESOS (CON MIGRACIÓN AUTOMÁTICA) ============
   static Future<List<Map<String, dynamic>>> getIngresos() async {
     final prefs = await SharedPreferences.getInstance();
     final data = prefs.getString(_keyIngresos);
     if (data == null) return [];
-    final List<dynamic> decoded = jsonDecode(data);
-    return decoded.map((e) => Map<String, dynamic>.from(e)).toList();
+    try {
+      final List<dynamic> decoded = jsonDecode(data);
+      // ✅ MIGRACIÓN: Normalizar cada ingreso al nuevo formato
+      return decoded
+          .map((e) => _normalizarIngreso(Map<String, dynamic>.from(e)))
+          .toList();
+    } catch (e) {
+      print('Error al cargar ingresos: $e');
+      return [];
+    }
   }
 
   static Future<void> agregarIngreso(Map<String, dynamic> ingreso) async {
     final ingresos = await getIngresos();
-    ingreso['id'] = DateTime.now().millisecondsSinceEpoch.toString();
-    ingreso['fecha'] = DateTime.now().toIso8601String();
-    ingresos.insert(0, ingreso);
+    final normalizado = _normalizarIngreso(ingreso);
+    normalizado['id'] = DateTime.now().millisecondsSinceEpoch.toString();
+    if (!normalizado.containsKey('fecha') || normalizado['fecha'] == null) {
+      normalizado['fecha'] = DateTime.now().toIso8601String();
+    }
+    ingresos.insert(0, normalizado);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyIngresos, jsonEncode(ingresos));
   }
@@ -114,7 +192,7 @@ class FinanzasService {
     final ingresos = await getIngresos();
     final index = ingresos.indexWhere((i) => i['id'] == ingreso['id']);
     if (index != -1) {
-      ingresos[index] = {...ingresos[index], ...ingreso};
+      ingresos[index] = _normalizarIngreso({...ingresos[index], ...ingreso});
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_keyIngresos, jsonEncode(ingresos));
     }
@@ -127,20 +205,31 @@ class FinanzasService {
     await prefs.setString(_keyIngresos, jsonEncode(ingresos));
   }
 
-  // ============ GASTOS ============
+  // ============ GASTOS (CON MIGRACIÓN AUTOMÁTICA) ============
   static Future<List<Map<String, dynamic>>> getGastos() async {
     final prefs = await SharedPreferences.getInstance();
     final data = prefs.getString(_keyGastos);
     if (data == null) return [];
-    final List<dynamic> decoded = jsonDecode(data);
-    return decoded.map((e) => Map<String, dynamic>.from(e)).toList();
+    try {
+      final List<dynamic> decoded = jsonDecode(data);
+      // ✅ MIGRACIÓN: Normalizar cada gasto al nuevo formato
+      return decoded
+          .map((e) => _normalizarGasto(Map<String, dynamic>.from(e)))
+          .toList();
+    } catch (e) {
+      print('Error al cargar gastos: $e');
+      return [];
+    }
   }
 
   static Future<void> agregarGasto(Map<String, dynamic> gasto) async {
     final gastos = await getGastos();
-    gasto['id'] = DateTime.now().millisecondsSinceEpoch.toString();
-    gasto['fecha'] = DateTime.now().toIso8601String();
-    gastos.insert(0, gasto);
+    final normalizado = _normalizarGasto(gasto);
+    normalizado['id'] = DateTime.now().millisecondsSinceEpoch.toString();
+    if (!normalizado.containsKey('fecha') || normalizado['fecha'] == null) {
+      normalizado['fecha'] = DateTime.now().toIso8601String();
+    }
+    gastos.insert(0, normalizado);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyGastos, jsonEncode(gastos));
   }
@@ -149,7 +238,7 @@ class FinanzasService {
     final gastos = await getGastos();
     final index = gastos.indexWhere((g) => g['id'] == gasto['id']);
     if (index != -1) {
-      gastos[index] = {...gastos[index], ...gasto};
+      gastos[index] = _normalizarGasto({...gastos[index], ...gasto});
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_keyGastos, jsonEncode(gastos));
     }
@@ -172,19 +261,34 @@ class FinanzasService {
     double ingresosMes = 0, gastosMes = 0, ingresosAnio = 0, gastosAnio = 0;
 
     for (var ing in ingresos) {
-      if (operacionId != null && ing['operacionId'] != operacionId) continue;
-      final fecha = DateTime.parse(ing['fecha']);
-      final monto = (ing['monto'] ?? 0).toDouble();
-      if (fecha.month == now.month && fecha.year == now.year) ingresosMes += monto;
-      if (fecha.year == now.year) ingresosAnio += monto;
+      // ✅ Manejar registros sin operacionId (datos antiguos)
+      if (operacionId != null && operacionId.isNotEmpty) {
+        final ingOpId = ing['operacionId'] ?? '';
+        if (ingOpId != operacionId) continue;
+      }
+      try {
+        final fecha = DateTime.parse(ing['fecha'] ?? DateTime.now().toIso8601String());
+        final monto = (ing['monto'] ?? 0).toDouble();
+        if (fecha.month == now.month && fecha.year == now.year) ingresosMes += monto;
+        if (fecha.year == now.year) ingresosAnio += monto;
+      } catch (e) {
+        print('Error procesando ingreso: $e');
+      }
     }
 
     for (var gas in gastos) {
-      if (operacionId != null && gas['operacionId'] != operacionId) continue;
-      final fecha = DateTime.parse(gas['fecha']);
-      final monto = (gas['monto'] ?? 0).toDouble();
-      if (fecha.month == now.month && fecha.year == now.year) gastosMes += monto;
-      if (fecha.year == now.year) gastosAnio += monto;
+      if (operacionId != null && operacionId.isNotEmpty) {
+        final gasOpId = gas['operacionId'] ?? '';
+        if (gasOpId != operacionId) continue;
+      }
+      try {
+        final fecha = DateTime.parse(gas['fecha'] ?? DateTime.now().toIso8601String());
+        final monto = (gas['monto'] ?? 0).toDouble();
+        if (fecha.month == now.month && fecha.year == now.year) gastosMes += monto;
+        if (fecha.year == now.year) gastosAnio += monto;
+      } catch (e) {
+        print('Error procesando gasto: $e');
+      }
     }
 
     return {
@@ -206,11 +310,18 @@ class FinanzasService {
     Map<String, double> categorias = {};
 
     for (var gas in gastos) {
-      if (operacionId != null && gas['operacionId'] != operacionId) continue;
-      final fecha = DateTime.parse(gas['fecha']);
-      if (fecha.month == now.month && fecha.year == now.year) {
-        final cat = gas['categoria'] ?? 'Otros';
-        categorias[cat] = (categorias[cat] ?? 0) + (gas['monto'] ?? 0).toDouble();
+      if (operacionId != null && operacionId.isNotEmpty) {
+        final gasOpId = gas['operacionId'] ?? '';
+        if (gasOpId != operacionId) continue;
+      }
+      try {
+        final fecha = DateTime.parse(gas['fecha'] ?? DateTime.now().toIso8601String());
+        if (fecha.month == now.month && fecha.year == now.year) {
+          final cat = gas['categoria'] ?? 'Otros';
+          categorias[cat] = (categorias[cat] ?? 0) + (gas['monto'] ?? 0).toDouble();
+        }
+      } catch (e) {
+        print('Error procesando gasto por categoría: $e');
       }
     }
     return categorias;
@@ -222,11 +333,18 @@ class FinanzasService {
     Map<String, double> negocios = {};
 
     for (var ing in ingresos) {
-      if (operacionId != null && ing['operacionId'] != operacionId) continue;
-      final fecha = DateTime.parse(ing['fecha']);
-      if (fecha.month == now.month && fecha.year == now.year) {
-        final neg = ing['negocioId'] ?? 'otros';
-        negocios[neg] = (negocios[neg] ?? 0) + (ing['monto'] ?? 0).toDouble();
+      if (operacionId != null && operacionId.isNotEmpty) {
+        final ingOpId = ing['operacionId'] ?? '';
+        if (ingOpId != operacionId) continue;
+      }
+      try {
+        final fecha = DateTime.parse(ing['fecha'] ?? DateTime.now().toIso8601String());
+        if (fecha.month == now.month && fecha.year == now.year) {
+          final neg = ing['negocioId'] ?? 'otros';
+          negocios[neg] = (negocios[neg] ?? 0) + (ing['monto'] ?? 0).toDouble();
+        }
+      } catch (e) {
+        print('Error procesando ingreso por negocio: $e');
       }
     }
     return negocios;
@@ -243,10 +361,21 @@ class FinanzasService {
     }
 
     for (var ing in ingresos) {
-      final fecha = DateTime.parse(ing['fecha']);
-      if (fecha.month == now.month && fecha.year == now.year) {
-        final opId = ing['operacionId'] ?? 'otros';
-        resultado[opId] = (resultado[opId] ?? 0) + (ing['monto'] ?? 0).toDouble();
+      try {
+        final fecha = DateTime.parse(ing['fecha'] ?? DateTime.now().toIso8601String());
+        if (fecha.month == now.month && fecha.year == now.year) {
+          final opId = ing['operacionId'] ?? '';
+          if (opId.isNotEmpty) {
+            resultado[opId] = (resultado[opId] ?? 0) + (ing['monto'] ?? 0).toDouble();
+          } else {
+            // Datos antiguos sin operación → asignar a "otros" o primera operación
+            if (resultado.containsKey('compra_venta')) {
+              resultado['compra_venta'] = (resultado['compra_venta'] ?? 0) + (ing['monto'] ?? 0).toDouble();
+            }
+          }
+        }
+      } catch (e) {
+        print('Error procesando ingreso por operación: $e');
       }
     }
     return resultado;
@@ -263,10 +392,20 @@ class FinanzasService {
     }
 
     for (var gas in gastos) {
-      final fecha = DateTime.parse(gas['fecha']);
-      if (fecha.month == now.month && fecha.year == now.year) {
-        final opId = gas['operacionId'] ?? 'otros';
-        resultado[opId] = (resultado[opId] ?? 0) + (gas['monto'] ?? 0).toDouble();
+      try {
+        final fecha = DateTime.parse(gas['fecha'] ?? DateTime.now().toIso8601String());
+        if (fecha.month == now.month && fecha.year == now.year) {
+          final opId = gas['operacionId'] ?? '';
+          if (opId.isNotEmpty) {
+            resultado[opId] = (resultado[opId] ?? 0) + (gas['monto'] ?? 0).toDouble();
+          } else {
+            if (resultado.containsKey('compra_venta')) {
+              resultado['compra_venta'] = (resultado['compra_venta'] ?? 0) + (gas['monto'] ?? 0).toDouble();
+            }
+          }
+        }
+      } catch (e) {
+        print('Error procesando gasto por operación: $e');
       }
     }
     return resultado;
@@ -277,7 +416,11 @@ class FinanzasService {
     final prefs = await SharedPreferences.getInstance();
     final data = prefs.getString(_keyMetas);
     if (data == null) return {'metaMensual': 100000.0, 'metaAnual': 1200000.0};
-    return Map<String, dynamic>.from(jsonDecode(data));
+    try {
+      return Map<String, dynamic>.from(jsonDecode(data));
+    } catch (e) {
+      return {'metaMensual': 100000.0, 'metaAnual': 1200000.0};
+    }
   }
 
   static Future<void> guardarMetas(Map<String, dynamic> metas) async {
@@ -298,20 +441,28 @@ class FinanzasService {
       double gastosOp = 0;
 
       for (var ing in ingresos) {
-        if (ing['operacionId'] == op['id']) {
-          final fecha = DateTime.parse(ing['fecha']);
-          if (fecha.month == now.month && fecha.year == now.year) {
-            ingresosOp += (ing['monto'] ?? 0).toDouble();
+        try {
+          if (ing['operacionId'] == op['id']) {
+            final fecha = DateTime.parse(ing['fecha'] ?? DateTime.now().toIso8601String());
+            if (fecha.month == now.month && fecha.year == now.year) {
+              ingresosOp += (ing['monto'] ?? 0).toDouble();
+            }
           }
+        } catch (e) {
+          print('Error: $e');
         }
       }
 
       for (var gas in gastos) {
-        if (gas['operacionId'] == op['id']) {
-          final fecha = DateTime.parse(gas['fecha']);
-          if (fecha.month == now.month && fecha.year == now.year) {
-            gastosOp += (gas['monto'] ?? 0).toDouble();
+        try {
+          if (gas['operacionId'] == op['id']) {
+            final fecha = DateTime.parse(gas['fecha'] ?? DateTime.now().toIso8601String());
+            if (fecha.month == now.month && fecha.year == now.year) {
+              gastosOp += (gas['monto'] ?? 0).toDouble();
+            }
           }
+        } catch (e) {
+          print('Error: $e');
         }
       }
 
@@ -333,19 +484,43 @@ class FinanzasService {
     Map<String, List<Map<String, dynamic>>> resultado = {};
 
     for (var ing in ingresos) {
-      final fecha = ing['fecha'] ?? '';
-      final key = fecha.substring(0, 10); // YYYY-MM-DD
-      if (!resultado.containsKey(key)) resultado[key] = [];
-      resultado[key]!.add({...ing, 'tipo': 'ingreso'});
+      try {
+        final fecha = ing['fecha'] ?? DateTime.now().toIso8601String();
+        final key = fecha.substring(0, 10);
+        if (!resultado.containsKey(key)) resultado[key] = [];
+        resultado[key]!.add({...ing, 'tipo': 'ingreso'});
+      } catch (e) {
+        print('Error: $e');
+      }
     }
 
     for (var gas in gastos) {
-      final fecha = gas['fecha'] ?? '';
-      final key = fecha.substring(0, 10);
-      if (!resultado.containsKey(key)) resultado[key] = [];
-      resultado[key]!.add({...gas, 'tipo': 'gasto'});
+      try {
+        final fecha = gas['fecha'] ?? DateTime.now().toIso8601String();
+        final key = fecha.substring(0, 10);
+        if (!resultado.containsKey(key)) resultado[key] = [];
+        resultado[key]!.add({...gas, 'tipo': 'gasto'});
+      } catch (e) {
+        print('Error: $e');
+      }
     }
 
     return resultado;
+  }
+
+  // ============ FUNCIÓN DE MIGRACIÓN EXPLÍCITA ============
+  // Llamar esta función una vez después de importar un respaldo antiguo
+  static Future<void> migrarDatosAntiguos() async {
+    print(' Iniciando migración de datos...');
+    
+    final ingresos = await getIngresos();
+    final gastos = await getGastos();
+    
+    // Re-guardar ingresos normalizados
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyIngresos, jsonEncode(ingresos));
+    await prefs.setString(_keyGastos, jsonEncode(gastos));
+    
+    print('✅ Migración completada: ${ingresos.length} ingresos, ${gastos.length} gastos');
   }
 }

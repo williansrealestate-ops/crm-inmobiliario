@@ -29,10 +29,10 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   String _operacionFiltro = 'todas';
   int _graficaModo = 0;
   
-  // Nuevos: búsqueda y filtro por negocio en transacciones
+  // Búsqueda y filtro en transacciones
   String _busquedaTransacciones = '';
   String _filtroNegocioTransacciones = 'todos';
-  String _filtroTipoTransacciones = 'todos'; // todos, ingreso, gasto
+  String _filtroTipoTransacciones = 'todos';
 
   @override
   void initState() {
@@ -41,8 +41,13 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     _cargarDatos();
   }
 
+  // ✅ MÉTODO _cargarDatos CON MIGRACIÓN AUTOMÁTICA
   Future<void> _cargarDatos() async {
     setState(() => _isLoading = true);
+    
+    // ✅ MIGRACIÓN AUTOMÁTICA: Normalizar datos antiguos al nuevo formato
+    await FinanzasService.migrarDatosAntiguos();
+    
     _resumen = await FinanzasService.getResumenFinanciero(
       operacionId: _operacionFiltro == 'todas' ? null : _operacionFiltro,
     );
@@ -160,11 +165,8 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Filtro de Operaciones
           _buildFiltroOperaciones(),
           const SizedBox(height: 12),
-
-          // ✅ KPIs COMPACTOS (más pequeños para dar espacio a la gráfica)
           Row(
             children: [
               Expanded(child: _buildKpiCardCompacto('Ingresos', ingresos, const Color(0xFF10B981), Icons.trending_up)),
@@ -175,8 +177,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
             ],
           ),
           const SizedBox(height: 16),
-
-          // ✅ GRÁFICA GRANDE INTERACTIVA
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -210,8 +210,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
             ),
           ),
           const SizedBox(height: 24),
-
-          // Resumen de Operaciones en Dashboard
           const Text('Operaciones del Mes', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           ..._resumenOperaciones.map((op) {
@@ -274,7 +272,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ✅ KPI CARD COMPACTO (más pequeño)
   Widget _buildKpiCardCompacto(String titulo, double valor, Color color, IconData icono) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -687,14 +684,13 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ==================== TRANSACCIONES (con búsqueda y filtros) ====================
+  // ==================== TRANSACCIONES ====================
   Widget _buildTabTransacciones() {
     final todasTransacciones = [
       ..._ingresos.map((i) => {...i, 'tipo': 'ingreso'}),
       ..._gastos.map((g) => {...g, 'tipo': 'gasto'}),
     ];
 
-    // Aplicar filtros
     final transaccionesFiltradas = todasTransacciones.where((t) {
       final matchBusqueda = _busquedaTransacciones.isEmpty || 
           (t['concepto']?.toString().toLowerCase().contains(_busquedaTransacciones.toLowerCase()) ?? false) ||
@@ -705,12 +701,10 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     }).toList()..sort((a, b) => (b['fecha'] ?? '').compareTo(a['fecha'] ?? ''));
 
     return Column(children: [
-      // ✅ BARRA DE BÚSQUEDA Y FILTROS
       Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            // Campo de búsqueda
             TextField(
               decoration: InputDecoration(
                 hintText: 'Buscar transacciones...',
@@ -726,7 +720,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
             const SizedBox(height: 8),
             Row(
               children: [
-                // Filtro por Negocio
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     value: _filtroNegocioTransacciones,
@@ -748,7 +741,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Filtro por Tipo
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     value: _filtroTipoTransacciones,
@@ -775,7 +767,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
           ],
         ),
       ),
-      // Botones de acción
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Row(children: [
@@ -822,7 +813,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                         ]),
                         const SizedBox(height: 2),
                         Text(_formatearFecha(t['fecha'] ?? ''), style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                        // ✅ MOSTRAR ASUNTO SI EXISTE
                         if (t['asunto'] != null && t['asunto'].toString().isNotEmpty)
                           Text('Asunto: ${t['asunto']}', style: const TextStyle(fontSize: 11, color: Colors.amber)),
                       ])),
@@ -853,11 +843,9 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     ]);
   }
 
-  // ✅ FUNCIÓN PARA DUPLICAR TRANSACCIÓN
   void _duplicarTransaccion(Map<String, dynamic> t) {
     final nuevaTransaccion = {
       ...t,
-      'id': null,
       'concepto': '${t['concepto']} (copia)',
       'fecha': DateTime.now().toIso8601String(),
     };
@@ -887,7 +875,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   void _mostrarDialogoTransaccion({required String tipo, Map<String, dynamic>? transaccion}) {
     final esEditar = transaccion != null;
     final conceptoCtrl = TextEditingController(text: transaccion?['concepto'] ?? '');
-    final asuntoCtrl = TextEditingController(text: transaccion?['asunto'] ?? ''); // ✅ NUEVO CAMPO ASUNTO
+    final asuntoCtrl = TextEditingController(text: transaccion?['asunto'] ?? '');
     final montoCtrl = TextEditingController(text: transaccion != null ? _formatearMoneda((transaccion['monto'] ?? 0).toDouble()) : '');
     final categoriaCtrl = TextEditingController(text: transaccion?['categoria'] ?? '');
     String negocioId = transaccion?['negocioId'] ?? (_negocios.isNotEmpty ? _negocios.first['id'] : 'otros');
@@ -910,7 +898,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                   decoration: const InputDecoration(labelText: 'Concepto', labelStyle: TextStyle(color: Colors.grey), border: OutlineInputBorder(), filled: true, fillColor: Color(0xFF0A0A0A)),
                 ),
                 const SizedBox(height: 12),
-                // ✅ NUEVO CAMPO ASUNTO
                 TextField(
                   controller: asuntoCtrl,
                   style: const TextStyle(color: Colors.white),
@@ -924,7 +911,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                   decoration: const InputDecoration(labelText: 'Monto (MXN)', labelStyle: TextStyle(color: Colors.grey), prefixText: '\$ ', border: OutlineInputBorder(), filled: true, fillColor: Color(0xFF0A0A0A)),
                 ),
                 const SizedBox(height: 12),
-                // Selector de fecha con mini calendario
                 InkWell(
                   onTap: () async {
                     final fecha = await showDatePicker(
@@ -998,7 +984,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 }
                 final data = {
                   'concepto': conceptoCtrl.text,
-                  'asunto': asuntoCtrl.text, // ✅ GUARDAR ASUNTO
+                  'asunto': asuntoCtrl.text,
                   'monto': monto,
                   'negocioId': negocioId,
                   'operacionId': operacionId,
