@@ -8,7 +8,7 @@ class DonutSegment {
   DonutSegment({required this.label, required this.value, required this.color});
 }
 
-class MoneyProDonutChart extends StatelessWidget {
+class MoneyProDonutChart extends StatefulWidget {
   final List<DonutSegment> segments;
   final String centerTitle;
   final double centerValue;
@@ -16,6 +16,10 @@ class MoneyProDonutChart extends StatelessWidget {
   final double outerRingWidth;
   final double innerRingWidth;
   final double centerCircleRadius;
+  final VoidCallback? onCenterTap;
+  final List<String> viewModes;
+  final int currentViewMode;
+  final ValueChanged<int>? onViewModeChanged;
 
   const MoneyProDonutChart({
     super.key,
@@ -26,8 +30,17 @@ class MoneyProDonutChart extends StatelessWidget {
     this.outerRingWidth = 60,
     this.innerRingWidth = 20,
     this.centerCircleRadius = 70,
+    this.onCenterTap,
+    this.viewModes = const ['Ingresos/Gastos', 'Ingresos por Negocio', 'Gastos por Categoría'],
+    this.currentViewMode = 0,
+    this.onViewModeChanged,
   });
 
+  @override
+  State<MoneyProDonutChart> createState() => _MoneyProDonutChartState();
+}
+
+class _MoneyProDonutChartState extends State<MoneyProDonutChart> {
   String _formatearMoneda(double valor) {
     return '\$${valor.toStringAsFixed(2).replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
@@ -37,121 +50,152 @@ class MoneyProDonutChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final total = segments.fold<double>(0, (sum, s) => sum + s.value);
+    final total = widget.segments.fold<double>(0, (sum, s) => sum + s.value);
     if (total == 0) {
       return const Center(
         child: Text('Sin datos', style: TextStyle(color: Colors.grey)),
       );
     }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Column(
       children: [
-        SizedBox(
-          width: size,
-          height: size,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Anillo exterior grueso
-              CustomPaint(
-                size: Size(size, size),
-                painter: DonutRingPainter(
-                  segments: segments,
-                  total: total,
-                  ringWidth: outerRingWidth,
-                  radius: size / 2 - 10,
-                ),
-              ),
-              // Anillo interior delgado decorativo
-              CustomPaint(
-                size: Size(size * 0.55, size * 0.55),
-                painter: InnerRingPainter(
-                  radius: size * 0.55 / 2 - 5,
-                  ringWidth: innerRingWidth,
-                ),
-              ),
-              // Círculo central con total
-              Container(
-                width: centerCircleRadius * 2,
-                height: centerCircleRadius * 2,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A1A),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.grey.shade700, width: 2),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      _formatearMoneda(centerValue),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: widget.size,
+              height: widget.size,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CustomPaint(
+                    size: Size(widget.size, widget.size),
+                    painter: DonutRingPainter(
+                      segments: widget.segments,
+                      total: total,
+                      ringWidth: widget.outerRingWidth,
+                      radius: widget.size / 2 - 10,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      centerTitle.toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  ),
+                  CustomPaint(
+                    size: Size(widget.size * 0.55, widget.size * 0.55),
+                    painter: InnerRingPainter(
+                      radius: widget.size * 0.55 / 2 - 5,
+                      ringWidth: widget.innerRingWidth,
                     ),
-                  ],
-                ),
-              ),
-              // Porcentajes en los segmentos
-              ..._buildPercentageLabels(total),
-            ],
-          ),
-        ),
-        const SizedBox(width: 32),
-        // Leyenda a la derecha
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: segments
-              .where((s) => s.value > 0)
-              .map((s) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 14,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            color: s.color,
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        SizedBox(
-                          width: 120,
-                          child: Text(
-                            s.label.toUpperCase(),
+                  ),
+                  GestureDetector(
+                    onTap: widget.onCenterTap,
+                    child: Container(
+                      width: widget.centerCircleRadius * 2,
+                      height: widget.centerCircleRadius * 2,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A1A1A),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.grey.shade700, width: 2),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _formatearMoneda(widget.centerValue),
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 11,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.centerTitle.toUpperCase(),
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 9,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          _formatearMoneda(s.value),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                          const SizedBox(height: 2),
+                          const Icon(Icons.touch_app, color: Colors.grey, size: 12),
+                        ],
+                      ),
                     ),
-                  ))
-              .toList(),
+                  ),
+                  ..._buildPercentageLabels(total),
+                ],
+              ),
+            ),
+            const SizedBox(width: 32),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: widget.segments
+                  .where((s) => s.value > 0)
+                  .map((s) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 14,
+                              height: 14,
+                              decoration: BoxDecoration(
+                                color: s.color,
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            SizedBox(
+                              width: 120,
+                              child: Text(
+                                s.label.toUpperCase(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              _formatearMoneda(s.value),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ))
+                  .toList(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(widget.viewModes.length, (index) {
+            final isActive = index == widget.currentViewMode;
+            return GestureDetector(
+              onTap: () => widget.onViewModeChanged?.call(index),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isActive ? const Color(0xFF0066FF) : const Color(0xFF1A1A1A),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: isActive ? const Color(0xFF0066FF) : Colors.grey.shade700),
+                ),
+                child: Text(
+                  widget.viewModes[index],
+                  style: TextStyle(
+                    color: isActive ? Colors.white : Colors.grey,
+                    fontSize: 11,
+                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ),
+            );
+          }),
         ),
       ],
     );
@@ -159,18 +203,18 @@ class MoneyProDonutChart extends StatelessWidget {
 
   List<Widget> _buildPercentageLabels(double total) {
     final List<Widget> labels = [];
-    double currentAngle = -90; // Empezar desde arriba
+    double currentAngle = -90;
 
-    for (final segment in segments) {
+    for (final segment in widget.segments) {
       if (segment.value == 0) continue;
       final percentage = (segment.value / total) * 100;
       final sweepAngle = (segment.value / total) * 360;
       final midAngle = currentAngle + sweepAngle / 2;
       final radians = midAngle * (3.14159 / 180);
       
-      final radius = (size / 2) - (outerRingWidth / 2) - 10;
-      final x = (size / 2) + radius * (radians.cos());
-      final y = (size / 2) + radius * (radians.sin());
+      final radius = (widget.size / 2) - (widget.outerRingWidth / 2) - 10;
+      final x = (widget.size / 2) + radius * (radians.cos());
+      final y = (widget.size / 2) + radius * (radians.sin());
 
       if (percentage >= 4) {
         labels.add(

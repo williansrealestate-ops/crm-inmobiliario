@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../services/finanzas_service.dart';
-import '../../services/integraciones_service.dart';
-import '../../services/pipeline_service.dart';
 import '../../widgets/money_pro_donut_chart.dart';
 
 class FinanzasScreen extends StatefulWidget {
@@ -18,26 +17,43 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   bool _isLoading = true;
   Map<String, dynamic> _resumen = {};
   List<Map<String, dynamic>> _negocios = [];
+  List<Map<String, dynamic>> _operaciones = [];
   List<Map<String, dynamic>> _ingresos = [];
   List<Map<String, dynamic>> _gastos = [];
   Map<String, double> _ingresosPorNegocio = {};
   Map<String, double> _gastosPorCategoria = {};
+  Map<String, double> _ingresosPorOperacion = {};
+  Map<String, double> _gastosPorOperacion = {};
+  List<Map<String, dynamic>> _resumenOperaciones = [];
+  
+  String _operacionFiltro = 'todas';
+  int _graficaModo = 0; // 0: Ingresos/Gastos, 1: Ingresos por Negocio, 2: Gastos por Categoría
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     _cargarDatos();
   }
 
   Future<void> _cargarDatos() async {
     setState(() => _isLoading = true);
-    _resumen = await FinanzasService.getResumenFinanciero();
+    _resumen = await FinanzasService.getResumenFinanciero(
+      operacionId: _operacionFiltro == 'todas' ? null : _operacionFiltro,
+    );
     _negocios = await FinanzasService.getNegocios();
+    _operaciones = await FinanzasService.getOperaciones();
     _ingresos = await FinanzasService.getIngresos();
     _gastos = await FinanzasService.getGastos();
-    _ingresosPorNegocio = await FinanzasService.getIngresosPorNegocio();
-    _gastosPorCategoria = await FinanzasService.getGastosPorCategoria();
+    _ingresosPorNegocio = await FinanzasService.getIngresosPorNegocio(
+      operacionId: _operacionFiltro == 'todas' ? null : _operacionFiltro,
+    );
+    _gastosPorCategoria = await FinanzasService.getGastosPorCategoria(
+      operacionId: _operacionFiltro == 'todas' ? null : _operacionFiltro,
+    );
+    _ingresosPorOperacion = await FinanzasService.getIngresosPorOperacion();
+    _gastosPorOperacion = await FinanzasService.getGastosPorOperacion();
+    _resumenOperaciones = await FinanzasService.getResumenPorOperacion();
     setState(() => _isLoading = false);
   }
 
@@ -46,6 +62,15 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (Match m) => '${m[1]},',
     )}';
+  }
+
+  String _formatearFecha(String fechaIso) {
+    try {
+      final fecha = DateTime.parse(fechaIso);
+      return DateFormat('dd/MM/yyyy').format(fecha);
+    } catch (e) {
+      return fechaIso;
+    }
   }
 
   Color _getColorFromHex(String hex) {
@@ -63,6 +88,10 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
       case 'local_gas_station': return Icons.local_gas_station;
       case 'agriculture': return Icons.agriculture;
       case 'engineering': return Icons.engineering;
+      case 'swap_horiz': return Icons.swap_horiz;
+      case 'construction': return Icons.construction;
+      case 'psychology': return Icons.psychology;
+      case 'admin_panel_settings': return Icons.admin_panel_settings;
       default: return Icons.more_horiz;
     }
   }
@@ -87,11 +116,13 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         foregroundColor: Colors.white,
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
           indicatorColor: Colors.white,
           tabs: const [
             Tab(text: 'Dashboard'),
+            Tab(text: 'Operaciones'),
             Tab(text: 'Negocios'),
             Tab(text: 'Transacciones'),
             Tab(text: 'Presupuestos'),
@@ -104,6 +135,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               controller: _tabController,
               children: [
                 _buildTabDashboard(),
+                _buildTabOperaciones(),
                 _buildTabNegocios(),
                 _buildTabTransacciones(),
                 _buildTabPresupuestos(),
@@ -112,6 +144,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
+  // ==================== DASHBOARD ====================
   Widget _buildTabDashboard() {
     final ingresos = (_resumen['ingresosMes'] ?? 0).toDouble();
     final gastos = (_resumen['gastosMes'] ?? 0).toDouble();
@@ -122,6 +155,11 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Filtro de Operaciones
+          _buildFiltroOperaciones(),
+          const SizedBox(height: 16),
+
+          // KPIs
           Row(
             children: [
               Expanded(child: _buildKpiCard('Ingresos', ingresos, const Color(0xFF10B981), Icons.trending_up)),
@@ -132,74 +170,198 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
             ],
           ),
           const SizedBox(height: 24),
+
+          // Gráfica Grande Interactiva estilo Money Pro
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF222222))),
+            decoration: BoxDecoration(
+              color: const Color(0xFF111111),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF222222)),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Ingresos / Gastos', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                Text(_getTituloGrafica(), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 MoneyProDonutChart(
-                  segments: [
-                    DonutSegment(label: 'Ingresos', value: ingresos, color: const Color(0xFF10B981)),
-                    DonutSegment(label: 'Gastos', value: gastos, color: const Color(0xFFEF4444)),
-                  ],
-                  centerTitle: 'Beneficio',
-                  centerValue: utilidad,
-                  size: 280,
+                  segments: _getSegmentosGrafica(),
+                  centerTitle: _getCentroTitulo(),
+                  centerValue: _getCentroValor(),
+                  size: 300,
+                  outerRingWidth: 70,
+                  innerRingWidth: 25,
+                  centerCircleRadius: 80,
+                  viewModes: const ['Ingresos/Gastos', 'Ingresos por Negocio', 'Gastos por Categoría'],
+                  currentViewMode: _graficaModo,
+                  onViewModeChanged: (modo) => setState(() => _graficaModo = modo),
+                  onCenterTap: () {
+                    setState(() {
+                      _graficaModo = (_graficaModo + 1) % 3;
+                    });
+                  },
                 ),
               ],
             ),
           ),
           const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF222222))),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Ingresos por Negocio', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                MoneyProDonutChart(
-                  segments: _negocios.map((n) => DonutSegment(
-                    label: n['nombre'],
-                    value: _ingresosPorNegocio[n['id']] ?? 0.0,
-                    color: _getColorFromHex(n['color']),
-                  )).toList(),
-                  centerTitle: 'Ingresos',
-                  centerValue: ingresos,
-                  size: 280,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          if (_gastosPorCategoria.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF222222))),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+
+          // Resumen de Operaciones en Dashboard
+          const Text('Operaciones del Mes', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          ..._resumenOperaciones.map((op) {
+            final color = _getColorFromHex(op['color']);
+            final ingresosOp = (op['ingresos'] ?? 0).toDouble();
+            final gastosOp = (op['gastos'] ?? 0).toDouble();
+            final balance = ingresosOp - gastosOp;
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF111111),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: color.withOpacity(0.3)),
+              ),
+              child: Row(
                 children: [
-                  const Text('Gastos por Categoría', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  MoneyProDonutChart(
-                    segments: _gastosPorCategoria.entries.map((e) => DonutSegment(
-                      label: e.key,
-                      value: e.value,
-                      color: _getColorParaCategoria(e.key),
-                    )).toList(),
-                    centerTitle: 'Gastos',
-                    centerValue: gastos,
-                    size: 280,
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
+                    child: Icon(_getIcono(op['icono']), color: color, size: 24),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(op['nombre'], style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Text('Ingresos: ', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                            Text(_formatearMoneda(ingresosOp), style: const TextStyle(color: Color(0xFF10B981), fontSize: 12, fontWeight: FontWeight.bold)),
+                            const SizedBox(width: 12),
+                            Text('Gastos: ', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                            Text(_formatearMoneda(gastosOp), style: const TextStyle(color: Color(0xFFEF4444), fontSize: 12, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(_formatearMoneda(balance), style: TextStyle(
+                        color: balance >= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      )),
+                      const Text('Balance', style: TextStyle(color: Colors.grey, fontSize: 10)),
+                    ],
                   ),
                 ],
               ),
-            ),
+            );
+          }).toList(),
         ],
       ),
     );
+  }
+
+  Widget _buildFiltroOperaciones() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111111),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF222222)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.filter_list, color: Colors.grey, size: 20),
+          const SizedBox(width: 8),
+          const Text('Operación: ', style: TextStyle(color: Colors.grey, fontSize: 13)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: DropdownButton<String>(
+              value: _operacionFiltro,
+              isExpanded: true,
+              underline: const SizedBox(),
+              dropdownColor: const Color(0xFF1A1A1A),
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              items: [
+                const DropdownMenuItem(value: 'todas', child: Text('Todas las operaciones')),
+                ..._operaciones.map((op) => DropdownMenuItem(
+                  value: op['id'],
+                  child: Text(op['nombre']),
+                )),
+              ],
+              onChanged: (v) {
+                setState(() => _operacionFiltro = v ?? 'todas');
+                _cargarDatos();
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getTituloGrafica() {
+    switch (_graficaModo) {
+      case 0: return 'Ingresos / Gastos';
+      case 1: return 'Ingresos por Negocio';
+      case 2: return 'Gastos por Categoría';
+      default: return '';
+    }
+  }
+
+  String _getCentroTitulo() {
+    switch (_graficaModo) {
+      case 0: return 'Beneficio';
+      case 1: return 'Ingresos';
+      case 2: return 'Gastos';
+      default: return '';
+    }
+  }
+
+  double _getCentroValor() {
+    final ingresos = (_resumen['ingresosMes'] ?? 0).toDouble();
+    final gastos = (_resumen['gastosMes'] ?? 0).toDouble();
+    switch (_graficaModo) {
+      case 0: return ingresos - gastos;
+      case 1: return ingresos;
+      case 2: return gastos;
+      default: return 0;
+    }
+  }
+
+  List<DonutSegment> _getSegmentosGrafica() {
+    final ingresos = (_resumen['ingresosMes'] ?? 0).toDouble();
+    final gastos = (_resumen['gastosMes'] ?? 0).toDouble();
+
+    switch (_graficaModo) {
+      case 0:
+        return [
+          DonutSegment(label: 'Ingresos', value: ingresos, color: const Color(0xFF10B981)),
+          DonutSegment(label: 'Gastos', value: gastos, color: const Color(0xFFEF4444)),
+        ];
+      case 1:
+        return _negocios.map((n) => DonutSegment(
+          label: n['nombre'],
+          value: _ingresosPorNegocio[n['id']] ?? 0.0,
+          color: _getColorFromHex(n['color']),
+        )).toList();
+      case 2:
+        return _gastosPorCategoria.entries.map((e) => DonutSegment(
+          label: e.key,
+          value: e.value,
+          color: _getColorParaCategoria(e.key),
+        )).toList();
+      default:
+        return [];
+    }
   }
 
   Color _getColorParaCategoria(String categoria) {
@@ -215,7 +377,11 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   Widget _buildKpiCard(String titulo, double valor, Color color, IconData icono) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withOpacity(0.3))),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Icon(icono, color: color, size: 24),
         const SizedBox(height: 8),
@@ -226,6 +392,239 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
+  // ==================== OPERACIONES ====================
+  Widget _buildTabOperaciones() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _mostrarDialogoOperacion(),
+              icon: const Icon(Icons.add),
+              label: const Text('Nueva Operación'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0066FF),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: _operaciones.isEmpty
+              ? const Center(child: Text('No hay operaciones', style: TextStyle(color: Colors.grey)))
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _operaciones.length,
+                  itemBuilder: (context, index) {
+                    final op = _operaciones[index];
+                    final color = _getColorFromHex(op['color']);
+                    final resumenOp = _resumenOperaciones.firstWhere(
+                      (r) => r['id'] == op['id'],
+                      orElse: () => {'ingresos': 0.0, 'gastos': 0.0, 'balance': 0.0},
+                    );
+                    final ingresosOp = (resumenOp['ingresos'] ?? 0).toDouble();
+                    final gastosOp = (resumenOp['gastos'] ?? 0).toDouble();
+                    final balance = ingresosOp - gastosOp;
+                    final presupuesto = (op['presupuesto'] ?? 0).toDouble();
+                    final progreso = presupuesto > 0 ? ((ingresosOp + gastosOp) / presupuesto).clamp(0.0, 1.0) : 0.0;
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF111111),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: color.withOpacity(0.3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(10)),
+                                child: Icon(_getIcono(op['icono']), color: Colors.white, size: 22),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(op['nombre'], style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                    Text('Presupuesto: ${_formatearMoneda(presupuesto)}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuButton<String>(
+                                icon: const Icon(Icons.more_vert, color: Colors.grey),
+                                color: const Color(0xFF1A1A1A),
+                                onSelected: (v) {
+                                  if (v == 'editar') _mostrarDialogoOperacion(operacion: op);
+                                  if (v == 'eliminar') _eliminarOperacion(op['id']);
+                                },
+                                itemBuilder: (ctx) => [
+                                  const PopupMenuItem(value: 'editar', child: Row(children: [Icon(Icons.edit, color: Colors.white, size: 18), SizedBox(width: 8), Text('Editar', style: TextStyle(color: Colors.white))])),
+                                  const PopupMenuItem(value: 'eliminar', child: Row(children: [Icon(Icons.delete, color: Colors.red, size: 18), SizedBox(width: 8), Text('Eliminar', style: TextStyle(color: Colors.red))])),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: LinearProgressIndicator(
+                              value: progreso,
+                              backgroundColor: color.withOpacity(0.2),
+                              valueColor: AlwaysStoppedAnimation<Color>(color),
+                              minHeight: 8,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Ingresos: ${_formatearMoneda(ingresosOp)}', style: const TextStyle(color: Color(0xFF10B981), fontSize: 12, fontWeight: FontWeight.bold)),
+                              Text('Gastos: ${_formatearMoneda(gastosOp)}', style: const TextStyle(color: Color(0xFFEF4444), fontSize: 12, fontWeight: FontWeight.bold)),
+                              Text('Balance: ${_formatearMoneda(balance)}', style: TextStyle(
+                                color: balance >= 0 ? const Color(0xFF3B82F6) : const Color(0xFFEF4444),
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              )),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  void _mostrarDialogoOperacion({Map<String, dynamic>? operacion}) {
+    final esEditar = operacion != null;
+    final nombreCtrl = TextEditingController(text: operacion?['nombre'] ?? '');
+    final presupuestoCtrl = TextEditingController(text: operacion != null ? operacion['presupuesto'].toString() : '');
+    String iconoSel = operacion?['icono'] ?? 'swap_horiz';
+    String colorSel = operacion?['color'] ?? '0xFF3B82F6';
+
+    final iconos = ['swap_horiz', 'home', 'construction', 'psychology', 'admin_panel_settings', 'business', 'handshake', 'store'];
+    final colores = ['0xFF3B82F6', '0xFF10B981', '0xFFF59E0B', '0xFF8B5CF6', '0xFF06B6D4', '0xFFEF4444', '0xFF22C55E', '0xFFEC4899'];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          title: Text(esEditar ? 'Editar Operación' : 'Nueva Operación', style: const TextStyle(color: Colors.white)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nombreCtrl,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(labelText: 'Nombre', labelStyle: TextStyle(color: Colors.grey), border: OutlineInputBorder(), filled: true, fillColor: Color(0xFF0A0A0A)),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: presupuestoCtrl,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(labelText: 'Presupuesto (MXN)', labelStyle: TextStyle(color: Colors.grey), prefixText: '\$ ', border: OutlineInputBorder(), filled: true, fillColor: Color(0xFF0A0A0A)),
+                ),
+                const SizedBox(height: 12),
+                const Text('Icono:', style: TextStyle(color: Colors.grey)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: iconos.map((ic) => GestureDetector(
+                    onTap: () => setState(() => iconoSel = ic),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: iconoSel == ic ? const Color(0xFF0066FF) : const Color(0xFF0A0A0A),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: iconoSel == ic ? const Color(0xFF0066FF) : Colors.grey),
+                      ),
+                      child: Icon(_getIcono(ic), color: Colors.white, size: 20),
+                    ),
+                  )).toList(),
+                ),
+                const SizedBox(height: 12),
+                const Text('Color:', style: TextStyle(color: Colors.grey)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: colores.map((c) => GestureDetector(
+                    onTap: () => setState(() => colorSel = c),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: _getColorFromHex(c),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: colorSel == c ? Colors.white : Colors.transparent, width: 3),
+                      ),
+                    ),
+                  )).toList(),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
+            ElevatedButton(
+              onPressed: () async {
+                final presupuesto = double.tryParse(presupuestoCtrl.text.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0;
+                if (nombreCtrl.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('El nombre es requerido'), backgroundColor: Color(0xFFEF4444)));
+                  return;
+                }
+                final data = {
+                  'nombre': nombreCtrl.text,
+                  'presupuesto': presupuesto,
+                  'icono': iconoSel,
+                  'color': colorSel,
+                };
+                if (esEditar) {
+                  data['id'] = operacion!['id'];
+                  await FinanzasService.actualizarOperacion(data);
+                } else {
+                  await FinanzasService.agregarOperacion(data);
+                }
+                Navigator.pop(ctx);
+                _cargarDatos();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(esEditar ? 'Operación actualizada' : 'Operación creada'),
+                    backgroundColor: const Color(0xFF10B981),
+                  ));
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
+              child: Text(esEditar ? 'Actualizar' : 'Crear', style: const TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _eliminarOperacion(String id) async {
+    await FinanzasService.eliminarOperacion(id);
+    _cargarDatos();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Operación eliminada'), backgroundColor: Color(0xFFEF4444)));
+    }
+  }
+
+  // ==================== NEGOCIOS ====================
   Widget _buildTabNegocios() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -251,7 +650,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                   Text(negocio['nombre'], style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                   Text('$transacciones transacciones', style: const TextStyle(color: Colors.grey, fontSize: 12)),
                 ])),
-                IconButton(icon: const Icon(Icons.more_vert, color: Colors.grey), onPressed: () => _mostrarMenuNegocio(negocio)),
               ]),
               const SizedBox(height: 16),
               Row(children: [
@@ -281,52 +679,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  void _mostrarMenuNegocio(Map<String, dynamic> negocio) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1A1A1A),
-      builder: (ctx) => Column(mainAxisSize: MainAxisSize.min, children: [
-        ListTile(leading: const Icon(Icons.edit, color: Colors.white), title: const Text('Editar Negocio', style: TextStyle(color: Colors.white)), onTap: () { Navigator.pop(ctx); _editarNegocio(negocio); }),
-        ListTile(leading: const Icon(Icons.visibility, color: Colors.white), title: const Text('Ver Gráfica', style: TextStyle(color: Colors.white)), onTap: () { Navigator.pop(ctx); _verGraficaNegocio(negocio); }),
-      ]),
-    );
-  }
-
-  void _editarNegocio(Map<String, dynamic> negocio) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Editar ${negocio['nombre']} (Función en desarrollo)'), backgroundColor: const Color(0xFF0066FF)),
-    );
-  }
-
-  void _verGraficaNegocio(Map<String, dynamic> negocio) {
-    final ingresosNeg = _ingresos.where((i) => i['negocioId'] == negocio['id']).fold<double>(0, (s, i) => s + (i['monto'] ?? 0).toDouble());
-    final gastosNeg = _gastos.where((g) => g['negocioId'] == negocio['id']).fold<double>(0, (s, g) => s + (g['monto'] ?? 0).toDouble());
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: const Color(0xFF0A0A0A),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(negocio['nombre'], style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            MoneyProDonutChart(
-              segments: [
-                DonutSegment(label: 'Ingresos', value: ingresosNeg, color: const Color(0xFF10B981)),
-                DonutSegment(label: 'Gastos', value: gastosNeg, color: const Color(0xFFEF4444)),
-              ],
-              centerTitle: 'Balance',
-              centerValue: ingresosNeg - gastosNeg,
-              size: 260,
-            ),
-            const SizedBox(height: 16),
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cerrar', style: TextStyle(color: Colors.grey))),
-          ]),
-        ),
-      ),
-    );
-  }
-
+  // ==================== TRANSACCIONES ====================
   Widget _buildTabTransacciones() {
     final todasTransacciones = [
       ..._ingresos.map((i) => {...i, 'tipo': 'ingreso'}),
@@ -354,7 +707,9 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                   final color = esIngreso ? const Color(0xFF10B981) : const Color(0xFFEF4444);
                   final icono = esIngreso ? Icons.add : Icons.remove;
                   final negocio = _negocios.firstWhere((n) => n['id'] == t['negocioId'], orElse: () => {'nombre': 'Otros', 'color': '0xFF6366F1', 'icono': 'more_horiz'});
+                  final operacion = _operaciones.firstWhere((o) => o['id'] == t['operacionId'], orElse: () => {'nombre': 'Sin operación', 'color': '0xFF6366F1'});
                   final colorNegocio = _getColorFromHex(negocio['color']);
+                  final colorOperacion = _getColorFromHex(operacion['color']);
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 8),
@@ -371,12 +726,16 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                           const SizedBox(width: 4),
                           Text(negocio['nombre'] ?? 'Otros', style: const TextStyle(fontSize: 11, color: Colors.grey)),
                           const SizedBox(width: 8),
-                          Text(t['categoria'] ?? '', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                          Container(width: 8, height: 8, decoration: BoxDecoration(color: colorOperacion, shape: BoxShape.circle)),
+                          const SizedBox(width: 4),
+                          Text(operacion['nombre'] ?? 'Sin operación', style: const TextStyle(fontSize: 11, color: Colors.grey)),
                         ]),
+                        const SizedBox(height: 2),
+                        Text(_formatearFecha(t['fecha'] ?? ''), style: const TextStyle(fontSize: 11, color: Colors.grey)),
                       ])),
                       Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                         Text(_formatearMoneda(t['monto'] ?? 0), style: TextStyle(fontWeight: FontWeight.w700, color: color, fontSize: 14)),
-                        Text(_formatearFecha(t['fecha'] ?? ''), style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                        Text(t['categoria'] ?? '', style: const TextStyle(fontSize: 11, color: Colors.grey)),
                       ]),
                       const SizedBox(width: 8),
                       PopupMenuButton<String>(
@@ -412,6 +771,8 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     final montoCtrl = TextEditingController(text: transaccion != null ? _formatearMoneda((transaccion['monto'] ?? 0).toDouble()) : '');
     final categoriaCtrl = TextEditingController(text: transaccion?['categoria'] ?? '');
     String negocioId = transaccion?['negocioId'] ?? (_negocios.isNotEmpty ? _negocios.first['id'] : 'otros');
+    String operacionId = transaccion?['operacionId'] ?? (_operaciones.isNotEmpty ? _operaciones.first['id'] : '');
+    DateTime fechaSel = transaccion != null ? DateTime.parse(transaccion['fecha']) : DateTime.now();
 
     showDialog(
       context: context,
@@ -426,58 +787,74 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 TextField(
                   controller: conceptoCtrl,
                   style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    labelText: 'Concepto',
-                    labelStyle: TextStyle(color: Colors.grey),
-                    border: OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Color(0xFF0A0A0A),
-                  ),
+                  decoration: const InputDecoration(labelText: 'Concepto', labelStyle: TextStyle(color: Colors.grey), border: OutlineInputBorder(), filled: true, fillColor: Color(0xFF0A0A0A)),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: montoCtrl,
                   style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Monto (MXN)',
-                    labelStyle: TextStyle(color: Colors.grey),
-                    prefixText: '\$ ',
-                    border: OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Color(0xFF0A0A0A),
+                  decoration: const InputDecoration(labelText: 'Monto (MXN)', labelStyle: TextStyle(color: Colors.grey), prefixText: '\$ ', border: OutlineInputBorder(), filled: true, fillColor: Color(0xFF0A0A0A)),
+                ),
+                const SizedBox(height: 12),
+                // Selector de fecha con mini calendario
+                InkWell(
+                  onTap: () async {
+                    final fecha = await showDatePicker(
+                      context: context,
+                      initialDate: fechaSel,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2030),
+                      builder: (ctx, child) => Theme(
+                        data: ThemeData.dark().copyWith(
+                          colorScheme: const ColorScheme.dark(primary: Color(0xFF0066FF), onPrimary: Colors.white, surface: Color(0xFF1A1A1A)),
+                        ),
+                        child: child!,
+                      ),
+                    );
+                    if (fecha != null) setState(() => fechaSel = fecha);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0A0A0A),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF333333)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today, color: Colors.grey, size: 20),
+                        const SizedBox(width: 12),
+                        Text(DateFormat('dd/MM/yyyy').format(fechaSel), style: const TextStyle(color: Colors.white, fontSize: 14)),
+                        const Spacer(),
+                        const Text('Cambiar fecha', style: TextStyle(color: Color(0xFF0066FF), fontSize: 12)),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: negocioId,
-                  decoration: const InputDecoration(
-                    labelText: 'Negocio',
-                    labelStyle: TextStyle(color: Colors.grey),
-                    border: OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Color(0xFF0A0A0A),
-                  ),
+                  decoration: const InputDecoration(labelText: 'Negocio', labelStyle: TextStyle(color: Colors.grey), border: OutlineInputBorder(), filled: true, fillColor: Color(0xFF0A0A0A)),
                   dropdownColor: const Color(0xFF0A0A0A),
                   style: const TextStyle(color: Colors.white),
-                  items: _negocios.map((n) => DropdownMenuItem<String>(
-                    value: n['id'] as String,
-                    child: Text(n['nombre'], style: const TextStyle(color: Colors.white)),
-                  )).toList(),
+                  items: _negocios.map((n) => DropdownMenuItem<String>(value: n['id'] as String, child: Text(n['nombre'], style: const TextStyle(color: Colors.white)))).toList(),
                   onChanged: (v) => setState(() => negocioId = v ?? negocioId),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: operacionId.isNotEmpty ? operacionId : null,
+                  decoration: const InputDecoration(labelText: 'Operación', labelStyle: TextStyle(color: Colors.grey), border: OutlineInputBorder(), filled: true, fillColor: Color(0xFF0A0A0A)),
+                  dropdownColor: const Color(0xFF0A0A0A),
+                  style: const TextStyle(color: Colors.white),
+                  items: _operaciones.map((o) => DropdownMenuItem<String>(value: o['id'] as String, child: Text(o['nombre'], style: const TextStyle(color: Colors.white)))).toList(),
+                  onChanged: (v) => setState(() => operacionId = v ?? ''),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: categoriaCtrl,
                   style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: 'Categoría ${tipo == 'gasto' ? '(opcional)' : ''}',
-                    labelStyle: const TextStyle(color: Colors.grey),
-                    border: const OutlineInputBorder(),
-                    filled: true,
-                    fillColor: const Color(0xFF0A0A0A),
-                    prefixIcon: const Icon(Icons.category, color: Colors.grey),
-                  ),
+                  decoration: InputDecoration(labelText: 'Categoría ${tipo == 'gasto' ? '(opcional)' : ''}', labelStyle: const TextStyle(color: Colors.grey), border: const OutlineInputBorder(), filled: true, fillColor: const Color(0xFF0A0A0A), prefixIcon: const Icon(Icons.category, color: Colors.grey)),
                 ),
               ],
             ),
@@ -496,11 +873,12 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                   'concepto': conceptoCtrl.text,
                   'monto': monto,
                   'negocioId': negocioId,
+                  'operacionId': operacionId,
                   'categoria': categoriaCtrl.text,
+                  'fecha': fechaSel.toIso8601String(),
                 };
                 if (esEditar) {
                   data['id'] = transaccion!['id'];
-                  data['fecha'] = transaccion['fecha'];
                   if (tipo == 'ingreso') await FinanzasService.actualizarIngreso(data);
                   else await FinanzasService.actualizarGasto(data);
                 } else {
@@ -525,66 +903,85 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
+  // ==================== PRESUPUESTOS ====================
   Widget _buildTabPresupuestos() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          const Text('Presupuestos por Negocio', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-          IconButton(icon: const Icon(Icons.add_circle, color: Color(0xFF10B981)), onPressed: () => _editarTodosLosPresupuestos()),
-        ]),
+        const Text('Presupuestos por Negocio', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
-        ..._negocios.map((negocio) {
-          final color = _getColorFromHex(negocio['color']);
-          final gastoNegocio = _gastos.where((g) => g['negocioId'] == negocio['id']).fold<double>(0, (s, g) => s + (g['monto'] ?? 0).toDouble());
-          final presupuesto = (negocio['presupuesto'] ?? 0).toDouble();
-          final progreso = presupuesto > 0 ? (gastoNegocio / presupuesto).clamp(0.0, 1.0) : 0.0;
-          final excedido = progreso >= 1.0 && gastoNegocio > 0;
-
-          return Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: excedido ? const Color(0xFFEF4444) : color.withOpacity(0.3))),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.2), borderRadius: BorderRadius.circular(8)), child: Icon(_getIcono(negocio['icono']), color: color, size: 20)),
-                const SizedBox(width: 12),
-                Expanded(child: Text(negocio['nombre'], style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600))),
-                Text(excedido ? '¡Excedido!' : '${(progreso * 100).toStringAsFixed(0)}%', style: TextStyle(color: excedido ? const Color(0xFFEF4444) : color, fontWeight: FontWeight.bold)),
-              ]),
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(value: progreso, backgroundColor: color.withOpacity(0.2), valueColor: AlwaysStoppedAnimation<Color>(excedido ? const Color(0xFFEF4444) : color), minHeight: 10),
-              ),
-              const SizedBox(height: 8),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('Gastado: ${_formatearMoneda(gastoNegocio)}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                Text('Presupuesto: ${_formatearMoneda(presupuesto)}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-              ]),
-              const SizedBox(height: 12),
-              SizedBox(width: double.infinity, child: OutlinedButton(onPressed: () => _editarPresupuesto(negocio), style: OutlinedButton.styleFrom(side: BorderSide(color: color), foregroundColor: color), child: const Text('Editar Presupuesto'))),
-            ]),
-          );
-        }).toList(),
+        ..._negocios.map((negocio) => _buildPresupuestoCard(negocio, 'negocio')),
+        const SizedBox(height: 24),
+        const Text('Presupuestos por Operación', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 16),
+        ..._operaciones.map((op) => _buildPresupuestoCard(op, 'operacion')),
       ]),
     );
   }
 
-  void _editarPresupuesto(Map<String, dynamic> negocio) {
-    final controller = TextEditingController(text: negocio['presupuesto'].toString());
+  Widget _buildPresupuestoCard(Map<String, dynamic> item, String tipo) {
+    final color = _getColorFromHex(item['color']);
+    double gastado = 0;
+    
+    if (tipo == 'negocio') {
+      gastado = _gastos.where((g) => g['negocioId'] == item['id']).fold<double>(0, (s, g) => s + (g['monto'] ?? 0).toDouble());
+    } else {
+      gastado = _gastos.where((g) => g['operacionId'] == item['id']).fold<double>(0, (s, g) => s + (g['monto'] ?? 0).toDouble());
+    }
+    
+    final presupuesto = (item['presupuesto'] ?? 0).toDouble();
+    final progreso = presupuesto > 0 ? (gastado / presupuesto).clamp(0.0, 1.0) : 0.0;
+    final excedido = progreso >= 1.0 && gastado > 0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: excedido ? const Color(0xFFEF4444) : color.withOpacity(0.3))),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.2), borderRadius: BorderRadius.circular(8)), child: Icon(_getIcono(item['icono']), color: color, size: 20)),
+          const SizedBox(width: 12),
+          Expanded(child: Text(item['nombre'], style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600))),
+          Text(excedido ? '¡Excedido!' : '${(progreso * 100).toStringAsFixed(0)}%', style: TextStyle(color: excedido ? const Color(0xFFEF4444) : color, fontWeight: FontWeight.bold)),
+        ]),
+        const SizedBox(height: 12),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(value: progreso, backgroundColor: color.withOpacity(0.2), valueColor: AlwaysStoppedAnimation<Color>(excedido ? const Color(0xFFEF4444) : color), minHeight: 10),
+        ),
+        const SizedBox(height: 8),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Text('Gastado: ${_formatearMoneda(gastado)}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+          Text('Presupuesto: ${_formatearMoneda(presupuesto)}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+        ]),
+        const SizedBox(height: 12),
+        SizedBox(width: double.infinity, child: OutlinedButton(
+          onPressed: () => _editarPresupuesto(item, tipo),
+          style: OutlinedButton.styleFrom(side: BorderSide(color: color), foregroundColor: color),
+          child: const Text('Editar Presupuesto'),
+        )),
+      ]),
+    );
+  }
+
+  void _editarPresupuesto(Map<String, dynamic> item, String tipo) {
+    final controller = TextEditingController(text: item['presupuesto'].toString());
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A1A),
-        title: Text('Presupuesto: ${negocio['nombre']}', style: const TextStyle(color: Colors.white)),
+        title: Text('Presupuesto: ${item['nombre']}', style: const TextStyle(color: Colors.white)),
         content: TextField(controller: controller, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto (MXN)', labelStyle: TextStyle(color: Colors.grey), border: OutlineInputBorder(), filled: true, fillColor: Color(0xFF0A0A0A))),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
             onPressed: () async {
               final nuevo = double.tryParse(controller.text.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0;
-              await FinanzasService.actualizarPresupuestoNegocio(negocio['id'], nuevo);
+              if (tipo == 'negocio') {
+                await FinanzasService.actualizarPresupuestoNegocio(item['id'], nuevo);
+              } else {
+                await FinanzasService.actualizarPresupuestoOperacion(item['id'], nuevo);
+              }
               Navigator.pop(ctx);
               _cargarDatos();
             },
@@ -594,47 +991,5 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         ],
       ),
     );
-  }
-
-  void _editarTodosLosPresupuestos() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        title: const Text('Editar Presupuestos', style: TextStyle(color: Colors.white)),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: Column(mainAxisSize: MainAxisSize.min, children: _negocios.map((n) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(children: [
-              Expanded(child: Text(n['nombre'], style: const TextStyle(color: Colors.white))),
-              SizedBox(
-                width: 120,
-                child: TextField(
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
-                  controller: TextEditingController(text: n['presupuesto'].toString()),
-                  decoration: const InputDecoration(border: OutlineInputBorder(), filled: true, fillColor: Color(0xFF0A0A0A), isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
-                  onChanged: (v) async {
-                    final nuevo = double.tryParse(v.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0;
-                    await FinanzasService.actualizarPresupuestoNegocio(n['id'], nuevo);
-                  },
-                ),
-              ),
-            ]),
-          )).toList()),
-        ),
-        actions: [ElevatedButton(onPressed: () { Navigator.pop(ctx); _cargarDatos(); }, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)), child: const Text('Cerrar', style: TextStyle(color: Colors.white)))],
-      ),
-    );
-  }
-
-  String _formatearFecha(String fechaIso) {
-    try {
-      final fecha = DateTime.parse(fechaIso);
-      return '${fecha.day}/${fecha.month}/${fecha.year}';
-    } catch (e) {
-      return fechaIso;
-    }
   }
 }
