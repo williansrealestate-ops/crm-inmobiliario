@@ -400,7 +400,7 @@ class _DetallePropiedadScreenState extends State<DetallePropiedadScreen> {
         Container(
           height: 400,
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE5E7EB)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 2))]),
-          child: ClipRRect(borderRadius: BorderRadius.circular(16), child: HtmlElementView(viewType: 'mapa-detalle')),
+          child: ClipRRect(borderRadius: BorderRadius.circular(16), child: const HtmlElementView(viewType: 'mapa-detalle')),
         ),
         const SizedBox(height: 12),
         Row(

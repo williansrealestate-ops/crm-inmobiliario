@@ -14,7 +14,7 @@ class GeolocalizacionScreen extends StatefulWidget {
 
 class _GeolocalizacionScreenState extends State<GeolocalizacionScreen> {
   GoogleMapController? _mapController;
-  Set<Marker> _marcadores = {};
+  final Set<Marker> _marcadores = {};
   List<Map<String, dynamic>> _visitasOptimizadas = [];
   Map<String, double> _ubicacionActual = {'lat': GeolocalizacionService.latitudMexico, 'lng': GeolocalizacionService.longitudMexico};
   bool _cargando = true;

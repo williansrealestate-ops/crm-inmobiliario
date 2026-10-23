@@ -228,7 +228,7 @@ class _DetalleInmuebleState extends State<DetalleInmueble> {
                     decoration: BoxDecoration(color: AppTheme.getSurfaceColor(context), borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.getBorderColor(context))),
                     child: Row(
                       children: [
-                        Icon(Icons.location_on, color: AppTheme.primary, size: 24),
+                        const Icon(Icons.location_on, color: AppTheme.primary, size: 24),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(

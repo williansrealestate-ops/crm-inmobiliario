@@ -14,7 +14,7 @@ class FileStorageService {
       final blob = html.Blob([jsonStr], 'application/json');
       final url = html.Url.createObjectUrlFromBlob(blob);
       final anchor = html.AnchorElement(href: url)
-        ..setAttribute('download', '$_fileName')
+        ..setAttribute('download', _fileName)
         ..click();
       html.Url.revokeObjectUrl(url);
       

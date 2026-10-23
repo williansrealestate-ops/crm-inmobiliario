@@ -52,7 +52,7 @@ class _BackupScreenState extends State<BackupScreen> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                IOSLargeTitle(
+                const IOSLargeTitle(
                   title: 'Respaldo',
                   subtitle: 'Protege tus datos con copias de seguridad',
                 ),
@@ -63,7 +63,7 @@ class _BackupScreenState extends State<BackupScreen> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.info_outline, color: IOSColors.blue, size: 20),
+                          const Icon(Icons.info_outline, color: IOSColors.blue, size: 20),
                           const SizedBox(width: 8),
                           Text('Información del Respaldo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.getTextColor(context))),
                         ],
@@ -97,7 +97,7 @@ class _BackupScreenState extends State<BackupScreen> {
                           children: [
                             Text('Crear Respaldo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.getTextColor(context))),
                             const SizedBox(height: 2),
-                            Text('Descarga un archivo JSON con todos tus datos', style: TextStyle(fontSize: 13, color: IOSColors.textSecondary)),
+                            const Text('Descarga un archivo JSON con todos tus datos', style: const TextStyle(fontSize: 13, color: IOSColors.textSecondary)),
                           ],
                         ),
                       ),
@@ -127,7 +127,7 @@ class _BackupScreenState extends State<BackupScreen> {
                           children: [
                             Text('Importar Respaldo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.getTextColor(context))),
                             const SizedBox(height: 2),
-                            Text('Restaura datos desde un archivo JSON', style: TextStyle(fontSize: 13, color: IOSColors.textSecondary)),
+                            const Text('Restaura datos desde un archivo JSON', style: const TextStyle(fontSize: 13, color: IOSColors.textSecondary)),
                           ],
                         ),
                       ),
@@ -157,7 +157,7 @@ class _BackupScreenState extends State<BackupScreen> {
                           children: [
                             Text('Limpiar Todos los Datos', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.getTextColor(context))),
                             const SizedBox(height: 2),
-                            Text('Elimina todos los datos de la aplicación', style: TextStyle(fontSize: 13, color: IOSColors.textSecondary)),
+                            const Text('Elimina todos los datos de la aplicación', style: const TextStyle(fontSize: 13, color: IOSColors.textSecondary)),
                           ],
                         ),
                       ),
@@ -174,7 +174,7 @@ class _BackupScreenState extends State<BackupScreen> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.help_outline, color: IOSColors.orange, size: 20),
+                          const Icon(Icons.help_outline, color: IOSColors.orange, size: 20),
                           const SizedBox(width: 8),
                           Text('Instrucciones', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.getTextColor(context))),
                         ],
@@ -232,7 +232,7 @@ class _BackupScreenState extends State<BackupScreen> {
             children: [
               Text(titulo, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.getTextColor(context))),
               const SizedBox(height: 2),
-              Text(descripcion, style: TextStyle(fontSize: 12, color: IOSColors.textSecondary)),
+              Text(descripcion, style: const TextStyle(fontSize: 12, color: IOSColors.textSecondary)),
             ],
           ),
         ),

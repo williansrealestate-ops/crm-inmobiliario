@@ -46,8 +46,9 @@ class _ListaClientesState extends State<ListaClientes> {
 
   double _calcularAvanceCliente(Map<String, dynamic> c) {
     double avance = 0;
-    if ((c['telefono'] ?? '').toString().trim().isNotEmpty && (c['email'] ?? '').toString().trim().isNotEmpty) avance += 0.30;
-    else if ((c['telefono'] ?? '').toString().trim().isNotEmpty || (c['email'] ?? '').toString().trim().isNotEmpty) avance += 0.15;
+    if ((c['telefono'] ?? '').toString().trim().isNotEmpty && (c['email'] ?? '').toString().trim().isNotEmpty) {
+      avance += 0.30;
+    } else if ((c['telefono'] ?? '').toString().trim().isNotEmpty || (c['email'] ?? '').toString().trim().isNotEmpty) avance += 0.15;
     if ((c['interes'] ?? '').toString().trim().isNotEmpty) avance += 0.20;
     final presupuesto = double.tryParse(c['presupuesto']?.toString().replaceAll(',', '').replaceAll('\$', '') ?? '0') ?? 0;
     if (presupuesto > 0) avance += 0.20;
@@ -208,7 +209,7 @@ class _ListaClientesState extends State<ListaClientes> {
                   'fechaAlta': DateTime.now().toIso8601String().split('T')[0],
                 };
                 if (esEditar) {
-                  LocalStorageService.actualizarCliente(cliente!['id'].toString(), {...datos, 'id': cliente['id'].toString()});
+                  LocalStorageService.actualizarCliente(cliente['id'].toString(), {...datos, 'id': cliente['id'].toString()});
                 } else {
                   LocalStorageService.agregarCliente(datos);
                 }
@@ -425,9 +426,9 @@ class _ListaClientesState extends State<ListaClientes> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.search, size: 14, color: AppTheme.primary),
+                                const Icon(Icons.search, size: 14, color: AppTheme.primary),
                                 const SizedBox(width: 6),
-                                Text('Buscando: "${widget.busqueda}"', style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w600)),
+                                Text('Buscando: "${widget.busqueda}"', style: const TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w600)),
                               ],
                             ),
                           ),
@@ -495,7 +496,7 @@ class _ListaClientesState extends State<ListaClientes> {
                                     if (estado.isNotEmpty)
                                       Row(
                                         children: [
-                                          Icon(Icons.location_on, size: 12, color: Colors.grey),
+                                          const Icon(Icons.location_on, size: 12, color: Colors.grey),
                                           const SizedBox(width: 4),
                                           Text(estado, style: TextStyle(color: AppTheme.getTextSecondaryColor(context), fontSize: 13)),
                                         ],
@@ -504,7 +505,7 @@ class _ListaClientesState extends State<ListaClientes> {
                                       const SizedBox(height: 4),
                                       Row(
                                         children: [
-                                          Icon(Icons.inventory_2, size: 12, color: AppTheme.primary),
+                                          const Icon(Icons.inventory_2, size: 12, color: AppTheme.primary),
                                           const SizedBox(width: 4),
                                           Expanded(child: Text('Catálogo: $catalogo', style: TextStyle(color: AppTheme.getTextSecondaryColor(context), fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis)),
                                         ],
@@ -514,7 +515,7 @@ class _ListaClientesState extends State<ListaClientes> {
                                       const SizedBox(height: 4),
                                       Row(
                                         children: [
-                                          Icon(Icons.note, size: 12, color: AppTheme.warning),
+                                          const Icon(Icons.note, size: 12, color: AppTheme.warning),
                                           const SizedBox(width: 4),
                                           Expanded(child: Text('Notas: $notas', style: TextStyle(color: AppTheme.getTextSecondaryColor(context), fontSize: 12, fontStyle: FontStyle.italic), maxLines: 2, overflow: TextOverflow.ellipsis)),
                                         ],
@@ -540,9 +541,9 @@ class _ListaClientesState extends State<ListaClientes> {
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(Icons.account_balance_wallet, size: 12, color: AppTheme.success),
+                                          const Icon(Icons.account_balance_wallet, size: 12, color: AppTheme.success),
                                           const SizedBox(width: 4),
-                                          Text(presupuestoFormateado, style: TextStyle(color: AppTheme.success, fontSize: 13, fontWeight: FontWeight.w700)),
+                                          Text(presupuestoFormateado, style: const TextStyle(color: AppTheme.success, fontSize: 13, fontWeight: FontWeight.w700)),
                                         ],
                                       ),
                                     ),
@@ -562,7 +563,7 @@ class _ListaClientesState extends State<ListaClientes> {
                         ),
                       ),
                     );
-                  }).toList(),
+                  }),
               ]),
             ),
           ),

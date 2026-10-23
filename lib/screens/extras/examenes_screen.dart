@@ -48,7 +48,7 @@ class _ExamenesScreenState extends State<ExamenesScreen> {
             children: [
               Row(
                 children: [
-                  Container(width: 48, height: 48, decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Center(child: const Icon(Icons.quiz, color: Color(0xFF3B82F6), size: 24))),
+                  Container(width: 48, height: 48, decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: const Center(child: Icon(Icons.quiz, color: Color(0xFF3B82F6), size: 24))),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(

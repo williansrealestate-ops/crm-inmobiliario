@@ -198,18 +198,18 @@ class _NotificationPanelState extends State<NotificationPanel> {
                     Row(
                       children: [
                         if (hora.isNotEmpty) ...[
-                          Icon(Icons.access_time, size: 12, color: IOSColors.textSecondary),
+                          const Icon(Icons.access_time, size: 12, color: IOSColors.textSecondary),
                           const SizedBox(width: 4),
-                          Text(hora, style: TextStyle(fontSize: 11, color: IOSColors.textSecondary)),
+                          Text(hora, style: const TextStyle(fontSize: 11, color: IOSColors.textSecondary)),
                           const SizedBox(width: 8),
                         ],
                         if (cliente.isNotEmpty) ...[
-                          Icon(Icons.person, size: 12, color: IOSColors.textSecondary),
+                          const Icon(Icons.person, size: 12, color: IOSColors.textSecondary),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               cliente,
-                              style: TextStyle(fontSize: 11, color: IOSColors.textSecondary),
+                              style: const TextStyle(fontSize: 11, color: IOSColors.textSecondary),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),

@@ -407,7 +407,7 @@ class _ComisionesScreenState extends State<ComisionesScreen> with SingleTickerPr
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(ComisionesService.formatearMoneda(entry.value), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.primary)),
+                      Text(ComisionesService.formatearMoneda(entry.value), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.primary)),
                       Text('${(porcentaje * 100).toStringAsFixed(1)}%', style: TextStyle(fontSize: 11, color: AppTheme.getTextSecondaryColor(context))),
                     ],
                   ),

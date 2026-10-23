@@ -242,7 +242,7 @@ class _MultiPhotoPickerState extends State<MultiPhotoPicker> {
               ),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                side: BorderSide(color: AppTheme.primary),
+                side: const BorderSide(color: AppTheme.primary),
                 foregroundColor: AppTheme.primary,
               ),
             ),

@@ -259,7 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Row(
                     children: [
                       Expanded(child: Container(height: 1, color: const Color(0xFF334155))),
-                      Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text('O', style: TextStyle(color: Colors.white54, fontSize: 12))),
+                      const Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: const Text('O', style: const TextStyle(color: Colors.white54, fontSize: 12))),
                       Expanded(child: Container(height: 1, color: const Color(0xFF334155))),
                     ],
                   ),
@@ -289,12 +289,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  Row(
+                  const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.shield, color: Colors.white38, size: 14),
-                      const SizedBox(width: 6),
-                      Text('Conexión segura con Supabase', style: TextStyle(color: Colors.white38, fontSize: 11)),
+                      Icon(Icons.shield, color: Colors.white38, size: 14),
+                      SizedBox(width: 6),
+                      const Text('Conexión segura con Supabase', style: const TextStyle(color: Colors.white38, fontSize: 11)),
                     ],
                   ),
                 ],

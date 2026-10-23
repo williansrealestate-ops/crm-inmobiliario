@@ -118,7 +118,7 @@ class _MapaScreenState extends State<MapaScreen> {
                     const SizedBox(width: 8),
                     Text(
                       inmueble['tipo'] ?? '',
-                      style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600),
+                      style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -126,7 +126,7 @@ class _MapaScreenState extends State<MapaScreen> {
               const SizedBox(height: 16),
               Text(
                 precio,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
                   color: AppTheme.primary,
@@ -376,7 +376,7 @@ class _MapaScreenState extends State<MapaScreen> {
                       children: [
                         Text(
                           _formatearPrecio(inmueble['precio'] ?? '0'),
-                          style: TextStyle(color: AppTheme.success, fontWeight: FontWeight.w700),
+                          style: const TextStyle(color: AppTheme.success, fontWeight: FontWeight.w700),
                         ),
                         if (coords != null) ...[
                           const SizedBox(width: 8),
@@ -397,7 +397,7 @@ class _MapaScreenState extends State<MapaScreen> {
                     },
                   ),
                 );
-              }).toList(),
+              }),
           ],
         ),
       ),

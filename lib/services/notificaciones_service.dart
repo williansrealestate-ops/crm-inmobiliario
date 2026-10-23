@@ -28,7 +28,7 @@ class NotificacionesService {
     final actividades = await ActividadesService.getActividadesPorFecha(hoy);
     final notificaciones = <Map<String, dynamic>>[];
     final ahora = DateTime.now();
-    final horaActual = ':';
+    const horaActual = ':';
     
     for (var act in actividades) {
       if (act['completada'] == true) continue;
@@ -41,8 +41,9 @@ class NotificacionesService {
         urgencia = 'vencida';
       } else if (horaAct.isNotEmpty) {
         final diferencia = _diferenciaMinutos(horaActual, horaAct);
-        if (diferencia <= 30) urgencia = 'urgente';
-        else if (diferencia <= 60) urgencia = 'proxima';
+        if (diferencia <= 30) {
+          urgencia = 'urgente';
+        } else if (diferencia <= 60) urgencia = 'proxima';
       }
       notificaciones.add({
         'id': 'notif_',
@@ -68,7 +69,7 @@ class NotificacionesService {
       'vencidas': notificaciones.where((n) => n['urgencia'] == 'vencida').length,
       'urgentes': notificaciones.where((n) => n['urgencia'] == 'urgente').length,
       'proximas': notificaciones.where((n) => n['urgencia'] == 'proxima').length,
-      'tienePendientes': notificaciones.length > 0,
+      'tienePendientes': notificaciones.isNotEmpty,
     };
   }
 

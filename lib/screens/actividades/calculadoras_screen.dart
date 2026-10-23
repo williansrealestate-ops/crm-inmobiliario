@@ -49,7 +49,7 @@ class _CalculadorasScreenState extends State<CalculadorasScreen> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: IOSSegmentedControl(
-              options: ['Comisión', 'Hipoteca', 'ROI'],
+              options: const ['Comisión', 'Hipoteca', 'ROI'],
               selectedIndex: _calculadoraSeleccionada,
               onSelected: (index) {
                 setState(() {
@@ -145,7 +145,7 @@ class _CalculadorasScreenState extends State<CalculadorasScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.analytics, color: IOSColors.green, size: 24),
+              const Icon(Icons.analytics, color: IOSColors.green, size: 24),
               const SizedBox(width: 8),
               Text('Resultado', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.getTextColor(context))),
             ],

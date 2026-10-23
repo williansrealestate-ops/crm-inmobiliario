@@ -99,7 +99,7 @@ class _ListaActividadesState extends State<ListaActividades> {
 
                 if (esEditar) {
                   // ✅ CORRECCIÓN 2: Quitado el '!' innecesario
-                  LocalStorageService.actualizarActividad(actividad!['id'], {...datos, 'id': actividad['id']});
+                  LocalStorageService.actualizarActividad(actividad['id'], {...datos, 'id': actividad['id']});
                 } else {
                   LocalStorageService.agregarActividad(datos);
                 }
@@ -303,8 +303,8 @@ class _ListaActividadesState extends State<ListaActividades> {
 
             // Lista de actividades
             if (_actividadesFiltradas.isEmpty)
-              Card(
-                child: const Padding(
+              const Card(
+                child: Padding(
                   padding: EdgeInsets.all(60),
                   child: Center(
                     child: Column(
@@ -425,7 +425,7 @@ class _ListaActividadesState extends State<ListaActividades> {
                     ),
                   ),
                 );
-              }).toList(),
+              }),
           ],
         ),
       ),

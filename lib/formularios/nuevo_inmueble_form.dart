@@ -1,562 +1,287 @@
 import 'package:flutter/material.dart';
-import '../../config/theme.dart';
-import '../../models/inmueble.dart';
-import '../../models/mock_inmuebles.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class NuevoInmuebleForm extends StatefulWidget {
-  final Function(Inmueble) onInmuebleCreado;
-  const NuevoInmuebleForm({super.key, required this.onInmuebleCreado});
+class NuevoClienteSimpleForm extends StatefulWidget {
+  final Map<String, dynamic>? cliente;
+  final VoidCallback? onClienteCreado;
+
+  const NuevoClienteSimpleForm({
+    super.key,
+    this.cliente,
+    this.onClienteCreado,
+  });
 
   @override
-  State<NuevoInmuebleForm> createState() => _NuevoInmuebleFormState();
+  State<NuevoClienteSimpleForm> createState() => _NuevoClienteSimpleFormState();
 }
 
-class _NuevoInmuebleFormState extends State<NuevoInmuebleForm> {
+class _NuevoClienteSimpleFormState extends State<NuevoClienteSimpleForm> {
+  final _supabase = Supabase.instance.client;
   final _formKey = GlobalKey<FormState>();
+  bool _loading = false;
 
-  final _tituloController = TextEditingController();
-  final _direccionController = TextEditingController();
-  final _precioController = TextEditingController();
-  final _areaTerrenoController = TextEditingController();
-  final _areaConstruccionController = TextEditingController();
-  final _descripcionController = TextEditingController();
-  final _comisionController = TextEditingController();
-  final _porcentajeController = TextEditingController(text: '6');
+  final _nombreController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _telefonoController = TextEditingController();
+  final _ubicacionController = TextEditingController();
+  final _paisController = TextEditingController();
+  final _estadoController = TextEditingController();
+  final _presupuestoController = TextEditingController();
+  final _asesorController = TextEditingController();
+  final _estadoNegociacionController = TextEditingController();
+  final _notasController = TextEditingController();
 
-  String _tipo = 'Casa';
-  String _moneda = 'MXN';
-  String _pais = 'México';
-  String _estado = 'Campeche';
-  String _municipio = '';
-  String _estadoVenta = 'Disponible';
+  String _tipo = 'Comprador';
+  String _interes = 'Casa';
+  bool _activo = true;
 
-  int _habitaciones = 0;
-  int _banos = 0;
-  int _estacionamientos = 0;
-
-  final Map<String, bool> _caracteristicas = {
-    'Alberca': false,
-    'Jardín': false,
-    'Seguridad 24/7': false,
-    'Aire acondicionado': false,
-    'Cocina integral': false,
-    'Estacionamiento techado': false,
-    'Cuarto de servicio': false,
-    'Vista panorámica': false,
-  };
-
-  final List<String> _tipos = [
+  final List<String> _tiposInteres = [
     'Casa',
     'Departamento',
     'Terreno',
-    'Gasolinera',
-    'Hotel',
-    'Mina',
     'Local',
     'Oficina',
-    'Bodega'
+    'Hotel',
+    'Hacienda',
+    'Gasolinera',
+    'Combustible',
+    'Refinería',
+    'Mina',
+    'Minerales',
   ];
-  final List<String> _monedas = ['MXN', 'USD'];
-  final List<String> _paises = [
-    'México',
-    'Estados Unidos',
-    'Canadá',
-    'Guatemala',
-    'Belice'
-  ];
-  final List<String> _estados = [
-    'Campeche',
-    'Yucatán',
-    'Quintana Roo',
-    'Tabasco',
-    'Chiapas',
-    'Veracruz',
-    'Querétaro',
-    'CDMX',
-    'Jalisco',
-    'Sonora',
-    'Nuevo León',
-    'Puebla'
-  ];
-  final List<String> _estadosVenta = [
-    'Disponible',
-    'Reservado',
-    'Vendido',
-    'Rentado'
-  ];
+
+  bool get _esEditar => widget.cliente != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_esEditar) {
+      _nombreController.text = widget.cliente?['nombre'] ?? '';
+      _emailController.text = widget.cliente?['email'] ?? '';
+      _telefonoController.text = widget.cliente?['telefono'] ?? '';
+      _ubicacionController.text = widget.cliente?['ubicacion'] ?? '';
+      _paisController.text = widget.cliente?['pais'] ?? 'México';
+      _estadoController.text = widget.cliente?['estado'] ?? '';
+      _presupuestoController.text = widget.cliente?['presupuesto']?.toString() ?? '0';
+      _asesorController.text = widget.cliente?['asesor'] ?? '';
+      _estadoNegociacionController.text = widget.cliente?['estado_negociacion'] ?? 'Inicial';
+      _notasController.text = widget.cliente?['notas'] ?? '';
+      _tipo = widget.cliente?['tipo'] ?? 'Comprador';
+      _interes = widget.cliente?['catalogo_interes'] ?? 'Casa';
+      _activo = widget.cliente?['activo'] ?? true;
+    }
+  }
 
   @override
   void dispose() {
-    _tituloController.dispose();
-    _direccionController.dispose();
-    _precioController.dispose();
-    _areaTerrenoController.dispose();
-    _areaConstruccionController.dispose();
-    _descripcionController.dispose();
-    _comisionController.dispose();
-    _porcentajeController.dispose();
+    _nombreController.dispose();
+    _emailController.dispose();
+    _telefonoController.dispose();
+    _ubicacionController.dispose();
+    _paisController.dispose();
+    _estadoController.dispose();
+    _presupuestoController.dispose();
+    _asesorController.dispose();
+    _estadoNegociacionController.dispose();
+    _notasController.dispose();
     super.dispose();
   }
 
-  void _guardarInmueble() {
-    if (_formKey.currentState!.validate()) {
-      final nuevasCaracteristicas = _caracteristicas.entries
-          .where((e) => e.value)
-          .map((e) => e.key)
-          .toList();
+  Future<void> _guardar() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      final nuevoInmueble = Inmueble(
-        id: MockInmuebles.lista.length + 1,
-        titulo: _tituloController.text.trim(),
-        tipo: _tipo,
-        precio:
-            double.tryParse(_precioController.text.replaceAll(',', '')) ?? 0,
-        moneda: _moneda,
-        pais: _pais,
-        estado: _estado,
-        municipio: _municipio.isEmpty ? _estado : _municipio,
-        direccion: _direccionController.text.trim(),
-        areaTerreno: double.tryParse(_areaTerrenoController.text) ?? 0,
-        unidadArea: _tipo == 'Terreno' ? 'm2' : 'm2',
-        areaConstruccion:
-            double.tryParse(_areaConstruccionController.text) ?? 0,
-        habitaciones: _habitaciones,
-        banos: _banos,
-        estacionamientos: _estacionamientos,
-        estadoVenta: _estadoVenta,
-        descripcion: _descripcionController.text.trim(),
-        caracteristicas: nuevasCaracteristicas,
-        fotos: [
-          'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800'
-        ],
-        fechaAlta: DateTime.now()
-            .toString()
-            .split(' ')[0]
-            .split('-')
-            .reversed
-            .join('/'),
-        propietario: 'Sin asignar',
-        asesor: 'Williams Carrillo',
-        comision:
-            double.tryParse(_comisionController.text.replaceAll(',', '')) ?? 0,
-        porcentajeComision: double.tryParse(_porcentajeController.text) ?? 6,
-      );
+    setState(() => _loading = true);
 
-      widget.onInmuebleCreado(nuevoInmueble);
+    try {
+      final data = {
+        'nombre': _nombreController.text.trim(),
+        'email': _emailController.text.trim(),
+        'telefono': _telefonoController.text.trim(),
+        'ubicacion': _ubicacionController.text.trim(),
+        'pais': _paisController.text.trim(),
+        'estado': _estadoController.text.trim(),
+        'presupuesto': double.tryParse(_presupuestoController.text) ?? 0,
+        'catalogo_interes': _interes,
+        'asesor': _asesorController.text.trim(),
+        'estado_negociacion': _estadoNegociacionController.text.trim(),
+        'notas': _notasController.text.trim(),
+        'tipo': _tipo,
+        'activo': _activo,
+      };
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text('Inmueble "${nuevoInmueble.titulo}" creado exitosamente'),
-          backgroundColor: AppTheme.success,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
+      print('📤 Datos a guardar: $data');
 
-      Navigator.pop(context);
+      if (_esEditar) {
+        await _supabase
+            .from('clientes')
+            .update(data)
+            .eq('id', widget.cliente!['id']);
+        print('✅ Actualizado correctamente');
+      } else {
+        await _supabase.from('clientes').insert(data);
+        print('✅ Insertado correctamente');
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_esEditar ? '✅ Cliente actualizado' : '✅ Cliente creado'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        widget.onClienteCreado?.call();
+        Navigator.pop(context);
+      }
+    } catch (e, stackTrace) {
+      print('❌ Error al guardar: $e');
+      print('📍 Stack: $stackTrace');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
-        title: const Text('Nuevo Inmueble'),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          TextButton.icon(
-            onPressed: _guardarInmueble,
-            icon: const Icon(Icons.check, color: AppTheme.accent),
-            label: const Text('Guardar',
-                style: TextStyle(
-                    color: AppTheme.accent, fontWeight: FontWeight.w600)),
-          ),
-        ],
+        backgroundColor: const Color(0xFF0066FF),
+        title: Text(_esEditar ? 'Editar Cliente' : 'Nuevo Cliente',
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // INFORMACIÓN GENERAL
-              const Text('Información general',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: _tituloController,
-                label: 'Título del inmueble',
-                icon: Icons.title,
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Ingresa un título' : null,
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                      child: _buildDropdown('Tipo', _tipo, _tipos,
-                          (v) => setState(() => _tipo = v!))),
-                  const SizedBox(width: 16),
-                  Expanded(
-                      child: _buildDropdown('Moneda', _moneda, _monedas,
-                          (v) => setState(() => _moneda = v!))),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: _buildTextField(
-                      controller: _precioController,
-                      label: 'Precio',
-                      icon: Icons.attach_money,
-                      keyboardType: TextInputType.number,
-                      validator: (v) =>
-                          v == null || v.isEmpty ? 'Ingresa el precio' : null,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildDropdown(
-                        'Estado venta',
-                        _estadoVenta,
-                        _estadosVenta,
-                        (v) => setState(() => _estadoVenta = v!)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-
-              // UBICACIÓN
-              const Text('Ubicación',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                      child: _buildDropdown('País', _pais, _paises,
-                          (v) => setState(() => _pais = v!))),
-                  const SizedBox(width: 16),
-                  Expanded(
-                      child: _buildDropdown('Estado', _estado, _estados,
-                          (v) => setState(() => _estado = v!))),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: TextEditingController(text: _municipio),
-                label: 'Municipio',
-                icon: Icons.location_city,
-                onChanged: (v) => _municipio = v ?? '',
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: _direccionController,
-                label: 'Dirección completa',
-                icon: Icons.place,
-                maxLines: 2,
-              ),
-              const SizedBox(height: 32),
-
-              // ÁREAS
-              const Text('Áreas',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _areaTerrenoController,
-                      label: 'Área terreno (m²)',
-                      icon: Icons.square_foot,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _areaConstruccionController,
-                      label: 'Área construcción (m²)',
-                      icon: Icons.home_work,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                      child: _buildContador('Habitaciones', _habitaciones,
-                          Icons.bed, (v) => setState(() => _habitaciones = v))),
-                  const SizedBox(width: 16),
-                  Expanded(
-                      child: _buildContador('Baños', _banos, Icons.bathtub,
-                          (v) => setState(() => _banos = v))),
-                  const SizedBox(width: 16),
-                  Expanded(
-                      child: _buildContador(
-                          'Estacionamientos',
-                          _estacionamientos,
-                          Icons.local_parking,
-                          (v) => setState(() => _estacionamientos = v))),
-                ],
-              ),
-              const SizedBox(height: 32),
-
-              // COMISIÓN (CAPTURA MANUAL)
-              const Text('Comisión',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppTheme.accent.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(12),
-                  border:
-                      Border.all(color: AppTheme.accent.withValues(alpha: 0.3)),
-                ),
-                child: const Row(
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(Icons.info_outline, color: AppTheme.accent, size: 20),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Captura la comisión que recibirás por esta venta. Se sumará a los Ingresos Totales en Reportes.',
-                        style: TextStyle(
-                            color: AppTheme.textPrimary, fontSize: 13),
+                    _buildTextField(_nombreController, 'Nombre *', Icons.person, 
+                        validator: (v) => v!.isEmpty ? 'Requerido' : null),
+                    const SizedBox(height: 16),
+                    _buildTextField(_emailController, 'Email', Icons.email, 
+                        keyboardType: TextInputType.emailAddress),
+                    const SizedBox(height: 16),
+                    _buildTextField(_telefonoController, 'Teléfono', Icons.phone, 
+                        keyboardType: TextInputType.phone),
+                    const SizedBox(height: 16),
+                    _buildDropdownField(
+                      'Tipo',
+                      _tipo,
+                      ['Comprador', 'Vendedor', 'Inversionista', 'Rentador'],
+                      (v) => setState(() => _tipo = v!),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDropdownField(
+                      'Interés',
+                      _interes,
+                      _tiposInteres,
+                      (v) => setState(() => _interes = v!),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextField(_ubicacionController, 'Ubicación', Icons.location_on),
+                    const SizedBox(height: 16),
+                    _buildTextField(_paisController, 'País', Icons.flag),
+                    const SizedBox(height: 16),
+                    _buildTextField(_estadoController, 'Estado', Icons.map),
+                    const SizedBox(height: 16),
+                    _buildTextField(_presupuestoController, 'Presupuesto (MXN)', Icons.attach_money, 
+                        keyboardType: TextInputType.number),
+                    const SizedBox(height: 16),
+                    _buildTextField(_asesorController, 'Asesor', Icons.person),
+                    const SizedBox(height: 16),
+                    _buildDropdownField(
+                      'Estado de negociación',
+                      _estadoNegociacionController.text.isEmpty ? 'Inicial' : _estadoNegociacionController.text,
+                      ['Inicial', 'Contactado', 'Negociación', 'Cerrado', 'Perdido'],
+                      (v) => _estadoNegociacionController.text = v!,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextField(_notasController, 'Notas', Icons.note, maxLines: 4),
+                    const SizedBox(height: 16),
+                    SwitchListTile(
+                      title: const Text('Cliente activo', style: TextStyle(color: Colors.white)),
+                      value: _activo,
+                      activeColor: Colors.green,
+                      onChanged: (v) => setState(() => _activo = v),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: _guardar,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0066FF),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
+                      child: Text(_esEditar ? 'Actualizar Cliente' : 'Crear Cliente',
+                          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.grey)),
+                      child: const Text('Cancelar', style: TextStyle(color: Colors.white)),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: _buildTextField(
-                      controller: _comisionController,
-                      label: 'Comisión (MXN)',
-                      icon: Icons.account_balance_wallet,
-                      keyboardType: TextInputType.number,
-                      validator: (v) =>
-                          v == null || v.isEmpty ? 'Ingresa la comisión' : null,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _porcentajeController,
-                      label: 'Porcentaje (%)',
-                      icon: Icons.percent,
-                      keyboardType: TextInputType.number,
-                      validator: (v) =>
-                          v == null || v.isEmpty ? 'Ingresa el %' : null,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
+            ),
+    );
+  }
 
-              // DESCRIPCIÓN
-              const Text('Descripción',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 16),
-              Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.border),
-                ),
-                child: TextFormField(
-                  controller: _descripcionController,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    hintText: 'Describe el inmueble...',
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.all(16),
-                    hintStyle: TextStyle(color: AppTheme.textSecondary),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // CARACTERÍSTICAS ADICIONALES
-              const Text('Características adicionales',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppTheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.border),
-                ),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _caracteristicas.keys.map((caract) {
-                    return FilterChip(
-                      label: Text(caract),
-                      selected: _caracteristicas[caract] ?? false,
-                      onSelected: (valor) {
-                        setState(() => _caracteristicas[caract] = valor);
-                      },
-                      backgroundColor: AppTheme.background,
-                      selectedColor: AppTheme.primary.withValues(alpha: 0.1),
-                      checkmarkColor: AppTheme.primary,
-                      labelStyle: TextStyle(
-                        color: (_caracteristicas[caract] ?? false)
-                            ? AppTheme.primary
-                            : AppTheme.textPrimary,
-                        fontWeight: (_caracteristicas[caract] ?? false)
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                      ),
-                      side: BorderSide(
-                        color: (_caracteristicas[caract] ?? false)
-                            ? AppTheme.primary
-                            : AppTheme.border,
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // BOTÓN GUARDAR
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton.icon(
-                  onPressed: _guardarInmueble,
-                  icon: const Icon(Icons.save, size: 24),
-                  label: const Text('GUARDAR INMUEBLE',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
-                    foregroundColor: AppTheme.accent,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    elevation: 4,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        ),
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon,
+      {TextInputType? keyboardType, String? Function(String?)? validator, int maxLines = 1}) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      validator: validator,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.grey),
+        prefixIcon: Icon(icon, color: Colors.grey),
+        filled: true,
+        fillColor: const Color(0xFF1A1A1A),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), 
+            borderSide: const BorderSide(color: Color(0xFF333333))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), 
+            borderSide: const BorderSide(color: Color(0xFF0066FF))),
       ),
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    TextInputType? keyboardType,
-    int? maxLines,
-    String? Function(String?)? validator,
-    void Function(String?)? onChanged,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.border),
-      ),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        maxLines: maxLines ?? 1,
-        validator: validator,
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, color: AppTheme.primary),
-          border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          labelStyle: const TextStyle(color: AppTheme.textSecondary),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDropdown(String label, String value, List<String> items,
+  Widget _buildDropdownField(String label, String value, List<String> items, 
       void Function(String?) onChanged) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.border),
+    return DropdownButtonFormField<String>(
+      value: items.contains(value) ? value : items.first,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.grey),
+        filled: true,
+        fillColor: const Color(0xFF1A1A1A),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), 
+            borderSide: const BorderSide(color: Color(0xFF333333))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), 
+            borderSide: const BorderSide(color: Color(0xFF0066FF))),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          icon: const Icon(Icons.arrow_drop_down, color: AppTheme.primary),
-          items: items
-              .map((item) => DropdownMenuItem(value: item, child: Text(item)))
-              .toList(),
-          onChanged: onChanged,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContador(
-      String label, int valor, IconData icon, void Function(int) onChanged) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.border),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: AppTheme.primary, size: 24),
-          const SizedBox(height: 8),
-          Text(label,
-              style:
-                  const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                onPressed: valor > 0 ? () => onChanged(valor - 1) : null,
-                icon: const Icon(Icons.remove_circle_outline, size: 24),
-                color: valor > 0 ? AppTheme.primary : Colors.grey,
-              ),
-              const SizedBox(width: 12),
-              Text('$valor',
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.w700)),
-              const SizedBox(width: 12),
-              IconButton(
-                onPressed: () => onChanged(valor + 1),
-                icon: const Icon(Icons.add_circle_outline, size: 24),
-                color: AppTheme.primary,
-              ),
-            ],
-          ),
-        ],
-      ),
+      dropdownColor: const Color(0xFF1A1A1A),
+      style: const TextStyle(color: Colors.white),
+      items: items.map((i) => DropdownMenuItem(value: i, child: Text(i))).toList(),
+      onChanged: onChanged,
     );
   }
 }

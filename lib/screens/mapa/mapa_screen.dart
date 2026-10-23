@@ -3,7 +3,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../config/theme.dart';
 import '../../services/mapa_service.dart';
-import '../../services/inmuebles_supabase_service.dart';
 
 class MapaScreen extends StatefulWidget {
   const MapaScreen({super.key});

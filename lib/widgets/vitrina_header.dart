@@ -149,8 +149,8 @@ class VitrinaHeader extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Expanded(
-                  child: _StatCard(
+                const Expanded(
+                  child: const _StatCard(
                     icon: Icons.verified,
                     valor: '100%',
                     label: 'Confiable',
@@ -177,11 +177,11 @@ class VitrinaHeader extends StatelessWidget {
               ),
               child: TextField(
                 onChanged: onBuscar,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Buscar por título o ubicación...',
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFF8E8E93)),
+                  prefixIcon: Icon(Icons.search, color: Color(0xFF8E8E93)),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
               ),
             ),

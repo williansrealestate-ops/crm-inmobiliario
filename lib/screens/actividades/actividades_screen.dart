@@ -269,15 +269,15 @@ class _ActividadesScreenState extends State<ActividadesScreen> {
             Row(
               children: [
                 if (cliente.isNotEmpty) ...[
-                  Icon(Icons.person, size: 14, color: const Color(0xFF3B82F6)),
+                  const Icon(Icons.person, size: 14, color: Color(0xFF3B82F6)),
                   const SizedBox(width: 4),
-                  Expanded(child: Text('Cliente: $cliente', style: TextStyle(fontSize: 11, color: const Color(0xFF3B82F6), fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+                  Expanded(child: Text('Cliente: $cliente', style: const TextStyle(fontSize: 11, color: Color(0xFF3B82F6), fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
                 ],
                 if (asesor.isNotEmpty) ...[
                   const SizedBox(width: 12),
-                  Icon(Icons.badge, size: 14, color: const Color(0xFF8B5CF6)),
+                  const Icon(Icons.badge, size: 14, color: Color(0xFF8B5CF6)),
                   const SizedBox(width: 4),
-                  Expanded(child: Text('Asesor: $asesor', style: TextStyle(fontSize: 11, color: const Color(0xFF8B5CF6), fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+                  Expanded(child: Text('Asesor: $asesor', style: const TextStyle(fontSize: 11, color: Color(0xFF8B5CF6), fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
                 ],
               ],
             ),
@@ -383,7 +383,7 @@ class _ActividadesScreenState extends State<ActividadesScreen> {
                     value: clienteCtrl.text.isEmpty ? 'Sin cliente' : clienteCtrl.text,
                     hint: 'Cliente',
                     icon: Icons.person,
-                    items: ['Sin cliente', ..._clientes.map((c) => c['nombre'].toString()).toList()],
+                    items: ['Sin cliente', ..._clientes.map((c) => c['nombre'].toString())],
                     showAvatars: true,
                     avatarLetters: Map.fromEntries(
                       _clientes.map((c) => MapEntry(
@@ -400,7 +400,7 @@ class _ActividadesScreenState extends State<ActividadesScreen> {
                     value: asesorCtrl.text.isEmpty ? 'Sin asesor asignado' : asesorCtrl.text,
                     hint: 'Asesor',
                     icon: Icons.badge,
-                    items: ['Sin asesor asignado', ..._asesores.map((a) => a['nombre'].toString()).toList()],
+                    items: ['Sin asesor asignado', ..._asesores.map((a) => a['nombre'].toString())],
                     showAvatars: true,
                     avatarLetters: Map.fromEntries(
                       _asesores.map((a) => MapEntry(
@@ -461,7 +461,7 @@ class _ActividadesScreenState extends State<ActividadesScreen> {
                               'completada': completada,
                             };
                             try {
-                              if (esEdicion && actividad != null) {
+                              if (esEdicion) {
                                 await ActividadesService.actualizarActividad(actividad['id'], datos);
                                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Actividad actualizada'), backgroundColor: Color(0xFF10B981)));
                               } else {

@@ -112,7 +112,7 @@ class _VistaMapaScreenState extends State<VistaMapaScreen> {
                                 ),
                               ),
                             );
-                          }).toList(),
+                          }),
                         ],
                       ),
                     ),

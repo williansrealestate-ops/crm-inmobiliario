@@ -68,9 +68,9 @@ class _AnaliticasScreenState extends State<AnaliticasScreen> {
                       getDrawingHorizontalLine: (value) => FlLine(color: AppTheme.getDividerColor(context), strokeWidth: 1),
                     ),
                     titlesData: FlTitlesData(
-                      leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      leftTitles: const AxisTitles(sideTitles: const SideTitles(showTitles: false)),
+                      topTitles: const AxisTitles(sideTitles: const SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(sideTitles: const SideTitles(showTitles: false)),
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
@@ -95,7 +95,7 @@ class _AnaliticasScreenState extends State<AnaliticasScreen> {
                         isCurved: true,
                         color: const Color(0xFF10B981),
                         barWidth: 3,
-                        dotData: FlDotData(show: true),
+                        dotData: const FlDotData(show: true),
                         belowBarData: BarAreaData(show: true, color: const Color(0xFF10B981).withOpacity(0.1)),
                       ),
                       // Proyección
@@ -105,7 +105,7 @@ class _AnaliticasScreenState extends State<AnaliticasScreen> {
                         color: const Color(0xFF3B82F6),
                         barWidth: 3,
                         dashArray: [5, 5],
-                        dotData: FlDotData(show: true),
+                        dotData: const FlDotData(show: true),
                       ),
                     ],
                   ),

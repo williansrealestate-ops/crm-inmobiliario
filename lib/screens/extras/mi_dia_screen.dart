@@ -61,11 +61,11 @@ class _MiDiaScreenState extends State<MiDiaScreen> {
             Text('Actividades programadas para hoy', style: TextStyle(color: AppTheme.getTextSecondaryColor(context), fontSize: 14)),
             const SizedBox(height: 24),
             if (widget.busqueda != null && widget.busqueda!.isNotEmpty) ...[
-              Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(20)), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.search, size: 14, color: AppTheme.primary), const SizedBox(width: 6), Text('Buscando: "${widget.busqueda}"', style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w600))])),
+              Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(20)), child: Row(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.search, size: 14, color: AppTheme.primary), const SizedBox(width: 6), Text('Buscando: "${widget.busqueda}"', style: const TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w600))])),
               const SizedBox(height: 16),
             ],
             if (_actividadesFiltradas.isEmpty)
-              Card(child: Padding(padding: const EdgeInsets.all(60), child: Center(child: Column(children: [Icon(Icons.event_note, size: 64, color: Colors.grey), const SizedBox(height: 16), Text('No hay actividades para hoy', style: TextStyle(color: Colors.grey, fontSize: 16))]))))
+              const Card(child: Padding(padding: EdgeInsets.all(60), child: Center(child: Column(children: [const Icon(Icons.event_note, size: 64, color: Colors.grey), SizedBox(height: 16), const Text('No hay actividades para hoy', style: const TextStyle(color: Colors.grey, fontSize: 16))]))))
             else
               ..._actividadesFiltradas.map((a) {
                 final completada = a['completada'] ?? false;
@@ -80,7 +80,7 @@ class _MiDiaScreenState extends State<MiDiaScreen> {
                   ])),
                   Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Text(a['tipo'] ?? 'Reunión', style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600))),
                 ])));
-              }).toList(),
+              }),
           ],
         ),
       ),

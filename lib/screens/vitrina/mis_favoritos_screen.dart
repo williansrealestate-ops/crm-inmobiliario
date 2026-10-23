@@ -214,9 +214,9 @@ class _MisFavoritosScreenState extends State<MisFavoritosScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        if (recamaras > 0) Column(children: [Icon(Icons.bed, size: 18, color: const Color(0xFF6B7280)), const SizedBox(height: 4), Text('$recamaras', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))), const Text('Rec', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)))]),
-                        if (banos > 0) Column(children: [Icon(Icons.bathtub, size: 18, color: const Color(0xFF6B7280)), const SizedBox(height: 4), Text('$banos', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))), const Text('Baños', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)))]),
-                        if (area > 0) Column(children: [Icon(Icons.square_foot, size: 18, color: const Color(0xFF6B7280)), const SizedBox(height: 4), Text(_formatearArea(area), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))), const Text('m²', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)))]),
+                        if (recamaras > 0) Column(children: [const Icon(Icons.bed, size: 18, color: Color(0xFF6B7280)), const SizedBox(height: 4), Text('$recamaras', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))), const Text('Rec', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)))]),
+                        if (banos > 0) Column(children: [const Icon(Icons.bathtub, size: 18, color: Color(0xFF6B7280)), const SizedBox(height: 4), Text('$banos', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))), const Text('Baños', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)))]),
+                        if (area > 0) Column(children: [const Icon(Icons.square_foot, size: 18, color: Color(0xFF6B7280)), const SizedBox(height: 4), Text(_formatearArea(area), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))), const Text('m²', style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)))]),
                       ],
                     ),
                   ),

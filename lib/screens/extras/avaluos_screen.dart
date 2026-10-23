@@ -16,7 +16,7 @@ class _AvaluosScreenState extends State<AvaluosScreen> with SingleTickerProvider
   // ✅ Variables de estado
   String _tipoPropiedad = 'casa';
   String _metodoValuacion = 'comparativo';
-  List<Map<String, dynamic>> _comparables = [];
+  final List<Map<String, dynamic>> _comparables = [];
 
   // ✅ Controladores de texto
   final TextEditingController _direccionCtrl = TextEditingController();
@@ -458,13 +458,13 @@ class _AvaluosScreenState extends State<AvaluosScreen> with SingleTickerProvider
     _tasaCapitalizacionCtrl.clear();
     _valorTerrenoCtrl.clear();
     _costoPorM2Ctrl.clear();
-    _comparables.forEach((c) {
+    for (var c in _comparables) {
       (c['direccionCtrl'] as TextEditingController).dispose();
       (c['valorCtrl'] as TextEditingController).dispose();
       (c['areaTerrenoCtrl'] as TextEditingController).dispose();
       (c['areaConstruccionCtrl'] as TextEditingController).dispose();
       (c['antiguedadCtrl'] as TextEditingController).dispose();
-    });
+    }
     _comparables.clear();
   }
 

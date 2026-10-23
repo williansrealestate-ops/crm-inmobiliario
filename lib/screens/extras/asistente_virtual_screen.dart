@@ -190,7 +190,7 @@ class _AsistenteVirtualScreenState extends State<AsistenteVirtualScreen> {
     if (info != null) {
       final contenido = info['contenido'] as String;
       final caso = info['caso'] as String;
-      final mensajeCompleto = contenido + '\n\n' + caso;
+      final mensajeCompleto = '$contenido\n\n$caso';
       _addBotMessage(
         mensajeCompleto,
         opciones: [
@@ -219,8 +219,8 @@ class _AsistenteVirtualScreenState extends State<AsistenteVirtualScreen> {
     String mensaje = '🎯 **Recomendaciones para hoy:**\n\n';
     for (var i = 0; i < recomendaciones.length; i++) {
       final rec = recomendaciones[i];
-      mensaje = mensaje + '${i + 1}. ' + rec['titulo'].toString() + '\n';
-      mensaje = mensaje + rec['descripcion'].toString() + '\n\n';
+      mensaje = '$mensaje${i + 1}. ${rec['titulo']}\n';
+      mensaje = '$mensaje${rec['descripcion']}\n\n';
     }
 
     final opciones = <Map<String, dynamic>>[];
@@ -246,12 +246,12 @@ class _AsistenteVirtualScreenState extends State<AsistenteVirtualScreen> {
       return;
     }
 
-    String mensaje = '🔒 **Operaciones en proceso (' + operaciones.length.toString() + '):**\n\n';
+    String mensaje = '🔒 **Operaciones en proceso (${operaciones.length}):**\n\n';
     for (var op in operaciones) {
       final dias = _calcularDiasDesdeFecha(op['fechaReserva'] ?? op['fechaIngreso'] ?? '');
-      mensaje = mensaje + '• **' + op['titulo'].toString() + '** - ' + dias.toString() + ' días reservado\n';
-      mensaje = mensaje + '  Precio: \$' + _formatearNumero(op['precio'] ?? '0') + '\n';
-      mensaje = mensaje + '  Comprador: ' + (op['propietario'] ?? 'No asignado') + '\n\n';
+      mensaje = '$mensaje• **${op['titulo']}** - $dias días reservado\n';
+      mensaje = '$mensaje  Precio: \$${_formatearNumero(op['precio'] ?? '0')}\n';
+      mensaje = '$mensaje  Comprador: ' + (op['propietario'] ?? 'No asignado') + '\n\n';
     }
 
     _addBotMessage(
@@ -277,13 +277,13 @@ class _AsistenteVirtualScreenState extends State<AsistenteVirtualScreen> {
       return;
     }
 
-    String mensaje = '🎯 **Clientes calificados sin propiedad (' + clientes.length.toString() + '):**\n\n';
+    String mensaje = '🎯 **Clientes calificados sin propiedad (${clientes.length}):**\n\n';
     for (var c in clientes) {
       final presupuesto = c['presupuesto'] ?? '0';
-      mensaje = mensaje + '• **' + c['nombre'].toString() + '**\n';
-      mensaje = mensaje + '  Presupuesto: \$' + _formatearNumero(presupuesto.toString()) + '\n';
-      mensaje = mensaje + '  Tipo: ' + (c['tipo'] ?? 'No especificado') + '\n';
-      mensaje = mensaje + '  Teléfono: ' + (c['telefono'] ?? 'No registrado') + '\n\n';
+      mensaje = '$mensaje• **${c['nombre']}**\n';
+      mensaje = '$mensaje  Presupuesto: \$${_formatearNumero(presupuesto.toString())}\n';
+      mensaje = '$mensaje  Tipo: ' + (c['tipo'] ?? 'No especificado') + '\n';
+      mensaje = '$mensaje  Teléfono: ' + (c['telefono'] ?? 'No registrado') + '\n\n';
     }
 
     _addBotMessage(
@@ -299,27 +299,27 @@ class _AsistenteVirtualScreenState extends State<AsistenteVirtualScreen> {
     final perfil = AnalisisInteligenteService.getAnalisisPerfil();
 
     String mensaje = '📈 **Tu Perfil Profesional:**\n\n';
-    mensaje = mensaje + '**Nivel:** ' + perfil['nivel'].toString() + ' 🏆\n\n';
-    mensaje = mensaje + '**Métricas clave:**\n';
-    mensaje = mensaje + '• Ventas cerradas: ' + perfil['totalVentas'].toString() + '\n';
-    mensaje = mensaje + '• Ingresos generados: \$' + _formatearNumero(perfil['totalIngresos'].toString()) + '\n';
-    mensaje = mensaje + '• Tasa de cierre: ' + (perfil['tasaCierre'] as double).toStringAsFixed(0) + '%\n';
-    mensaje = mensaje + '• Productividad: ' + (perfil['tasaProductividad'] as double).toStringAsFixed(0) + '%\n\n';
+    mensaje = '$mensaje**Nivel:** ${perfil['nivel']} 🏆\n\n';
+    mensaje = '$mensaje**Métricas clave:**\n';
+    mensaje = '$mensaje• Ventas cerradas: ${perfil['totalVentas']}\n';
+    mensaje = '$mensaje• Ingresos generados: \$${_formatearNumero(perfil['totalIngresos'].toString())}\n';
+    mensaje = '$mensaje• Tasa de cierre: ${(perfil['tasaCierre'] as double).toStringAsFixed(0)}%\n';
+    mensaje = '$mensaje• Productividad: ${(perfil['tasaProductividad'] as double).toStringAsFixed(0)}%\n\n';
 
     final fortalezas = perfil['fortalezas'] as List;
     if (fortalezas.isNotEmpty) {
-      mensaje = mensaje + '**✅ Fortalezas:**\n';
+      mensaje = '$mensaje**✅ Fortalezas:**\n';
       for (var f in fortalezas) {
-        mensaje = mensaje + '• ' + f.toString() + '\n';
+        mensaje = '$mensaje• $f\n';
       }
-      mensaje = mensaje + '\n';
+      mensaje = '$mensaje\n';
     }
 
     final areasMejora = perfil['areasMejora'] as List;
     if (areasMejora.isNotEmpty) {
-      mensaje = mensaje + '**🎯 Áreas de mejora:**\n';
+      mensaje = '$mensaje**🎯 Áreas de mejora:**\n';
       for (var a in areasMejora) {
-        mensaje = mensaje + '• ' + a.toString() + '\n';
+        mensaje = '$mensaje• $a\n';
       }
     }
 
@@ -354,7 +354,7 @@ class _AsistenteVirtualScreenState extends State<AsistenteVirtualScreen> {
       final info = _knowledgeBase[primerResultado]!;
       final contenido = info['contenido'] as String;
       final caso = info['caso'] as String;
-      final mensajeCompleto = contenido + '\n\n' + caso;
+      final mensajeCompleto = '$contenido\n\n$caso';
       _addBotMessage(
         mensajeCompleto,
         opciones: [
@@ -363,7 +363,7 @@ class _AsistenteVirtualScreenState extends State<AsistenteVirtualScreen> {
         ],
       );
     } else {
-      final mensajeNoEncontrado = '🔍 No encontré información específica sobre "' + query + '" en mi base de conocimiento.\n\nTe sugiero:\n1. Revisar la sección de **Academia** para información detallada.\n2. Intentar con otras palabras clave.\n3. Seleccionar un tema de las opciones disponibles.';
+      final mensajeNoEncontrado = '🔍 No encontré información específica sobre "$query" en mi base de conocimiento.\n\nTe sugiero:\n1. Revisar la sección de **Academia** para información detallada.\n2. Intentar con otras palabras clave.\n3. Seleccionar un tema de las opciones disponibles.';
       _addBotMessage(
         mensajeNoEncontrado,
         opciones: [
@@ -430,7 +430,7 @@ class _AsistenteVirtualScreenState extends State<AsistenteVirtualScreen> {
       recomendacion = 'Este cliente está INDECISO. **Estrategia recomendada:**\n\n1. Haz preguntas abiertas para entender sus dudas reales.\n2. Ofrece más información específica.\n3. Invítalo a una visita sin compromiso.\n4. Comparte testimonios de clientes satisfechos.\n5. Usa la técnica de cierre por opciones.\n\n💡 *La indecisión suele ocultar una objeción no expresada.*';
     }
 
-    final mensajeAnalisis = emoji + ' **Análisis de Sentimiento:** ' + resultado + '\n\n**Texto analizado:** "' + texto + '"\n\n**Indicadores detectados:**\n• Señales positivas: ' + puntajePositivo.toString() + '\n• Señales negativas: ' + puntajeNegativo.toString() + '\n• Señales neutrales: ' + puntajeNeutral.toString() + '\n\n**Recomendación:**\n' + recomendacion;
+    final mensajeAnalisis = '$emoji **Análisis de Sentimiento:** $resultado\n\n**Texto analizado:** "$texto"\n\n**Indicadores detectados:**\n• Señales positivas: $puntajePositivo\n• Señales negativas: $puntajeNegativo\n• Señales neutrales: $puntajeNeutral\n\n**Recomendación:**\n$recomendacion';
 
     _addBotMessage(
       mensajeAnalisis,
@@ -450,16 +450,16 @@ class _AsistenteVirtualScreenState extends State<AsistenteVirtualScreen> {
 
     switch (tipo) {
       case 'captacion':
-        return ' **SCRIPT: LLAMADA DE CAPTACIÓN**\n\n"Hola ' + nombre + ', soy [Tu nombre] de [Tu inmobiliaria]. Te llamo porque vi que tienes una propiedad en [zona] y me gustaría platicar contigo sobre una oportunidad.\n\n¿Tienes 2 minutos?\n\n[Esperar respuesta]\n\nExcelente. Resulta que tengo clientes muy interesados en la zona y tu propiedad podría ser exactamente lo que buscan. Me gustaría agendar una visita para hacer una valuación profesional sin compromiso.\n\n¿Te parece bien el [día] a las [hora]?\n\n[Si acepta]\nPerfecto, te enviaré un WhatsApp con los detalles. ¡Gracias ' + nombre + '!"';
+        return ' **SCRIPT: LLAMADA DE CAPTACIÓN**\n\n"Hola $nombre, soy [Tu nombre] de [Tu inmobiliaria]. Te llamo porque vi que tienes una propiedad en [zona] y me gustaría platicar contigo sobre una oportunidad.\n\n¿Tienes 2 minutos?\n\n[Esperar respuesta]\n\nExcelente. Resulta que tengo clientes muy interesados en la zona y tu propiedad podría ser exactamente lo que buscan. Me gustaría agendar una visita para hacer una valuación profesional sin compromiso.\n\n¿Te parece bien el [día] a las [hora]?\n\n[Si acepta]\nPerfecto, te enviaré un WhatsApp con los detalles. ¡Gracias $nombre!"';
 
       case 'seguimiento':
-        return '📞 **SCRIPT: SEGUIMIENTO POST-VISITA**\n\n"Hola ' + nombre + ', soy [Tu nombre]. Te llamo para saber qué te pareció ' + prop + ' que visitamos el [día].\n\n[Esperar respuesta]\n\nMe alegra que te haya gustado. ¿Tienes alguna duda o algo que quieras revisar nuevamente?\n\n[Si tiene dudas]\nCon gusto te aclaro todo. ¿Qué te parece si agendamos una segunda visita?\n\n[Si está interesado]\nExcelente. Para avanzar, necesitaría que me confirmes:\n1. ¿Tienes financiamiento pre-aprobado?\n2. ¿En qué tiempo te gustaría cerrar?\n\n[Si no está interesado]\nEntiendo perfectamente. ¿Hay algo específico que no te haya convencido?"';
+        return '📞 **SCRIPT: SEGUIMIENTO POST-VISITA**\n\n"Hola $nombre, soy [Tu nombre]. Te llamo para saber qué te pareció $prop que visitamos el [día].\n\n[Esperar respuesta]\n\nMe alegra que te haya gustado. ¿Tienes alguna duda o algo que quieras revisar nuevamente?\n\n[Si tiene dudas]\nCon gusto te aclaro todo. ¿Qué te parece si agendamos una segunda visita?\n\n[Si está interesado]\nExcelente. Para avanzar, necesitaría que me confirmes:\n1. ¿Tienes financiamiento pre-aprobado?\n2. ¿En qué tiempo te gustaría cerrar?\n\n[Si no está interesado]\nEntiendo perfectamente. ¿Hay algo específico que no te haya convencido?"';
 
       case 'cierre':
-        return '🎯 **SCRIPT: CIERRE DE VENTA**\n\n"Hola ' + nombre + ', te llamo con buenas noticias sobre ' + prop + '.\n\n[Esperar respuesta]\n\nEl propietario me comentó que tiene otra oferta muy seria para mañana. Antes de responderle, quería darte la oportunidad porque sé que te interesa mucho.\n\n¿Te gustaría hacer una oferta hoy?\n\n[Si dice que sí]\nPerfecto. ¿Qué precio tendrías en mente?\n\n[Negociar]\n\nExcelente. Para formalizar, necesitaría:\n1. Copia de tu identificación\n2. Comprobante de ingresos o pre-aprobación\n3. Un anticipo del 10%\n\n¿Podrías traerlo mañana a las [hora]?\n\n[Si duda]\nEntiendo que es una decisión importante. ¿Qué te genera duda específicamente?"';
+        return '🎯 **SCRIPT: CIERRE DE VENTA**\n\n"Hola $nombre, te llamo con buenas noticias sobre $prop.\n\n[Esperar respuesta]\n\nEl propietario me comentó que tiene otra oferta muy seria para mañana. Antes de responderle, quería darte la oportunidad porque sé que te interesa mucho.\n\n¿Te gustaría hacer una oferta hoy?\n\n[Si dice que sí]\nPerfecto. ¿Qué precio tendrías en mente?\n\n[Negociar]\n\nExcelente. Para formalizar, necesitaría:\n1. Copia de tu identificación\n2. Comprobante de ingresos o pre-aprobación\n3. Un anticipo del 10%\n\n¿Podrías traerlo mañana a las [hora]?\n\n[Si duda]\nEntiendo que es una decisión importante. ¿Qué te genera duda específicamente?"';
 
       case 'objeciones':
-        return ' **SCRIPT: MANEJO DE OBJECIONES**\n\n**Si dice "Es muy caro":**\n"Entiendo tu preocupación, ' + nombre + '. Sin embargo, este precio refleja el valor real de mercado. De hecho, propiedades similares en la zona se han vendido hasta un 10% más caro en los últimos 6 meses. ¿Te gustaría que te muestre el comparativo?"\n\n**Si dice "Lo voy a pensar":**\n"Claro, es una decisión importante. ¿Hay algo específico que te genere duda? A veces lo que parece "pensarlo" es una objeción no expresada. ¿Qué te preocupa realmente?"\n\n**Si dice "Necesito hablarlo con mi esposa/esposo":**\n"Por supuesto, es una decisión en pareja. ¿Qué te parece si agendamos una visita juntos para que ambos la conozcan?"';
+        return ' **SCRIPT: MANEJO DE OBJECIONES**\n\n**Si dice "Es muy caro":**\n"Entiendo tu preocupación, $nombre. Sin embargo, este precio refleja el valor real de mercado. De hecho, propiedades similares en la zona se han vendido hasta un 10% más caro en los últimos 6 meses. ¿Te gustaría que te muestre el comparativo?"\n\n**Si dice "Lo voy a pensar":**\n"Claro, es una decisión importante. ¿Hay algo específico que te genere duda? A veces lo que parece "pensarlo" es una objeción no expresada. ¿Qué te preocupa realmente?"\n\n**Si dice "Necesito hablarlo con mi esposa/esposo":**\n"Por supuesto, es una decisión en pareja. ¿Qué te parece si agendamos una visita juntos para que ambos la conozcan?"';
 
       default:
         return 'Script no disponible.';
@@ -527,7 +527,7 @@ class _AsistenteVirtualScreenState extends State<AsistenteVirtualScreen> {
                 final texto = _sentimientoCtrl.text.trim();
                 if (texto.isNotEmpty) {
                   Navigator.pop(ctx);
-                  _addUserMessage('📊 Analizar: "' + texto + '"', 'sentimiento_analisis');
+                  _addUserMessage('📊 Analizar: "$texto"', 'sentimiento_analisis');
                   _analizarSentimiento(texto);
                   
                   final telefono = _clienteTelefonoCtrl.text.trim();
@@ -535,7 +535,7 @@ class _AsistenteVirtualScreenState extends State<AsistenteVirtualScreen> {
                   if (telefono.isNotEmpty) {
                     Future.delayed(const Duration(seconds: 1), () {
                       _addBotMessage(
-                        '📱 ¿Deseas enviar este análisis al cliente ' + nombre + ' por WhatsApp?',
+                        '📱 ¿Deseas enviar este análisis al cliente $nombre por WhatsApp?',
                         opciones: [
                           {'label': '📱 Sí, enviar por WhatsApp', 'action': 'whatsapp_sentimiento', 'telefono': telefono, 'nombre': nombre, 'texto': texto},
                           {'label': '❌ No, gracias', 'action': 'inicio'},
@@ -615,7 +615,7 @@ class _AsistenteVirtualScreenState extends State<AsistenteVirtualScreen> {
               onPressed: () {
                 Navigator.pop(ctx);
                 final script = _generarScript(_scriptTipo, _scriptNombreCliente, _scriptPropiedad);
-                _addUserMessage(' Generar script: ' + _scriptTipo, 'script_generado');
+                _addUserMessage(' Generar script: $_scriptTipo', 'script_generado');
                 _addBotMessage(
                   script,
                   opciones: [
@@ -649,10 +649,10 @@ class _AsistenteVirtualScreenState extends State<AsistenteVirtualScreen> {
   }
 
   void _enviarWhatsApp(String telefono, String nombre, String mensaje) {
-    final mensajeCompleto = 'Hola ' + nombre + ',\n\n' + mensaje + '\n\nSaludos,\n[Tu nombre]\n[Tu inmobiliaria]';
+    final mensajeCompleto = 'Hola $nombre,\n\n$mensaje\n\nSaludos,\n[Tu nombre]\n[Tu inmobiliaria]';
     WhatsAppService.enviarMensaje(telefono, mensajeCompleto);
     _addBotMessage(
-      '✅ Mensaje enviado a ' + nombre + ' (' + telefono + ') por WhatsApp.\n\n**Mensaje enviado:**\n' + mensajeCompleto,
+      '✅ Mensaje enviado a $nombre ($telefono) por WhatsApp.\n\n**Mensaje enviado:**\n$mensajeCompleto',
       opciones: [
         {'label': '🔄 Volver al inicio', 'action': 'inicio'},
       ],
@@ -777,7 +777,7 @@ class _AsistenteVirtualScreenState extends State<AsistenteVirtualScreen> {
                             onPressed: () {
                               final query = _textController.text.trim();
                               if (query.isNotEmpty) {
-                                _addUserMessage('🔍 ' + query, 'busqueda');
+                                _addUserMessage('🔍 $query', 'busqueda');
                                 _buscarEnBaseDeConocimiento(query);
                                 _textController.clear();
                               }
@@ -786,7 +786,7 @@ class _AsistenteVirtualScreenState extends State<AsistenteVirtualScreen> {
                         ),
                         onSubmitted: (value) {
                           if (value.trim().isNotEmpty) {
-                            _addUserMessage('🔍 ' + value, 'busqueda');
+                            _addUserMessage('🔍 $value', 'busqueda');
                             _buscarEnBaseDeConocimiento(value);
                             _textController.clear();
                           }
@@ -809,7 +809,7 @@ class _AsistenteVirtualScreenState extends State<AsistenteVirtualScreen> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(color: const Color(0xFFE2E8F0), borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16), bottomRight: Radius.circular(16))),
+        decoration: const BoxDecoration(color: Color(0xFFE2E8F0), borderRadius: BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16), bottomRight: Radius.circular(16))),
         child: Row(mainAxisSize: MainAxisSize.min, children: [_buildDot(), const SizedBox(width: 4), _buildDot(delay: 200), const SizedBox(width: 4), _buildDot(delay: 400)]),
       ),
     );
@@ -856,7 +856,7 @@ class _AsistenteVirtualScreenState extends State<AsistenteVirtualScreen> {
                       onPressed: () {
                         final telefono = opcion['telefono']?.toString() ?? '';
                         final nombre = opcion['nombre']?.toString() ?? '';
-                        final analisis = 'Análisis de tu mensaje: Revisa el resumen que te envié. Estoy aquí para ayudarte con cualquier duda sobre la propiedad.';
+                        const analisis = 'Análisis de tu mensaje: Revisa el resumen que te envié. Estoy aquí para ayudarte con cualquier duda sobre la propiedad.';
                         _enviarWhatsApp(telefono, nombre, analisis);
                       },
                       icon: const Icon(Icons.message, color: Color(0xFF25D366), size: 16),
@@ -964,8 +964,8 @@ class _AsistenteVirtualScreenState extends State<AsistenteVirtualScreen> {
 
   String _formatearNumero(String numero) {
     final valor = double.tryParse(numero.replaceAll(',', '')) ?? 0;
-    if (valor >= 1000000) return (valor / 1000000).toStringAsFixed(1) + 'M';
-    if (valor >= 1000) return (valor / 1000).toStringAsFixed(0) + 'K';
+    if (valor >= 1000000) return '${(valor / 1000000).toStringAsFixed(1)}M';
+    if (valor >= 1000) return '${(valor / 1000).toStringAsFixed(0)}K';
     return valor.toStringAsFixed(0);
   }
 }

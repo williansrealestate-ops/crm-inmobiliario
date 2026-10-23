@@ -59,8 +59,9 @@ class _ActividadesScreenState extends State<ActividadesScreen> {
       final coincideTipo = _filtroTipo == 'Todas' || a['tipo'] == _filtroTipo;
       final coincideAsesor = _filtroAsesor == 'Todos' || a['asesor'] == _filtroAsesor;
       bool coincideEstado = true;
-      if (_filtroEstado == 'Pendientes') coincideEstado = a['completada'] != true;
-      else if (_filtroEstado == 'Completadas') coincideEstado = a['completada'] == true;
+      if (_filtroEstado == 'Pendientes') {
+        coincideEstado = a['completada'] != true;
+      } else if (_filtroEstado == 'Completadas') coincideEstado = a['completada'] == true;
       else if (_filtroEstado == 'Vencidas') coincideEstado = _estaVencida(a);
       else if (_filtroEstado == 'Hoy') {
         final hoy = DateTime.now();
@@ -148,7 +149,7 @@ class _ActividadesScreenState extends State<ActividadesScreen> {
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
             ElevatedButton(onPressed: () {
               final datos = {'titulo': tituloCtrl.text, 'tipo': tipoCtrl.text, 'fecha': fechaCtrl.text, 'hora': horaCtrl.text, 'cliente': clienteCtrl.text, 'asesor': asesorCtrl.text, 'prioridad': prioridadCtrl.text, 'completada': actividad?['completada'] ?? false, 'notas': notasCtrl.text};
-              if (esEditar) { LocalStorageService.actualizarActividad(actividad!['id'].toString(), {...datos, 'id': actividad['id'].toString()}); } else { LocalStorageService.agregarActividad(datos); }
+              if (esEditar) { LocalStorageService.actualizarActividad(actividad['id'].toString(), {...datos, 'id': actividad['id'].toString()}); } else { LocalStorageService.agregarActividad(datos); }
               Navigator.pop(ctx);
               _cargarActividades();
             }, child: Text(esEditar ? 'Guardar' : 'Agregar')),
@@ -210,17 +211,17 @@ class _ActividadesScreenState extends State<ActividadesScreen> {
               Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: AppTheme.danger.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: const Text('VENCIDA', style: TextStyle(color: AppTheme.danger, fontSize: 10, fontWeight: FontWeight.w700))),
             ],
             const SizedBox(width: 16),
-            Icon(Icons.person, size: 12, color: Colors.grey),
+            const Icon(Icons.person, size: 12, color: Colors.grey),
             const SizedBox(width: 4),
-            Text(a['cliente'] ?? '', style: TextStyle(color: Colors.grey, fontSize: 13)),
+            Text(a['cliente'] ?? '', style: const TextStyle(color: Colors.grey, fontSize: 13)),
           ]),
           if (asesor.isNotEmpty) ...[
             const SizedBox(height: 2),
-            Row(children: [Icon(Icons.business, size: 12, color: AppTheme.primary), const SizedBox(width: 4), Text('Asesor: $asesor', style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w600))]),
+            Row(children: [const Icon(Icons.business, size: 12, color: AppTheme.primary), const SizedBox(width: 4), Text('Asesor: $asesor', style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w600))]),
           ],
           if (notas.isNotEmpty && !compacto) ...[
             const SizedBox(height: 6),
-            Row(children: [Icon(Icons.note, size: 12, color: AppTheme.primary), const SizedBox(width: 4), Expanded(child: Text(notas, style: TextStyle(color: AppTheme.getTextSecondaryColor(context), fontSize: 12, fontStyle: FontStyle.italic), maxLines: 2, overflow: TextOverflow.ellipsis))]),
+            Row(children: [const Icon(Icons.note, size: 12, color: AppTheme.primary), const SizedBox(width: 4), Expanded(child: Text(notas, style: TextStyle(color: AppTheme.getTextSecondaryColor(context), fontSize: 12, fontStyle: FontStyle.italic), maxLines: 2, overflow: TextOverflow.ellipsis))]),
           ],
         ])),
         const SizedBox(width: 12),
@@ -276,20 +277,20 @@ class _ActividadesScreenState extends State<ActividadesScreen> {
               const SizedBox(width: 12),
               Expanded(child: DropdownButtonFormField<String>(value: _filtroAsesor, decoration: const InputDecoration(labelText: 'Asesor', contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)), items: ['Todos', ..._getAsesoresUnicos()].map((f) => DropdownMenuItem(value: f, child: Text(f))).toList(), onChanged: (v) => setState(() => _filtroAsesor = v ?? 'Todos'))),
             ]),
-            if (widget.busqueda != null && widget.busqueda!.isNotEmpty) ...[const SizedBox(height: 12), Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(20)), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.search, size: 14, color: AppTheme.primary), const SizedBox(width: 6), Text('Buscando: "${widget.busqueda}"', style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w600))]))],
+            if (widget.busqueda != null && widget.busqueda!.isNotEmpty) ...[const SizedBox(height: 12), Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(20)), child: Row(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.search, size: 14, color: AppTheme.primary), const SizedBox(width: 6), Text('Buscando: "${widget.busqueda}"', style: const TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w600))]))],
           ]))),
           const SizedBox(height: 16),
           if (_vistaActual == 'lista') ...[
             Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(gradient: LinearGradient(colors: [AppTheme.primary.withOpacity(0.1), AppTheme.primary.withOpacity(0.05)]), borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.primary.withOpacity(0.3))), child: Row(children: [
-              Icon(Icons.today, color: AppTheme.primary, size: 24),
+              const Icon(Icons.today, color: AppTheme.primary, size: 24),
               const SizedBox(width: 12),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Resumen de hoy', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)), Text('$actividadesHoy actividades pendientes para hoy', style: TextStyle(color: AppTheme.getTextSecondaryColor(context), fontSize: 13))])),
-              if (vencidas > 0) Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), decoration: BoxDecoration(color: AppTheme.danger.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Text('$vencidas vencidas', style: TextStyle(color: AppTheme.danger, fontSize: 12, fontWeight: FontWeight.w700))),
+              if (vencidas > 0) Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), decoration: BoxDecoration(color: AppTheme.danger.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Text('$vencidas vencidas', style: const TextStyle(color: AppTheme.danger, fontSize: 12, fontWeight: FontWeight.w700))),
             ])),
             const SizedBox(height: 16),
           ],
           if (_vistaActual == 'asesor') ...[
-            if (_actividadesPorAsesor.isEmpty) Card(child: Padding(padding: const EdgeInsets.all(60), child: Center(child: Column(children: [Icon(Icons.group_off, size: 64, color: Colors.grey), const SizedBox(height: 16), Text('No hay actividades', style: TextStyle(color: Colors.grey, fontSize: 16))]))))
+            if (_actividadesPorAsesor.isEmpty) const Card(child: Padding(padding: EdgeInsets.all(60), child: Center(child: Column(children: [const Icon(Icons.group_off, size: 64, color: Colors.grey), SizedBox(height: 16), const Text('No hay actividades', style: const TextStyle(color: Colors.grey, fontSize: 16))]))))
             else ..._actividadesPorAsesor.entries.map((entry) {
               final asesor = entry.key;
               final actividades = entry.value;
@@ -297,16 +298,16 @@ class _ActividadesScreenState extends State<ActividadesScreen> {
               final totalAsesor = actividades.length;
               final progreso = totalAsesor > 0 ? completadasAsesor / totalAsesor : 0.0;
               return Container(margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: AppTheme.getSurfaceColor(context), borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.primary.withOpacity(0.2))), child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [Container(width: 40, height: 40, decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(20)), child: Icon(Icons.person, color: AppTheme.primary)), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(asesor, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: AppTheme.getTextPrimaryColor(context))), Text('$completadasAsesor de $totalAsesor completadas', style: TextStyle(color: AppTheme.getTextSecondaryColor(context), fontSize: 13))])), Text('${(progreso * 100).toStringAsFixed(0)}%', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20, color: progreso >= 0.7 ? AppTheme.success : progreso >= 0.4 ? AppTheme.warning : AppTheme.danger))]),
+                Row(children: [Container(width: 40, height: 40, decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(20)), child: const Icon(Icons.person, color: AppTheme.primary)), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(asesor, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: AppTheme.getTextPrimaryColor(context))), Text('$completadasAsesor de $totalAsesor completadas', style: TextStyle(color: AppTheme.getTextSecondaryColor(context), fontSize: 13))])), Text('${(progreso * 100).toStringAsFixed(0)}%', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20, color: progreso >= 0.7 ? AppTheme.success : progreso >= 0.4 ? AppTheme.warning : AppTheme.danger))]),
                 const SizedBox(height: 8),
                 ClipRRect(borderRadius: BorderRadius.circular(8), child: LinearProgressIndicator(value: progreso, backgroundColor: Colors.grey.withOpacity(0.2), valueColor: AlwaysStoppedAnimation<Color>(progreso >= 0.7 ? AppTheme.success : progreso >= 0.4 ? AppTheme.warning : AppTheme.danger), minHeight: 8)),
                 const SizedBox(height: 12),
                 ...actividades.map((a) => _buildActividadCard(a, compacto: true)),
               ])));
-            }).toList(),
+            }),
           ] else ...[
-            if (_actividadesFiltradas.isEmpty) Card(child: Padding(padding: const EdgeInsets.all(60), child: Center(child: Column(children: [Icon(Icons.event_note, size: 64, color: Colors.grey), const SizedBox(height: 16), Text('No hay actividades', style: TextStyle(color: Colors.grey, fontSize: 16))]))))
-            else ..._actividadesFiltradas.map((a) => _buildActividadCard(a)).toList(),
+            if (_actividadesFiltradas.isEmpty) const Card(child: Padding(padding: EdgeInsets.all(60), child: Center(child: Column(children: [const Icon(Icons.event_note, size: 64, color: Colors.grey), SizedBox(height: 16), const Text('No hay actividades', style: const TextStyle(color: Colors.grey, fontSize: 16))]))))
+            else ..._actividadesFiltradas.map((a) => _buildActividadCard(a)),
           ],
         ]))),
       ]),

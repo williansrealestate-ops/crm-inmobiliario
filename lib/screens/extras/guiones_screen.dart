@@ -51,7 +51,7 @@ class _GuionesScreenState extends State<GuionesScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
           ElevatedButton(onPressed: () {
             final datos = {'titulo': tituloCtrl.text, 'contenido': contenidoCtrl.text};
-            if (esEditar) { LocalStorageService.actualizarGuion(guion!['id'].toString(), {...datos, 'id': guion['id'].toString()}); } else { LocalStorageService.agregarGuion(datos); }
+            if (esEditar) { LocalStorageService.actualizarGuion(guion['id'].toString(), {...datos, 'id': guion['id'].toString()}); } else { LocalStorageService.agregarGuion(datos); }
             Navigator.pop(ctx);
             _cargarGuiones();
           }, child: Text(esEditar ? 'Guardar' : 'Agregar')),
@@ -91,17 +91,17 @@ class _GuionesScreenState extends State<GuionesScreen> {
             ]),
             const SizedBox(height: 24),
             if (widget.busqueda != null && widget.busqueda!.isNotEmpty) ...[
-              Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(20)), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.search, size: 14, color: AppTheme.primary), const SizedBox(width: 6), Text('Buscando: "${widget.busqueda}"', style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w600))])),
+              Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(20)), child: Row(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.search, size: 14, color: AppTheme.primary), const SizedBox(width: 6), Text('Buscando: "${widget.busqueda}"', style: const TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w600))])),
               const SizedBox(height: 16),
             ],
             if (_guionesFiltrados.isEmpty)
-              Card(child: Padding(padding: const EdgeInsets.all(60), child: Center(child: Column(children: [Icon(Icons.article, size: 64, color: Colors.grey), const SizedBox(height: 16), Text('No hay guiones', style: TextStyle(color: Colors.grey, fontSize: 16))]))))
+              const Card(child: Padding(padding: EdgeInsets.all(60), child: Center(child: Column(children: [const Icon(Icons.article, size: 64, color: Colors.grey), SizedBox(height: 16), const Text('No hay guiones', style: const TextStyle(color: Colors.grey, fontSize: 16))]))))
             else
               ..._guionesFiltrados.map((g) => Container(margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: AppTheme.getSurfaceColor(context), borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.primary.withOpacity(0.2))), child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [Expanded(child: Text(g['titulo'] ?? '', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppTheme.getTextPrimaryColor(context)))), IconButton(icon: const Icon(Icons.copy, color: AppTheme.primary, size: 20), onPressed: () => _copiarGuion(g), tooltip: 'Copiar guion'), IconButton(icon: const Icon(Icons.edit, color: AppTheme.primary, size: 20), onPressed: () => _mostrarFormularioGuion(guion: g)), IconButton(icon: const Icon(Icons.delete, color: AppTheme.danger, size: 20), onPressed: () => _confirmarEliminar(g))]),
                 const SizedBox(height: 8),
                 Text(g['contenido'] ?? '', style: TextStyle(color: AppTheme.getTextSecondaryColor(context), fontSize: 13, height: 1.5), maxLines: 3, overflow: TextOverflow.ellipsis),
-              ])))).toList(),
+              ])))),
           ],
         ),
       ),

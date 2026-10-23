@@ -39,7 +39,7 @@ class BackupService {
     };
     
     // Descargar archivo
-    final jsonStr = JsonEncoder.withIndent('  ').convert(respaldo);
+    final jsonStr = const JsonEncoder.withIndent('  ').convert(respaldo);
     final blob = html.Blob([jsonStr], 'application/json');
     final url = html.Url.createObjectUrlFromBlob(blob);
     final anchor = html.AnchorElement(href: url)

@@ -17,7 +17,7 @@ class DetalleInmuebleNuevo extends StatelessWidget {
   }
 
   String _formatearPrecio(String precio) {
-    final valor = double.tryParse(precio?.replaceAll(',', '') ?? '0') ?? 0;
+    final valor = double.tryParse(precio.replaceAll(',', '') ?? '0') ?? 0;
     if (valor >= 1000000) return '\$${(valor / 1000000).toStringAsFixed(1)}M';
     if (valor >= 1000) return '\$${(valor / 1000).toStringAsFixed(0)}K';
     return '\$${valor.toStringAsFixed(0)}';
@@ -90,7 +90,7 @@ class DetalleInmuebleNuevo extends StatelessWidget {
                   child: ClipOval(
                     child: fotoBase64.isNotEmpty
                         ? Image.network(fotoBase64, fit: BoxFit.cover)
-                        : Container(color: AppTheme.primary.withOpacity(0.2), child: Center(child: Icon(Icons.home, color: AppTheme.primary, size: 40))),
+                        : Container(color: AppTheme.primary.withOpacity(0.2), child: const Center(child: const Icon(Icons.home, color: AppTheme.primary, size: 40))),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -102,7 +102,7 @@ class DetalleInmuebleNuevo extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text('$tipo • $estadoVenta', style: TextStyle(fontSize: 14, color: AppTheme.getTextSecondaryColor(context))),
                       const SizedBox(height: 4),
-                      Text(precio, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppTheme.success)),
+                      Text(precio, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppTheme.success)),
                     ],
                   ),
                 ),
@@ -226,11 +226,11 @@ class DetalleInmuebleNuevo extends StatelessWidget {
                 children: [
                   Text(label, style: TextStyle(fontSize: 11, color: AppTheme.getTextSecondaryColor(context))),
                   const SizedBox(height: 2),
-                  Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primary, decoration: TextDecoration.underline)),
+                  Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primary, decoration: TextDecoration.underline)),
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios, size: 14, color: AppTheme.primary),
+            const Icon(Icons.arrow_forward_ios, size: 14, color: AppTheme.primary),
           ],
         ),
       ),

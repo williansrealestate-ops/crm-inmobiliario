@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../../config/theme.dart';
 
 class SimuladorCreditoScreen extends StatefulWidget {
   final double precioPropiedad;

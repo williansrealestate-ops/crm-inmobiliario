@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'finanzas_service.dart'; // ✅ IMPORT NECESARIO AGREGADO
 
 class IntegracionesService {

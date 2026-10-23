@@ -276,9 +276,9 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
                             Text(titulo, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.getTextColor(context)), maxLines: 2, overflow: TextOverflow.ellipsis),
                             const SizedBox(height: 6),
                             Row(children: [
-                              Icon(Icons.location_on, size: 14, color: IOSColors.textSecondary),
+                              const Icon(Icons.location_on, size: 14, color: IOSColors.textSecondary),
                               const SizedBox(width: 4),
-                              Expanded(child: Text(ubicacion, style: TextStyle(fontSize: 13, color: IOSColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                              Expanded(child: Text(ubicacion, style: const TextStyle(fontSize: 13, color: IOSColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis)),
                             ]),
                           ],
                         ),
@@ -308,7 +308,7 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
                       Text(_formatearPrecio(precio), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF10B981))),
                       const Spacer(),
                       if (asesor.isNotEmpty)
-                        Row(children: [Icon(Icons.person, size: 14, color: IOSColors.purple), const SizedBox(width: 4), Text('Asesor: $asesor', style: TextStyle(fontSize: 11, color: IOSColors.purple))]),
+                        Row(children: [const Icon(Icons.person, size: 14, color: IOSColors.purple), const SizedBox(width: 4), Text('Asesor: $asesor', style: const TextStyle(fontSize: 11, color: IOSColors.purple))]),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -366,12 +366,12 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
                       const SizedBox(height: 16),
                       Row(children: [const Icon(Icons.attach_money, color: Color(0xFF10B981), size: 24), const SizedBox(width: 8), Text(_formatearPrecio(precio), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Color(0xFF10B981)))]),
                       const SizedBox(height: 16),
-                      Row(children: [Icon(Icons.location_on, color: IOSColors.textSecondary), const SizedBox(width: 8), Expanded(child: Text(ubicacion, style: TextStyle(fontSize: 14, color: AppTheme.getTextSecondaryColor(context))))]),
+                      Row(children: [const Icon(Icons.location_on, color: IOSColors.textSecondary), const SizedBox(width: 8), Expanded(child: Text(ubicacion, style: TextStyle(fontSize: 14, color: AppTheme.getTextSecondaryColor(context))))]),
                       const SizedBox(height: 16),
                       Row(children: [
-                        if (recamaras > 0) ...[Icon(Icons.bed, color: IOSColors.textSecondary), const SizedBox(width: 4), Text('$recamaras Recámaras', style: TextStyle(color: AppTheme.getTextSecondaryColor(context))), const SizedBox(width: 16)],
-                        if (banos > 0) ...[Icon(Icons.bathtub, color: IOSColors.textSecondary), const SizedBox(width: 4), Text('$banos Baños', style: TextStyle(color: AppTheme.getTextSecondaryColor(context))), const SizedBox(width: 16)],
-                        if (area > 0) ...[Icon(Icons.square_foot, color: IOSColors.textSecondary), const SizedBox(width: 4), Text('${area.toInt()} m²', style: TextStyle(color: AppTheme.getTextSecondaryColor(context)))],
+                        if (recamaras > 0) ...[const Icon(Icons.bed, color: IOSColors.textSecondary), const SizedBox(width: 4), Text('$recamaras Recámaras', style: TextStyle(color: AppTheme.getTextSecondaryColor(context))), const SizedBox(width: 16)],
+                        if (banos > 0) ...[const Icon(Icons.bathtub, color: IOSColors.textSecondary), const SizedBox(width: 4), Text('$banos Baños', style: TextStyle(color: AppTheme.getTextSecondaryColor(context))), const SizedBox(width: 16)],
+                        if (area > 0) ...[const Icon(Icons.square_foot, color: IOSColors.textSecondary), const SizedBox(width: 4), Text('${area.toInt()} m²', style: TextStyle(color: AppTheme.getTextSecondaryColor(context)))],
                       ]),
                       const SizedBox(height: 20),
                       const Divider(),
@@ -381,7 +381,7 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
                       Text(descripcion, style: TextStyle(fontSize: 14, color: AppTheme.getTextSecondaryColor(context), height: 1.6)),
                       if (asesor.isNotEmpty) ...[
                         const SizedBox(height: 20),
-                        Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: IOSColors.purple.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Row(children: [Icon(Icons.person, color: IOSColors.purple), const SizedBox(width: 8), Text('Asesor: $asesor', style: TextStyle(color: IOSColors.purple, fontWeight: FontWeight.w600))])),
+                        Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: IOSColors.purple.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Row(children: [const Icon(Icons.person, color: IOSColors.purple), const SizedBox(width: 8), Text('Asesor: $asesor', style: const TextStyle(color: IOSColors.purple, fontWeight: FontWeight.w600))])),
                       ],
                       const SizedBox(height: 20),
                       Row(

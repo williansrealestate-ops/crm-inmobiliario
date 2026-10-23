@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
-import '../../services/theme_service.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../extras/actividades_screen.dart';
 import '../clientes/lista_clientes.dart';
@@ -12,7 +11,6 @@ import '../extras/guiones_screen.dart';
 import '../extras/reportes_screen.dart';
 import '../extras/vitrina_screen.dart';
 import '../extras/conocimientos_screen.dart';
-import '../extras/asistente_virtual_screen.dart';
 import '../extras/generador_documentos_screen.dart';
 import '../extras/perfil_screen.dart';
 import '../extras/calculadoras_screen.dart';

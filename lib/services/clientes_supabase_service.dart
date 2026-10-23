@@ -1,7 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 import 'dart:typed_data';
-import 'package:path/path.dart' as path;
 
 class ClientesSupabaseService {
   static final SupabaseClient _client = SupabaseService.client;

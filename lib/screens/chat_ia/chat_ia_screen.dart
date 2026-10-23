@@ -147,10 +147,16 @@ class _ChatIAScreenState extends State<ChatIAScreen> {
               ),
             ),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80), // ⬅️ PADDING INFERIOR AUMENTADO para no tapar WhatsApp
             decoration: BoxDecoration(
               color: AppTheme.getSurfaceColor(context),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, -2))],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, -2),
+                ),
+              ],
             ),
             child: Row(
               children: [
@@ -163,7 +169,10 @@ class _ChatIAScreenState extends State<ChatIAScreen> {
                       hintStyle: TextStyle(color: AppTheme.getTextSecondaryColor(context)),
                       filled: true,
                       fillColor: const Color(0xFF0F172A),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     ),
                     onSubmitted: (_) => _enviarMensaje(),
@@ -176,10 +185,22 @@ class _ChatIAScreenState extends State<ChatIAScreen> {
                   decoration: BoxDecoration(
                     color: _cargando ? Colors.grey : AppTheme.primary,
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: IconButton(
-                    icon: Icon(_cargando ? Icons.hourglass_empty : Icons.send, color: Colors.white),
+                    icon: Icon(
+                      _cargando ? Icons.hourglass_empty : Icons.send,
+                      color: Colors.white,
+                      size: 24,
+                    ),
                     onPressed: _cargando ? null : _enviarMensaje,
+                    iconSize: 24,
                   ),
                 ),
               ],
@@ -200,7 +221,10 @@ class _ChatIAScreenState extends State<ChatIAScreen> {
           if (!esUsuario) ...[
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(20)),
+              decoration: BoxDecoration(
+                color: AppTheme.primary,
+                borderRadius: BorderRadius.circular(20),
+              ),
               child: const Icon(Icons.smart_toy, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 8),
@@ -212,14 +236,20 @@ class _ChatIAScreenState extends State<ChatIAScreen> {
                 color: esUsuario ? AppTheme.primary : const Color(0xFF1E293B),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Text(contenido, style: const TextStyle(color: Colors.white, fontSize: 14)),
+              child: Text(
+                contenido,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+              ),
             ),
           ),
           if (esUsuario) ...[
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: const Color(0xFF8B5CF6), borderRadius: BorderRadius.circular(20)),
+              decoration: BoxDecoration(
+                color: const Color(0xFF8B5CF6),
+                borderRadius: BorderRadius.circular(20),
+              ),
               child: const Icon(Icons.person, color: Colors.white, size: 20),
             ),
           ],

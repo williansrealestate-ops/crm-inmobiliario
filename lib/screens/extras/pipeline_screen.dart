@@ -223,7 +223,7 @@ class _PipelineScreenState extends State<PipelineScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(Icons.attach_money, size: 16, color: AppTheme.success),
+              const Icon(Icons.attach_money, size: 16, color: AppTheme.success),
               const SizedBox(width: 4),
               Text(PipelineService.formatearMoneda(op['valor'] ?? 0), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF10B981))),
               const Spacer(),
@@ -616,7 +616,7 @@ class _PipelineScreenState extends State<PipelineScreen> {
             ],
           ),
           actions: [
-            ElevatedButton(onPressed: () => Navigator.pop(ctx), child: const Text('¡Genial!'), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF59E0B), foregroundColor: Colors.white)),
+            ElevatedButton(onPressed: () => Navigator.pop(ctx), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF59E0B), foregroundColor: Colors.white), child: const Text('¡Genial!')),
           ],
         ),
       );

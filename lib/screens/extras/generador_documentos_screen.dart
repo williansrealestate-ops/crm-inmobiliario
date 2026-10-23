@@ -17,7 +17,9 @@ class _GeneradorDocumentosScreenState extends State<GeneradorDocumentosScreen> {
 
   @override
   void dispose() {
-    _controladores.values.forEach((c) => c.dispose());
+    for (var c in _controladores.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -95,7 +97,7 @@ class _GeneradorDocumentosScreenState extends State<GeneradorDocumentosScreen> {
             ],
           ),
           actions: [
-            ElevatedButton(onPressed: () => Navigator.pop(ctx), child: const Text('¡Genial!'), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF59E0B), foregroundColor: Colors.white)),
+            ElevatedButton(onPressed: () => Navigator.pop(ctx), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF59E0B), foregroundColor: Colors.white), child: const Text('¡Genial!')),
           ],
         ),
       );
@@ -140,7 +142,7 @@ class _GeneradorDocumentosScreenState extends State<GeneradorDocumentosScreen> {
                 onTap: () => _seleccionarPlantilla(p),
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );
@@ -177,7 +179,7 @@ class _GeneradorDocumentosScreenState extends State<GeneradorDocumentosScreen> {
                 ),
               ),
             );
-          }).toList(),
+          }),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,

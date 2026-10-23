@@ -53,7 +53,7 @@ class AsistenteIAService {
           final prop = top3[i];
           resp += '${i + 1}. **${prop['titulo']}**\n   📍 ${prop['ubicacion']}\n   💰 \$${_formatearNumero(prop['precio'])}\n\n';
         }
-        return resp + '¿Te gustaría agendar una visita?';
+        return '$resp¿Te gustaría agendar una visita?';
       case 'agendar_visita':
         return '¡Perfecto! 📅 Para coordinar, ¿podrías decirme:\n1. ¿Qué propiedad te interesa?\n2. ¿Qué día y hora te conviene?\nUn asesor te contactará en menos de 2 horas.';
       case 'precio':

@@ -224,7 +224,7 @@ class _ContactoScreenState extends State<ContactoScreen> {
                               width: double.infinity,
                               child: ElevatedButton.icon(
                                 onPressed: () {
-                                  final mensaje = 'Hola, quiero más información sobre sus propiedades';
+                                  const mensaje = 'Hola, quiero más información sobre sus propiedades';
                                   final whatsapp = widget.config['whatsapp'] ?? '529932149996';
                                   html.window.open('https://wa.me/$whatsapp?text=${Uri.encodeComponent(mensaje)}', '_blank');
                                 },

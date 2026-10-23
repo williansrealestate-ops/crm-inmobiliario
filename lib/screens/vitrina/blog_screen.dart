@@ -114,18 +114,18 @@ class _BlogScreenState extends State<BlogScreen> {
             // Header
             Container(
               padding: const EdgeInsets.all(40),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFF0066FF), Color(0xFF1E40AF)]),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(colors: [Color(0xFF0066FF), Color(0xFF1E40AF)]),
               ),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Noticias y Consejos',
                     style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w800),
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
+                  SizedBox(height: 12),
+                  Text(
                     'Mantente informado sobre el mundo inmobiliario',
                     style: TextStyle(color: Colors.white70, fontSize: 16),
                   ),

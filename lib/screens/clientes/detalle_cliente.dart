@@ -43,7 +43,7 @@ class DetalleCliente extends StatelessWidget {
                   child: ClipOval(
                     child: fotoBase64.isNotEmpty
                         ? Image.network(fotoBase64, fit: BoxFit.cover)
-                        : Container(color: AppTheme.primary.withOpacity(0.2), child: Center(child: Icon(Icons.person, color: AppTheme.primary, size: 40))),
+                        : Container(color: AppTheme.primary.withOpacity(0.2), child: const Center(child: const Icon(Icons.person, color: AppTheme.primary, size: 40))),
                   ),
                 ),
                 const SizedBox(width: 16),

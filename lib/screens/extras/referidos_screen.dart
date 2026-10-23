@@ -449,11 +449,11 @@ class _ReferidosScreenState extends State<ReferidosScreen> with SingleTickerProv
                     color: const Color(0xFF10B981).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Row(
+                  child: const Row(
                     children: [
-                      const Icon(Icons.celebration, color: Color(0xFF10B981), size: 18),
-                      const SizedBox(width: 8),
-                      const Expanded(
+                      Icon(Icons.celebration, color: Color(0xFF10B981), size: 18),
+                      SizedBox(width: 8),
+                      Expanded(
                         child: Text(
                           '¡Referido exitoso! +100 puntos ganados',
                           style: TextStyle(fontSize: 12, color: Color(0xFF10B981), fontWeight: FontWeight.w600),

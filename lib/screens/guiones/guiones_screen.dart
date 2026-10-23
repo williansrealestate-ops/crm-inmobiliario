@@ -157,7 +157,7 @@ class _GuionesScreenState extends State<GuionesScreen> {
                   ),
                 ),
                 if (!activo)
-                  IOSBadge(text: 'Inactivo', color: IOSColors.textSecondary, filled: false),
+                  const IOSBadge(text: 'Inactivo', color: IOSColors.textSecondary, filled: false),
               ],
             ),
             if (contenido.isNotEmpty) ...[
@@ -287,9 +287,9 @@ class _GuionesScreenState extends State<GuionesScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4, bottom: 6),
-                        child: Text('Contenido', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: IOSColors.textSecondary)),
+                      const Padding(
+                        padding: EdgeInsets.only(left: 4, bottom: 6),
+                        child: const Text('Contenido', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: IOSColors.textSecondary)),
                       ),
                       Container(
                         decoration: BoxDecoration(
@@ -300,10 +300,10 @@ class _GuionesScreenState extends State<GuionesScreen> {
                           controller: contenidoCtrl,
                           maxLines: 10,
                           style: TextStyle(fontSize: 14, color: AppTheme.getTextColor(context)),
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             hintText: 'Escribe el contenido del guion...',
                             border: InputBorder.none,
-                            contentPadding: const EdgeInsets.all(14),
+                            contentPadding: EdgeInsets.all(14),
                           ),
                         ),
                       ),
@@ -335,7 +335,7 @@ class _GuionesScreenState extends State<GuionesScreen> {
                   'activo': activo,
                 };
                 try {
-                  if (esEdicion && guion != null) {
+                  if (esEdicion) {
                     await GuionesService.actualizarGuion(guion['id'], datos);
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Guion actualizado'), backgroundColor: Color(0xFF10B981)));
                   } else {

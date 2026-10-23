@@ -159,7 +159,7 @@ class _AcademiaScreenState extends State<AcademiaScreen> {
                               'fecha': DateTime.now().toIso8601String().split('T')[0],
                             };
                             if (esEdicion) {
-                              final index = _cursos.indexWhere((c) => c['id'] == curso!['id']);
+                              final index = _cursos.indexWhere((c) => c['id'] == curso['id']);
                               if (index != -1) _cursos[index] = nuevoCurso;
                             } else {
                               _cursos.add(nuevoCurso);

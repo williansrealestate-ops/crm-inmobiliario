@@ -52,7 +52,9 @@ class GeolocalizacionService {
   static String generarUrlRutaCompleta({required double latOrigen, required double lngOrigen, required List<Map<String, dynamic>> destinos}) {
     if (destinos.isEmpty) return 'https://www.google.com/maps/@$latOrigen,$lngOrigen,15z';
     String url = 'https://www.google.com/maps/dir/$latOrigen,$lngOrigen/';
-    for (var destino in destinos) url += '${destino['lat'] ?? latitudMexico},${destino['lng'] ?? longitudMexico}/';
+    for (var destino in destinos) {
+      url += '${destino['lat'] ?? latitudMexico},${destino['lng'] ?? longitudMexico}/';
+    }
     return url;
   }
 
@@ -60,7 +62,6 @@ class GeolocalizacionService {
   static Future<Map<String, double>> obtenerUbicacionActual() async {
     try {
       final geolocation = html.window.navigator.geolocation;
-      if (geolocation == null) return {'lat': latitudMexico, 'lng': longitudMexico};
       final position = await geolocation.getCurrentPosition();
       final coords = position.coords;
       return {

@@ -41,7 +41,7 @@ class _CalculadorasScreenState extends State<CalculadorasScreen> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: IOSSegmentedControl(
-              options: ['Comisión', 'Hipoteca', 'ROI'],
+              options: const ['Comisión', 'Hipoteca', 'ROI'],
               selectedIndex: _calculadoraSeleccionada,
               onSelected: (index) { setState(() { _calculadoraSeleccionada = index; _resultado = null; }); },
             ),
@@ -107,7 +107,7 @@ class _CalculadorasScreenState extends State<CalculadorasScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [Icon(Icons.analytics, color: IOSColors.green, size: 24), const SizedBox(width: 8), Text('Resultado', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.getTextColor(context)))]),
+          Row(children: [const Icon(Icons.analytics, color: IOSColors.green, size: 24), const SizedBox(width: 8), Text('Resultado', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.getTextColor(context)))]),
           const SizedBox(height: 16),
           ..._resultado!.entries.map((entry) {
             final key = entry.key;

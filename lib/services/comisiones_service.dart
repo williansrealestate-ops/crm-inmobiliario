@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:html' as html;
-import 'pipeline_service.dart';
 
 class ComisionesService {
   static const String _keyComisiones = 'comisiones_datos';

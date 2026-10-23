@@ -145,12 +145,12 @@ class _VitrinaPublicaScreenState extends State<VitrinaPublicaScreen> {
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.phone, color: Colors.white, size: 16),
-                const SizedBox(width: 6),
-                const Text(
+                Icon(Icons.phone, color: Colors.white, size: 16),
+                SizedBox(width: 6),
+                Text(
                   '52 993 214 9996',
                   style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
                 ),

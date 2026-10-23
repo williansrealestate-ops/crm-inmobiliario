@@ -158,7 +158,7 @@ class _CalculadorasScreenState extends State<CalculadorasScreen> with SingleTick
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
         controller: controller,
-        keyboardType: TextInputType.numberWithOptions(decimal: true),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
         inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
         decoration: InputDecoration(
           labelText: label,

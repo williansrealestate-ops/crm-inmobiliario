@@ -44,7 +44,7 @@ class _ConocimientosScreenState extends State<ConocimientosScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.school, color: AppTheme.primary, size: 28),
+                      const Icon(Icons.school, color: AppTheme.primary, size: 28),
                       const SizedBox(width: 12),
                       const Expanded(
                         child: Text(
@@ -59,9 +59,9 @@ class _ConocimientosScreenState extends State<ConocimientosScreen> {
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
                         ),
-                        child: Text(
+                        child: const Text(
                           'v${ContenidoAcademico.version}',
-                          style: TextStyle(color: AppTheme.primary, fontSize: 11, fontWeight: FontWeight.w700),
+                          style: const TextStyle(color: AppTheme.primary, fontSize: 11, fontWeight: FontWeight.w700),
                         ),
                       ),
                     ],
@@ -443,8 +443,8 @@ class _ConocimientosScreenState extends State<ConocimientosScreen> {
         actions: [
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('¡Genial!'),
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF59E0B), foregroundColor: Colors.white),
+            child: const Text('¡Genial!'),
           ),
         ],
       ),
@@ -470,8 +470,8 @@ class _ConocimientosScreenState extends State<ConocimientosScreen> {
           actions: [
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('¡Increíble!'),
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF59E0B), foregroundColor: Colors.white),
+              child: const Text('¡Increíble!'),
             ),
           ],
         ),

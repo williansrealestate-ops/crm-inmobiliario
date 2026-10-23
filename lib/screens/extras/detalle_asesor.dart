@@ -87,7 +87,7 @@ class DetalleAsesor extends StatelessWidget {
                             child: Center(
                               child: Text(
                                 nombre.isNotEmpty ? nombre[0].toUpperCase() : 'A',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: AppTheme.primary,
                                   fontSize: 32,
                                   fontWeight: FontWeight.w800,
@@ -266,11 +266,11 @@ class DetalleAsesor extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.calendar_today, color: AppTheme.primary, size: 20),
+                  const Icon(Icons.calendar_today, color: AppTheme.primary, size: 20),
                   const SizedBox(width: 12),
                   Text(
                     'Fecha de ingreso: $fechaIngreso',
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: AppTheme.primary,
                       fontWeight: FontWeight.w600,
                     ),

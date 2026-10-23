@@ -125,7 +125,7 @@ class PerfilScreen extends StatelessWidget {
                 child: const Center(child: Text('Sin actividad registrada')),
               )
             else
-              ...historial.reversed.take(10).map((item) => _buildHistorialItem(item)).toList(),
+              ...historial.reversed.take(10).map((item) => _buildHistorialItem(item)),
           ],
         ),
       ),

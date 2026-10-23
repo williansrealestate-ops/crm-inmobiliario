@@ -119,7 +119,7 @@ class _CalculadoraClienteScreenState extends State<CalculadoraClienteScreen> {
                     const SizedBox(height: 8),
                     Text(
                       CalculadoraService.formatearMoneda(_resultado!['mensualidad']),
-                      style: TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: AppTheme.primary),
+                      style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: AppTheme.primary),
                     ),
                     const SizedBox(height: 24),
                     Row(

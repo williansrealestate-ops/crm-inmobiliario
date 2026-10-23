@@ -166,7 +166,7 @@ class ReportePdfService {
                       ),
                     ],
                   );
-                }).toList(),
+                }),
               ],
             ),
           ];

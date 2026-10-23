@@ -267,7 +267,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
                   'notas': notasCtrl.text,
                 };
                 if (esEditar) {
-                  LocalStorageService.actualizarActividad(actividad!['id'].toString(), {...datos, 'id': actividad['id'].toString()});
+                  LocalStorageService.actualizarActividad(actividad['id'].toString(), {...datos, 'id': actividad['id'].toString()});
                 } else {
                   LocalStorageService.agregarActividad(datos);
                 }
@@ -684,7 +684,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
                   children: [
                     Text(
                       esHoy ? 'HOY' : _getNombreDiaSemana(_selectedDate.weekday).toUpperCase(),
-                      style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w700),
+                      style: const TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -711,9 +711,9 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.event_busy, size: 64, color: Colors.grey),
+                    const Icon(Icons.event_busy, size: 64, color: Colors.grey),
                     const SizedBox(height: 16),
-                    Text('No hay eventos para este día', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                    const Text('No hay eventos para este día', style: const TextStyle(color: Colors.grey, fontSize: 16)),
                     const SizedBox(height: 8),
                     ElevatedButton.icon(
                       onPressed: () => _mostrarFormularioEvento(),
@@ -744,15 +744,15 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
     }
 
     if (eventosAgrupados.isEmpty) {
-      return Card(
+      return const Card(
         child: Padding(
-          padding: const EdgeInsets.all(60),
+          padding: EdgeInsets.all(60),
           child: Center(
             child: Column(
               children: [
-                Icon(Icons.event_busy, size: 64, color: Colors.grey),
-                const SizedBox(height: 16),
-                Text('No hay próximos eventos', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                const Icon(Icons.event_busy, size: 64, color: Colors.grey),
+                SizedBox(height: 16),
+                const Text('No hay próximos eventos', style: const TextStyle(color: Colors.grey, fontSize: 16)),
               ],
             ),
           ),
@@ -827,7 +827,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
       children: [
         Row(
           children: [
-            Icon(Icons.event_note, color: AppTheme.primary, size: 20),
+            const Icon(Icons.event_note, color: AppTheme.primary, size: 20),
             const SizedBox(width: 8),
             Text(titulo, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.getTextPrimaryColor(context))),
             const Spacer(),
@@ -839,15 +839,15 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
         ),
         const SizedBox(height: 12),
         if (eventos.isEmpty)
-          Card(
+          const Card(
             child: Padding(
-              padding: const EdgeInsets.all(40),
+              padding: EdgeInsets.all(40),
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.event_busy, size: 48, color: Colors.grey),
-                    const SizedBox(height: 8),
-                    Text('Sin eventos', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                    const Icon(Icons.event_busy, size: 48, color: Colors.grey),
+                    SizedBox(height: 8),
+                    const Text('Sin eventos', style: const TextStyle(color: Colors.grey, fontSize: 14)),
                   ],
                 ),
               ),
@@ -935,9 +935,9 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        Icon(Icons.person, size: 12, color: Colors.grey),
+                        const Icon(Icons.person, size: 12, color: Colors.grey),
                         const SizedBox(width: 4),
-                        Text('Cliente: ${a['cliente']}', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                        Text('Cliente: ${a['cliente']}', style: const TextStyle(color: Colors.grey, fontSize: 11)),
                       ],
                     ),
                   ],
@@ -945,9 +945,9 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        Icon(Icons.business, size: 12, color: AppTheme.primary),
+                        const Icon(Icons.business, size: 12, color: AppTheme.primary),
                         const SizedBox(width: 4),
-                        Text('Asesor: $asesor', style: TextStyle(color: AppTheme.primary, fontSize: 11, fontWeight: FontWeight.w600)),
+                        Text('Asesor: $asesor', style: const TextStyle(color: AppTheme.primary, fontSize: 11, fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ],
@@ -955,7 +955,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.note, size: 12, color: AppTheme.primary),
+                        const Icon(Icons.note, size: 12, color: AppTheme.primary),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(

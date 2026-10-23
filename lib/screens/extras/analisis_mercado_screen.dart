@@ -435,9 +435,9 @@ class _AnalisisMercadoScreenState extends State<AnalisisMercadoScreen> with Sing
                       maxY: distribucion.isEmpty ? 100 : distribucion.map((d) => d['promedio'] as double).reduce((a, b) => a > b ? a : b) * 1.2,
                       gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: distribucion.isEmpty ? 50 : distribucion.map((d) => d['promedio'] as double).reduce((a, b) => a > b ? a : b) / 4, getDrawingHorizontalLine: (value) => FlLine(color: AppTheme.getDividerColor(context), strokeWidth: 1)),
                       titlesData: FlTitlesData(
-                        leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        leftTitles: const AxisTitles(sideTitles: const SideTitles(showTitles: false)),
+                        topTitles: const AxisTitles(sideTitles: const SideTitles(showTitles: false)),
+                        rightTitles: const AxisTitles(sideTitles: const SideTitles(showTitles: false)),
                         bottomTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
@@ -459,7 +459,7 @@ class _AnalisisMercadoScreenState extends State<AnalisisMercadoScreen> with Sing
                       borderData: FlBorderData(show: false),
                       barGroups: distribucion.asMap().entries.map((entry) {
                         final index = entry.key;
-                        final data = entry.value as Map<String, dynamic>;
+                        final data = entry.value;
                         return BarChartGroupData(
                           x: index,
                           barRods: [
@@ -484,7 +484,7 @@ class _AnalisisMercadoScreenState extends State<AnalisisMercadoScreen> with Sing
           const SizedBox(height: 12),
           ...topZonas.asMap().entries.map((entry) {
             final index = entry.key;
-            final zona = entry.value as Map<String, dynamic>;
+            final zona = entry.value;
             final maxPrecio = topZonas.isEmpty ? 1.0 : (topZonas.first['promedio'] as double);
             final porcentaje = maxPrecio > 0 ? ((zona['promedio'] as double) / maxPrecio) : 0.0;
 

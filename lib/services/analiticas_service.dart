@@ -18,7 +18,7 @@ class AnaliticasService {
     final cumplimientoMeta = metaMes > 0 ? (ingresosMes / metaMes) * 100 : 0.0;
 
     // Simulación de tiempo promedio de cierre (en días)
-    final tiempoPromedioCierre = 45; 
+    const tiempoPromedioCierre = 45; 
     final ticketPromedio = cerradas > 0 ? (pipeline['cerrado']['valor'] as double) / cerradas : 0.0;
 
     return {
@@ -73,7 +73,7 @@ class AnaliticasService {
   // ✅ Obtener conversión por etapa del pipeline
   static List<Map<String, dynamic>> getConversionPorEtapa() {
     final pipeline = PipelineService.getResumenPipeline();
-    final etapas = PipelineService.etapas;
+    const etapas = PipelineService.etapas;
     
     return etapas.map((etapa) {
       final etapaId = etapa['id'] as String;
