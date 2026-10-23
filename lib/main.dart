@@ -73,6 +73,7 @@ class _MainScreenState extends State<MainScreen> {
     {'icon': Icons.home, 'label': 'Inmuebles', 'color': const Color(0xFF00BCD4)},
   ];
 
+  // ✅ ENVOLVER PANTALLAS PROBLEMÁTICAS CON FONDO NEGRO FORZADO
   final List<Widget> _screens = [
     const GuionesScreen(),
     const DashboardAsesores(),
@@ -81,12 +82,20 @@ class _MainScreenState extends State<MainScreen> {
     const ChatIAScreen(),
     const CalculadorasScreen(),
     const FinanzasScreen(),
-    const BackupScreen(),
+    _forceDarkBackground(const BackupScreen()),
     const DashboardNegociosScreen(),
-    const ClientesScreen(),
-    const AsesoresScreen(),
-    const ListaInmuebles(),
+    _forceDarkBackground(const ClientesScreen()),
+    _forceDarkBackground(const AsesoresScreen()),
+    _forceDarkBackground(const ListaInmuebles()),
   ];
+
+  // ✅ FUNCIÓN PARA FORZAR FONDO NEGRO
+  static Widget _forceDarkBackground(Widget child) {
+    return ColoredBox(
+      color: const Color(0xFF0A0A0A),
+      child: child,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -213,7 +222,7 @@ class _MainScreenState extends State<MainScreen> {
               ],
             ),
           ),
-          // ✅ CONTENIDO PRINCIPAL - SIN Stack, directo al Expanded
+          // ✅ CONTENIDO PRINCIPAL
           Expanded(
             child: _screens[_selectedIndex],
           ),
