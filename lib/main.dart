@@ -213,20 +213,9 @@ class _MainScreenState extends State<MainScreen> {
               ],
             ),
           ),
-          // ✅ CONTENIDO PRINCIPAL - AJUSTADO AL 100% DEL ANCHO
+          // ✅ CONTENIDO PRINCIPAL - SIN Stack, directo al Expanded
           Expanded(
-            child: Container(
-              width: double.infinity,
-              color: const Color(0xFF0A0A0A),
-              child: Stack(
-                children: [
-                  // Fondo negro absoluto
-                  Container(color: const Color(0xFF0A0A0A)),
-                  // Contenido de la pantalla
-                  _screens[_selectedIndex],
-                ],
-              ),
-            ),
+            child: _screens[_selectedIndex],
           ),
         ],
       ),
