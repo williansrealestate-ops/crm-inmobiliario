@@ -28,15 +28,59 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'CRM Inmobiliario',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
+      // ✅ FORZAR TEMA OSCURO EXCLUSIVAMENTE
+      themeMode: ThemeMode.dark,
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
         primaryColor: const Color(0xFF0066FF),
         scaffoldBackgroundColor: const Color(0xFF0A0A0A),
+        // ✅ 'backgroundColor' ELIMINADO PORQUE NO ES VÁLIDO EN ThemeData
         cardColor: const Color(0xFF111111),
         dividerColor: const Color(0xFF222222),
+        canvasColor: const Color(0xFF0A0A0A),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF0066FF),
           foregroundColor: Colors.white,
           elevation: 0,
+        ),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: Color(0xFF111111),
+          selectedItemColor: Color(0xFF0066FF),
+          unselectedItemColor: Colors.grey,
+        ),
+        inputDecorationTheme: const InputDecorationTheme(
+          filled: true,
+          fillColor: Color(0xFF1A1A1A),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(color: Color(0xFF333333)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Color(0xFF333333)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Color(0xFF0066FF)),
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF0066FF),
+            foregroundColor: Colors.white,
+          ),
+        ),
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(color: Colors.white),
+          bodySmall: TextStyle(color: Colors.grey),
+          titleLarge: TextStyle(color: Colors.white),
+          titleMedium: TextStyle(color: Colors.white),
+          titleSmall: TextStyle(color: Colors.white),
+        ),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF0066FF),
+          secondary: Color(0xFF00BCD4),
+          surface: Color(0xFF111111),
+          background: Color(0xFF0A0A0A),
+          error: Color(0xFFEF4444),
         ),
       ),
       home: const MainScreen(),
@@ -70,33 +114,25 @@ class _MainScreenState extends State<MainScreen> {
     {'icon': Icons.home, 'label': 'Inmuebles', 'color': const Color(0xFF00BCD4)},
   ];
 
-  // ✅ ENVOLVER CADA PANTALLA CON FONDO OSCURO
   final List<Widget> _screens = [
-    _wrapWithDarkBackground(const GuionesScreen()),
-    _wrapWithDarkBackground(const DashboardAsesores()),
-    _wrapWithDarkBackground(const ReportesScreen()),
-    _wrapWithDarkBackground(const AcademiaScreen()),
-    _wrapWithDarkBackground(const ChatIAScreen()),
-    _wrapWithDarkBackground(const CalculadorasScreen()),
-    _wrapWithDarkBackground(const FinanzasScreen()),
-    _wrapWithDarkBackground(const BackupScreen()),
-    _wrapWithDarkBackground(const DashboardNegociosScreen()),
-    _wrapWithDarkBackground(const ClientesScreen()),
-    _wrapWithDarkBackground(const AsesoresScreen()),
-    _wrapWithDarkBackground(const ListaInmuebles()),
+    const GuionesScreen(),
+    const DashboardAsesores(),
+    const ReportesScreen(),
+    const AcademiaScreen(),
+    const ChatIAScreen(),
+    const CalculadorasScreen(),
+    const FinanzasScreen(),
+    const BackupScreen(),
+    const DashboardNegociosScreen(),
+    const ClientesScreen(),
+    const AsesoresScreen(),
+    const ListaInmuebles(),
   ];
-
-  // ✅ FUNCIÓN PARA FORZAR FONDO OSCURO
-  Widget _wrapWithDarkBackground(Widget child) {
-    return Container(
-      color: const Color(0xFF0A0A0A),
-      child: child,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A), // ✅ Fondo oscuro en el Scaffold principal
       body: Row(
         children: [
           // ✅ SIDEBAR IZQUIERDO
@@ -220,7 +256,10 @@ class _MainScreenState extends State<MainScreen> {
           ),
           // ✅ CONTENIDO PRINCIPAL (con fondo oscuro forzado)
           Expanded(
-            child: _screens[_selectedIndex],
+            child: Container(
+              color: const Color(0xFF0A0A0A),
+              child: _screens[_selectedIndex],
+            ),
           ),
         ],
       ),
