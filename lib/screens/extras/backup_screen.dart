@@ -120,7 +120,6 @@ class _BackupScreenState extends State<BackupScreen> {
     }
   }
 
-  // ✅ CORREGIDO: Solo usa bytes (100% compatible con Web)
   Future<void> _importarRespaldo() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -132,7 +131,6 @@ class _BackupScreenState extends State<BackupScreen> {
 
       setState(() => _loading = true);
 
-      // En Web, file_picker devuelve los bytes directamente
       final bytes = result.files.single.bytes;
       if (bytes == null) {
         throw Exception('No se pudieron leer los bytes del archivo');
@@ -141,59 +139,52 @@ class _BackupScreenState extends State<BackupScreen> {
       final jsonString = utf8.decode(bytes);
       final respaldo = jsonDecode(jsonString);
 
-      if (!respaldo.containsKey('datos')) {
-        throw Exception('Archivo de respaldo inválido');
+      Map<String, dynamic> datos;
+      if (respaldo.containsKey('datos')) {
+        datos = respaldo['datos'];
+      } else if (respaldo.containsKey('clientes') || respaldo.containsKey('asesores')) {
+        datos = respaldo;
+      } else {
+        throw Exception('Estructura de respaldo no reconocida.');
       }
 
-      final datos = respaldo['datos'];
       int clientesImportados = 0;
       int asesoresImportados = 0;
       int inmueblesImportados = 0;
 
-      // Importar Clientes
       if (datos['clientes'] != null) {
         final clientes = List<Map<String, dynamic>>.from(datos['clientes']);
         for (var cliente in clientes) {
           try {
             await _supabase.from('clientes').upsert(cliente);
             clientesImportados++;
-          } catch (e) {
-            print('Error cliente: $e');
-          }
+          } catch (e) { print('Error cliente: $e'); }
         }
       }
 
-      // Importar Asesores
       if (datos['asesores'] != null) {
         final asesores = List<Map<String, dynamic>>.from(datos['asesores']);
         for (var asesor in asesores) {
           try {
             await _supabase.from('asesores').upsert(asesor);
             asesoresImportados++;
-          } catch (e) {
-            print('Error asesor: $e');
-          }
+          } catch (e) { print('Error asesor: $e'); }
         }
       }
 
-      // Importar Inmuebles
       if (datos['inmuebles'] != null) {
         final inmuebles = List<Map<String, dynamic>>.from(datos['inmuebles']);
         for (var inmueble in inmuebles) {
           try {
             await _supabase.from('inmuebles').upsert(inmueble);
             inmueblesImportados++;
-          } catch (e) {
-            print('Error inmueble: $e');
-          }
+          } catch (e) { print('Error inmueble: $e'); }
         }
       }
 
-      // Importar Finanzas
       if (datos['finanzas'] != null) {
         final prefs = await SharedPreferences.getInstance();
         final finanzas = datos['finanzas'];
-        
         if (finanzas['ingresos'] != null) await prefs.setString('finanzas_ingresos', finanzas['ingresos']);
         if (finanzas['gastos'] != null) await prefs.setString('finanzas_gastos', finanzas['gastos']);
         if (finanzas['operaciones'] != null) await prefs.setString('finanzas_operaciones', finanzas['operaciones']);
@@ -206,7 +197,7 @@ class _BackupScreenState extends State<BackupScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Respaldo importado: $clientesImportados clientes, $asesoresImportados asesores, $inmueblesImportados inmuebles'),
+            content: Text('✅ Importado: $clientesImportados clientes, $asesoresImportados asesores, $inmueblesImportados inmuebles'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 5),
           ),
@@ -215,7 +206,7 @@ class _BackupScreenState extends State<BackupScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al importar respaldo: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error al importar: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -235,10 +226,7 @@ class _BackupScreenState extends State<BackupScreen> {
           Text('Respaldo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ]),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: _cargarStats,
-          ),
+          IconButton(icon: const Icon(Icons.refresh, color: Colors.white), onPressed: _cargarStats),
         ],
       ),
       body: _loading
@@ -248,133 +236,35 @@ class _BackupScreenState extends State<BackupScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Respaldo y Restauración',
-                    style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Protege tus datos con copias de seguridad',
-                    style: TextStyle(color: Colors.grey, fontSize: 14),
-                  ),
+                  const Text('Respaldo y Restauración', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 24),
-
                   Container(
                     padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF111111),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF222222)),
-                    ),
+                    decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.info_outline, color: Color(0xFF0066FF), size: 20),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Información del Respaldo',
-                              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
                         _buildStatRow('Clientes', _stats['clientes'] ?? 0),
                         _buildStatRow('Asesores', _stats['asesores'] ?? 0),
                         _buildStatRow('Inmuebles', _stats['inmuebles'] ?? 0),
-                        _buildStatRow('Ingresos (Finanzas)', _stats['ingresos'] ?? 0),
-                        _buildStatRow('Gastos (Finanzas)', _stats['gastos'] ?? 0),
-                        _buildStatRow('Operaciones', _stats['operaciones'] ?? 0),
-                        _buildStatRow('Negocios', _stats['negocios'] ?? 0),
+                        _buildStatRow('Ingresos', _stats['ingresos'] ?? 0),
+                        _buildStatRow('Gastos', _stats['gastos'] ?? 0),
                       ],
                     ),
                   ),
                   const SizedBox(height: 24),
-
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF111111),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF222222)),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF10B981).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(Icons.download, color: Color(0xFF10B981), size: 28),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Crear Respaldo',
-                                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'Descarga un archivo JSON con todos tus datos',
-                                style: TextStyle(color: Colors.grey, fontSize: 12),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
-                          onPressed: _crearRespaldo,
-                        ),
-                      ],
-                    ),
+                  ElevatedButton.icon(
+                    onPressed: _crearRespaldo,
+                    icon: const Icon(Icons.download),
+                    label: const Text('Crear Respaldo'),
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 50)),
                   ),
                   const SizedBox(height: 16),
-
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF111111),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF222222)),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF3B82F6).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(Icons.upload, color: Color(0xFF3B82F6), size: 28),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Importar Respaldo',
-                                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'Restaura datos desde un archivo JSON',
-                                style: TextStyle(color: Colors.grey, fontSize: 12),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
-                          onPressed: _importarRespaldo,
-                        ),
-                      ],
-                    ),
+                  ElevatedButton.icon(
+                    onPressed: _importarRespaldo,
+                    icon: const Icon(Icons.upload),
+                    label: const Text('Importar Respaldo'),
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6), foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 50)),
                   ),
                 ],
               ),
@@ -388,22 +278,8 @@ class _BackupScreenState extends State<BackupScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: count > 0 ? const Color(0xFF10B981).withOpacity(0.1) : const Color(0xFFEF4444).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              '$count registros',
-              style: TextStyle(
-                color: count > 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
+          Text('$count registros', style: TextStyle(color: count > 0 ? const Color(0xFF10B981) : Colors.red, fontWeight: FontWeight.bold)),
         ],
       ),
     );
