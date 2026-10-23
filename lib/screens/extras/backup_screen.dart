@@ -1,6 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
-import 'dart:html' as html; // ✅ IMPORT AGREGADO PARA WEB
+import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -27,12 +26,10 @@ class _BackupScreenState extends State<BackupScreen> {
   Future<void> _cargarStats() async {
     setState(() => _loading = true);
     try {
-      // Leer datos reales de Supabase
       final clientes = await _supabase.from('clientes').select('id');
       final asesores = await _supabase.from('asesores').select('id');
       final inmuebles = await _supabase.from('inmuebles').select('id');
       
-      // Leer datos de Finanzas de SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final ingresosData = prefs.getString('finanzas_ingresos');
       final gastosData = prefs.getString('finanzas_gastos');
@@ -60,7 +57,7 @@ class _BackupScreenState extends State<BackupScreen> {
       setState(() => _loading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar estadísticas: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -69,12 +66,10 @@ class _BackupScreenState extends State<BackupScreen> {
   Future<void> _crearRespaldo() async {
     setState(() => _loading = true);
     try {
-      // 1. Obtener datos de Supabase
       final clientes = await _supabase.from('clientes').select('*');
       final asesores = await _supabase.from('asesores').select('*');
       final inmuebles = await _supabase.from('inmuebles').select('*');
 
-      // 2. Obtener datos de Finanzas de SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final finanzasData = {
         'ingresos': prefs.getString('finanzas_ingresos') ?? '[]',
@@ -84,7 +79,6 @@ class _BackupScreenState extends State<BackupScreen> {
         'metas': prefs.getString('finanzas_metas') ?? '{}',
       };
 
-      // 3. Crear objeto de respaldo completo
       final respaldo = {
         'version': '2.0',
         'fecha': DateTime.now().toIso8601String(),
@@ -94,18 +88,11 @@ class _BackupScreenState extends State<BackupScreen> {
           'inmuebles': inmuebles,
           'finanzas': finanzasData,
         },
-        'estadisticas': {
-          'total_clientes': clientes.length,
-          'total_asesores': asesores.length,
-          'total_inmuebles': inmuebles.length,
-        },
       };
 
-      // 4. Convertir a JSON
       final jsonString = jsonEncode(respaldo);
       final bytes = utf8.encode(jsonString);
 
-      // 5. Descargar archivo (para web)
       if (mounted) {
         final blob = html.Blob([bytes], 'application/json');
         final url = html.Url.createObjectUrlFromBlob(blob);
@@ -116,7 +103,7 @@ class _BackupScreenState extends State<BackupScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Respaldo creado: ${clientes.length} clientes, ${asesores.length} asesores, ${inmuebles.length} inmuebles'),
+            content: Text('✅ Respaldo creado: ${clientes.length} clientes, ${asesores.length} asesores'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 4),
           ),
@@ -125,7 +112,7 @@ class _BackupScreenState extends State<BackupScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al crear respaldo: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -133,24 +120,27 @@ class _BackupScreenState extends State<BackupScreen> {
     }
   }
 
+  // ✅ CORREGIDO: Solo usa bytes (100% compatible con Web)
   Future<void> _importarRespaldo() async {
     try {
-      // 1. Seleccionar archivo
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
       );
 
-      if (result == null || result.files.single.path == null) return;
+      if (result == null || result.files.isEmpty) return;
 
       setState(() => _loading = true);
 
-      // 2. Leer archivo
-      final file = File(result.files.single.path!);
-      final jsonString = await file.readAsString();
+      // En Web, file_picker devuelve los bytes directamente
+      final bytes = result.files.single.bytes;
+      if (bytes == null) {
+        throw Exception('No se pudieron leer los bytes del archivo');
+      }
+      
+      final jsonString = utf8.decode(bytes);
       final respaldo = jsonDecode(jsonString);
 
-      // 3. Validar estructura
       if (!respaldo.containsKey('datos')) {
         throw Exception('Archivo de respaldo inválido');
       }
@@ -160,7 +150,7 @@ class _BackupScreenState extends State<BackupScreen> {
       int asesoresImportados = 0;
       int inmueblesImportados = 0;
 
-      // 4. Importar Clientes a Supabase
+      // Importar Clientes
       if (datos['clientes'] != null) {
         final clientes = List<Map<String, dynamic>>.from(datos['clientes']);
         for (var cliente in clientes) {
@@ -168,12 +158,12 @@ class _BackupScreenState extends State<BackupScreen> {
             await _supabase.from('clientes').upsert(cliente);
             clientesImportados++;
           } catch (e) {
-            print('Error importando cliente: $e');
+            print('Error cliente: $e');
           }
         }
       }
 
-      // 5. Importar Asesores a Supabase
+      // Importar Asesores
       if (datos['asesores'] != null) {
         final asesores = List<Map<String, dynamic>>.from(datos['asesores']);
         for (var asesor in asesores) {
@@ -181,12 +171,12 @@ class _BackupScreenState extends State<BackupScreen> {
             await _supabase.from('asesores').upsert(asesor);
             asesoresImportados++;
           } catch (e) {
-            print('Error importando asesor: $e');
+            print('Error asesor: $e');
           }
         }
       }
 
-      // 6. Importar Inmuebles a Supabase
+      // Importar Inmuebles
       if (datos['inmuebles'] != null) {
         final inmuebles = List<Map<String, dynamic>>.from(datos['inmuebles']);
         for (var inmueble in inmuebles) {
@@ -194,12 +184,12 @@ class _BackupScreenState extends State<BackupScreen> {
             await _supabase.from('inmuebles').upsert(inmueble);
             inmueblesImportados++;
           } catch (e) {
-            print('Error importando inmueble: $e');
+            print('Error inmueble: $e');
           }
         }
       }
 
-      // 7. Importar Finanzas a SharedPreferences
+      // Importar Finanzas
       if (datos['finanzas'] != null) {
         final prefs = await SharedPreferences.getInstance();
         final finanzas = datos['finanzas'];
@@ -211,7 +201,6 @@ class _BackupScreenState extends State<BackupScreen> {
         if (finanzas['metas'] != null) await prefs.setString('finanzas_metas', finanzas['metas']);
       }
 
-      // 8. Recargar estadísticas
       await _cargarStats();
 
       if (mounted) {
@@ -270,7 +259,6 @@ class _BackupScreenState extends State<BackupScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Información del Respaldo
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -304,7 +292,6 @@ class _BackupScreenState extends State<BackupScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Crear Respaldo
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -348,7 +335,6 @@ class _BackupScreenState extends State<BackupScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Importar Respaldo
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -386,39 +372,6 @@ class _BackupScreenState extends State<BackupScreen> {
                         IconButton(
                           icon: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
                           onPressed: _importarRespaldo,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Nota importante
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF59E0B).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.warning_amber, color: Color(0xFFF59E0B), size: 24),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Nota Importante',
-                                style: TextStyle(color: Color(0xFFF59E0B), fontSize: 14, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'El respaldo incluye datos de Supabase (Clientes, Asesores, Inmuebles) y datos locales (Finanzas). Al importar, los datos existentes se actualizarán.',
-                                style: TextStyle(color: Colors.grey, fontSize: 12),
-                              ),
-                            ],
-                          ),
                         ),
                       ],
                     ),
