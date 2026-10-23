@@ -5,26 +5,47 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="CRM Inmobiliario">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="CRM Inmobiliario">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CRM Inmobiliario</title>
-  <link rel="manifest" href="manifest.json">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-</head>
-<body>
-  <script>
-    if ('caches' in window) {
-      caches.keys().then(function(names) {
-        for (let name of names) caches.delete(name);
-      });
+  <style>
+    /* ✅ FORZAR FONDO NEGRO EN TODO EL HTML */
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #0A0A0A !important;
+      overflow: hidden;
     }
+    
+    /* Eliminar cualquier espacio en blanco */
+    body {
+      display: flex;
+    }
+    
+    /* Asegurar que el contenedor de Flutter ocupe todo */
+    #flutter-container {
+      width: 100%;
+      height: 100%;
+      background-color: #0A0A0A !important;
+    }
+  </style>
+</head>
+<body style="background-color: #0A0A0A;">
+  <script src="flutter.js" defer></script>
+  <script>
+    window.addEventListener('load', function(ev) {
+      _flutter.loader.loadEntrypoint({
+        serviceWorker: {
+          serviceWorkerVersion: serviceWorkerVersion,
+        },
+        onEntrypointLoaded: function(engineInitializer) {
+          engineInitializer.initializeEngine().then(function(appRunner) {
+            appRunner.runApp();
+          });
+        }
+      });
+    });
   </script>
-  <script src="flutter_service_worker.js?v=20261023001" type="application/javascript"></script>
-  <script src="main.dart.js?v=20261023001" type="application/javascript"></script>
 </body>
 </html>
