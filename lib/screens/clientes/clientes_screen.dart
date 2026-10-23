@@ -75,7 +75,7 @@ class _ClientesScreenState extends State<ClientesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: const Color(0xFF0A0A0A), // ✅ FONDO NEGRO FORZADO
       appBar: AppBar(
         backgroundColor: const Color(0xFF0066FF),
         title: const Row(children: [
