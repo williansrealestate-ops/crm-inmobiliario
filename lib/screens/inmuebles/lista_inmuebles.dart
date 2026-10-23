@@ -95,7 +95,6 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
       ),
       body: Column(
         children: [
-          // 🔒 SECCIÓN FIJA: Búsqueda y filtros
           Padding(
             padding: const EdgeInsets.all(12),
             child: TextField(
@@ -139,12 +138,10 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
             ),
           ),
           const SizedBox(height: 12),
-          // 🔒 HEADER FIJO DE LA TABLA
           Container(
             color: const Color(0xFF111111),
             child: _buildHeader(),
           ),
-          // 📜 SOLO LAS FILAS HACEN SCROLL
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
@@ -265,8 +262,8 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
         child: Row(
           children: [
             SizedBox(width: 80, child: Padding(padding: const EdgeInsets.only(right: 8), child: _buildAvatar(titulo, tipoColor.withOpacity(0.8)))),
-            SizedBox(width: 240, child: Text(titulo, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 130, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: tipoColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(tipo, style: TextStyle(color: tipoColor, fontSize: 12, fontWeight: FontWeight.w500)))),
+            SizedBox(width: 240, child: Text(titulo, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 130, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: tipoColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(tipo, style: TextStyle(color: tipoColor, fontSize: 13, fontWeight: FontWeight.w500)))),
             SizedBox(width: 200, child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 13), overflow: TextOverflow.ellipsis)),
             SizedBox(width: 110, child: Text(pais, style: const TextStyle(color: Colors.grey, fontSize: 13))),
             SizedBox(width: 130, child: Text(estado, style: const TextStyle(color: Colors.grey, fontSize: 13))),
@@ -275,8 +272,8 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
             SizedBox(width: 70, child: Text(recamaras > 0 ? '$recamaras' : '-', style: const TextStyle(color: Colors.grey, fontSize: 13))),
             SizedBox(width: 70, child: Text(banos > 0 ? '$banos' : '-', style: const TextStyle(color: Colors.grey, fontSize: 13))),
             SizedBox(width: 200, child: Text(asesor, style: const TextStyle(color: Colors.grey, fontSize: 13), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 110, child: Row(children: [Container(width: 10, height: 10, decoration: BoxDecoration(color: activo ? Colors.green : Colors.red, shape: BoxShape.circle)), const SizedBox(width: 6), Text(activo ? 'Activo' : 'Inactivo', style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 12, fontWeight: FontWeight.w500))])),
-            SizedBox(width: 200, child: Text(notas, style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 110, child: Row(children: [Container(width: 10, height: 10, decoration: BoxDecoration(color: activo ? Colors.green : Colors.red, shape: BoxShape.circle)), const SizedBox(width: 6), Text(activo ? 'Activo' : 'Inactivo', style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 13, fontWeight: FontWeight.w500))])),
+            SizedBox(width: 200, child: Text(notas, style: const TextStyle(color: Colors.grey, fontSize: 13), overflow: TextOverflow.ellipsis)),
           ],
         ),
       ),

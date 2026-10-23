@@ -88,7 +88,6 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: Column(
         children: [
-          // 🔒 SECCIÓN FIJA: Búsqueda y filtros
           Padding(
             padding: const EdgeInsets.all(12),
             child: TextField(
@@ -115,12 +114,10 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          // 🔒 HEADER FIJO DE LA TABLA
           Container(
             color: const Color(0xFF111111),
             child: _buildHeader(),
           ),
-          // 📜 SOLO LAS FILAS HACEN SCROLL
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
@@ -224,16 +221,16 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
         child: Row(
           children: [
             SizedBox(width: 80, child: Padding(padding: const EdgeInsets.only(right: 8), child: _buildAvatar(nombre, Colors.blue.shade700))),
-            SizedBox(width: 240, child: Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 130, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.blue.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(grupo, style: TextStyle(color: Colors.blue, fontSize: 12, fontWeight: FontWeight.w500)))),
+            SizedBox(width: 240, child: Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 130, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.blue.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(grupo, style: TextStyle(color: Colors.blue, fontSize: 13, fontWeight: FontWeight.w500)))),
             SizedBox(width: 150, child: Text(tel, style: const TextStyle(color: Colors.grey, fontSize: 13))),
             SizedBox(width: 200, child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 13), overflow: TextOverflow.ellipsis)),
             SizedBox(width: 110, child: Text(pais, style: const TextStyle(color: Colors.grey, fontSize: 13))),
             SizedBox(width: 130, child: Text(estado, style: const TextStyle(color: Colors.grey, fontSize: 13))),
             SizedBox(width: 140, child: Text(interes, style: const TextStyle(color: Colors.amber, fontSize: 13, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
             SizedBox(width: 110, child: Text('$comision%', style: const TextStyle(color: Colors.green, fontSize: 13, fontWeight: FontWeight.bold))),
-            SizedBox(width: 110, child: Row(children: [Container(width: 10, height: 10, decoration: BoxDecoration(color: activo ? Colors.green : Colors.red, shape: BoxShape.circle)), const SizedBox(width: 6), Text(activo ? 'Activo' : 'Inactivo', style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 12, fontWeight: FontWeight.w500))])),
-            SizedBox(width: 200, child: Text(notas, style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 110, child: Row(children: [Container(width: 10, height: 10, decoration: BoxDecoration(color: activo ? Colors.green : Colors.red, shape: BoxShape.circle)), const SizedBox(width: 6), Text(activo ? 'Activo' : 'Inactivo', style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 13, fontWeight: FontWeight.w500))])),
+            SizedBox(width: 200, child: Text(notas, style: const TextStyle(color: Colors.grey, fontSize: 13), overflow: TextOverflow.ellipsis)),
           ],
         ),
       ),
