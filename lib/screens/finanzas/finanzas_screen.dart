@@ -27,7 +27,12 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   List<Map<String, dynamic>> _resumenOperaciones = [];
   
   String _operacionFiltro = 'todas';
-  int _graficaModo = 0; // 0: Ingresos/Gastos, 1: Ingresos por Negocio, 2: Gastos por Categoría
+  int _graficaModo = 0;
+  
+  // Nuevos: búsqueda y filtro por negocio en transacciones
+  String _busquedaTransacciones = '';
+  String _filtroNegocioTransacciones = 'todos';
+  String _filtroTipoTransacciones = 'todos'; // todos, ingreso, gasto
 
   @override
   void initState() {
@@ -157,21 +162,21 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         children: [
           // Filtro de Operaciones
           _buildFiltroOperaciones(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-          // KPIs
+          // ✅ KPIs COMPACTOS (más pequeños para dar espacio a la gráfica)
           Row(
             children: [
-              Expanded(child: _buildKpiCard('Ingresos', ingresos, const Color(0xFF10B981), Icons.trending_up)),
-              const SizedBox(width: 12),
-              Expanded(child: _buildKpiCard('Gastos', gastos, const Color(0xFFEF4444), Icons.trending_down)),
-              const SizedBox(width: 12),
-              Expanded(child: _buildKpiCard('Balance', utilidad, utilidad >= 0 ? const Color(0xFF3B82F6) : const Color(0xFFEF4444), Icons.account_balance_wallet)),
+              Expanded(child: _buildKpiCardCompacto('Ingresos', ingresos, const Color(0xFF10B981), Icons.trending_up)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildKpiCardCompacto('Gastos', gastos, const Color(0xFFEF4444), Icons.trending_down)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildKpiCardCompacto('Balance', utilidad, utilidad >= 0 ? const Color(0xFF3B82F6) : const Color(0xFFEF4444), Icons.account_balance_wallet)),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
-          // Gráfica Grande Interactiva estilo Money Pro
+          // ✅ GRÁFICA GRANDE INTERACTIVA
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -188,7 +193,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                   segments: _getSegmentosGrafica(),
                   centerTitle: _getCentroTitulo(),
                   centerValue: _getCentroValor(),
-                  size: 300,
+                  size: 320,
                   outerRingWidth: 70,
                   innerRingWidth: 25,
                   centerCircleRadius: 80,
@@ -266,6 +271,27 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
           }).toList(),
         ],
       ),
+    );
+  }
+
+  // ✅ KPI CARD COMPACTO (más pequeño)
+  Widget _buildKpiCardCompacto(String titulo, double valor, Color color, IconData icono) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(icono, color: color, size: 16),
+          const SizedBox(width: 4),
+          Text(titulo, style: TextStyle(color: color.withOpacity(0.8), fontSize: 11)),
+        ]),
+        const SizedBox(height: 4),
+        Text(_formatearMoneda(valor), style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: color)),
+      ]),
     );
   }
 
@@ -372,24 +398,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
       'Alquiler': const Color(0xFF3B82F6), 'Insumos': const Color(0xFF22C55E), 'Otros': const Color(0xFF6366F1),
     };
     return colores[categoria] ?? const Color(0xFF6366F1);
-  }
-
-  Widget _buildKpiCard(String titulo, double valor, Color color, IconData icono) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(icono, color: color, size: 24),
-        const SizedBox(height: 8),
-        Text(titulo, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-        const SizedBox(height: 4),
-        Text(_formatearMoneda(valor), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: color)),
-      ]),
-    );
   }
 
   // ==================== OPERACIONES ====================
@@ -679,30 +687,112 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ==================== TRANSACCIONES ====================
+  // ==================== TRANSACCIONES (con búsqueda y filtros) ====================
   Widget _buildTabTransacciones() {
     final todasTransacciones = [
       ..._ingresos.map((i) => {...i, 'tipo': 'ingreso'}),
       ..._gastos.map((g) => {...g, 'tipo': 'gasto'}),
-    ]..sort((a, b) => (b['fecha'] ?? '').compareTo(a['fecha'] ?? ''));
+    ];
+
+    // Aplicar filtros
+    final transaccionesFiltradas = todasTransacciones.where((t) {
+      final matchBusqueda = _busquedaTransacciones.isEmpty || 
+          (t['concepto']?.toString().toLowerCase().contains(_busquedaTransacciones.toLowerCase()) ?? false) ||
+          (t['categoria']?.toString().toLowerCase().contains(_busquedaTransacciones.toLowerCase()) ?? false);
+      final matchNegocio = _filtroNegocioTransacciones == 'todos' || t['negocioId'] == _filtroNegocioTransacciones;
+      final matchTipo = _filtroTipoTransacciones == 'todos' || t['tipo'] == _filtroTipoTransacciones;
+      return matchBusqueda && matchNegocio && matchTipo;
+    }).toList()..sort((a, b) => (b['fecha'] ?? '').compareTo(a['fecha'] ?? ''));
 
     return Column(children: [
+      // ✅ BARRA DE BÚSQUEDA Y FILTROS
       Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            // Campo de búsqueda
+            TextField(
+              decoration: InputDecoration(
+                hintText: 'Buscar transacciones...',
+                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                filled: true,
+                fillColor: const Color(0xFF1A1A1A),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              onChanged: (v) => setState(() => _busquedaTransacciones = v),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                // Filtro por Negocio
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _filtroNegocioTransacciones,
+                    decoration: const InputDecoration(
+                      labelText: 'Negocio',
+                      labelStyle: TextStyle(color: Colors.grey, fontSize: 11),
+                      filled: true,
+                      fillColor: Color(0xFF1A1A1A),
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    ),
+                    dropdownColor: const Color(0xFF1A1A1A),
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    items: [
+                      const DropdownMenuItem(value: 'todos', child: Text('Todos')),
+                      ..._negocios.map((n) => DropdownMenuItem(value: n['id'], child: Text(n['nombre']))),
+                    ],
+                    onChanged: (v) => setState(() => _filtroNegocioTransacciones = v ?? 'todos'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Filtro por Tipo
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _filtroTipoTransacciones,
+                    decoration: const InputDecoration(
+                      labelText: 'Tipo',
+                      labelStyle: TextStyle(color: Colors.grey, fontSize: 11),
+                      filled: true,
+                      fillColor: Color(0xFF1A1A1A),
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    ),
+                    dropdownColor: const Color(0xFF1A1A1A),
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    items: const [
+                      DropdownMenuItem(value: 'todos', child: Text('Todos')),
+                      DropdownMenuItem(value: 'ingreso', child: Text('Ingresos')),
+                      DropdownMenuItem(value: 'gasto', child: Text('Gastos')),
+                    ],
+                    onChanged: (v) => setState(() => _filtroTipoTransacciones = v ?? 'todos'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      // Botones de acción
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Row(children: [
-          Expanded(child: ElevatedButton.icon(onPressed: () => _mostrarDialogoTransaccion(tipo: 'ingreso'), icon: const Icon(Icons.add), label: const Text('Ingreso'), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 12)))),
+          Expanded(child: ElevatedButton.icon(onPressed: () => _mostrarDialogoTransaccion(tipo: 'ingreso'), icon: const Icon(Icons.add), label: const Text('Ingreso'), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 10)))),
           const SizedBox(width: 12),
-          Expanded(child: ElevatedButton.icon(onPressed: () => _mostrarDialogoTransaccion(tipo: 'gasto'), icon: const Icon(Icons.add), label: const Text('Gasto'), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 12)))),
+          Expanded(child: ElevatedButton.icon(onPressed: () => _mostrarDialogoTransaccion(tipo: 'gasto'), icon: const Icon(Icons.add), label: const Text('Gasto'), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 10)))),
         ]),
       ),
+      const SizedBox(height: 8),
       Expanded(
-        child: todasTransacciones.isEmpty
+        child: transaccionesFiltradas.isEmpty
             ? const Center(child: Text('No hay transacciones', style: TextStyle(color: Colors.grey)))
             : ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: todasTransacciones.length,
+                padding: const EdgeInsets.all(12),
+                itemCount: transaccionesFiltradas.length,
                 itemBuilder: (context, index) {
-                  final t = todasTransacciones[index];
+                  final t = transaccionesFiltradas[index];
                   final esIngreso = t['tipo'] == 'ingreso';
                   final color = esIngreso ? const Color(0xFF10B981) : const Color(0xFFEF4444);
                   final icono = esIngreso ? Icons.add : Icons.remove;
@@ -732,6 +822,9 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                         ]),
                         const SizedBox(height: 2),
                         Text(_formatearFecha(t['fecha'] ?? ''), style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                        // ✅ MOSTRAR ASUNTO SI EXISTE
+                        if (t['asunto'] != null && t['asunto'].toString().isNotEmpty)
+                          Text('Asunto: ${t['asunto']}', style: const TextStyle(fontSize: 11, color: Colors.amber)),
                       ])),
                       Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                         Text(_formatearMoneda(t['monto'] ?? 0), style: TextStyle(fontWeight: FontWeight.w700, color: color, fontSize: 14)),
@@ -744,9 +837,11 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                         onSelected: (value) {
                           if (value == 'editar') _mostrarDialogoTransaccion(tipo: t['tipo'], transaccion: t);
                           if (value == 'eliminar') _eliminarTransaccion(t);
+                          if (value == 'duplicar') _duplicarTransaccion(t);
                         },
                         itemBuilder: (ctx) => [
                           const PopupMenuItem(value: 'editar', child: Row(children: [Icon(Icons.edit, color: Colors.white, size: 18), SizedBox(width: 8), Text('Editar', style: TextStyle(color: Colors.white))])),
+                          const PopupMenuItem(value: 'duplicar', child: Row(children: [Icon(Icons.copy, color: Colors.blue, size: 18), SizedBox(width: 8), Text('Duplicar', style: TextStyle(color: Colors.blue))])),
                           const PopupMenuItem(value: 'eliminar', child: Row(children: [Icon(Icons.delete, color: Colors.red, size: 18), SizedBox(width: 8), Text('Eliminar', style: TextStyle(color: Colors.red))])),
                         ],
                       ),
@@ -756,6 +851,30 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               ),
       ),
     ]);
+  }
+
+  // ✅ FUNCIÓN PARA DUPLICAR TRANSACCIÓN
+  void _duplicarTransaccion(Map<String, dynamic> t) {
+    final nuevaTransaccion = {
+      ...t,
+      'id': null,
+      'concepto': '${t['concepto']} (copia)',
+      'fecha': DateTime.now().toIso8601String(),
+    };
+    nuevaTransaccion.remove('id');
+    
+    if (t['tipo'] == 'ingreso') {
+      FinanzasService.agregarIngreso(nuevaTransaccion);
+    } else {
+      FinanzasService.agregarGasto(nuevaTransaccion);
+    }
+    
+    _cargarDatos();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Transacción duplicada'), backgroundColor: Color(0xFF3B82F6)),
+      );
+    }
   }
 
   void _eliminarTransaccion(Map<String, dynamic> t) async {
@@ -768,6 +887,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   void _mostrarDialogoTransaccion({required String tipo, Map<String, dynamic>? transaccion}) {
     final esEditar = transaccion != null;
     final conceptoCtrl = TextEditingController(text: transaccion?['concepto'] ?? '');
+    final asuntoCtrl = TextEditingController(text: transaccion?['asunto'] ?? ''); // ✅ NUEVO CAMPO ASUNTO
     final montoCtrl = TextEditingController(text: transaccion != null ? _formatearMoneda((transaccion['monto'] ?? 0).toDouble()) : '');
     final categoriaCtrl = TextEditingController(text: transaccion?['categoria'] ?? '');
     String negocioId = transaccion?['negocioId'] ?? (_negocios.isNotEmpty ? _negocios.first['id'] : 'otros');
@@ -788,6 +908,13 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                   controller: conceptoCtrl,
                   style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(labelText: 'Concepto', labelStyle: TextStyle(color: Colors.grey), border: OutlineInputBorder(), filled: true, fillColor: Color(0xFF0A0A0A)),
+                ),
+                const SizedBox(height: 12),
+                // ✅ NUEVO CAMPO ASUNTO
+                TextField(
+                  controller: asuntoCtrl,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(labelText: 'Asunto', labelStyle: TextStyle(color: Colors.grey), border: OutlineInputBorder(), filled: true, fillColor: Color(0xFF0A0A0A), prefixIcon: Icon(Icons.subject, color: Colors.grey)),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -871,6 +998,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 }
                 final data = {
                   'concepto': conceptoCtrl.text,
+                  'asunto': asuntoCtrl.text, // ✅ GUARDAR ASUNTO
                   'monto': monto,
                   'negocioId': negocioId,
                   'operacionId': operacionId,
