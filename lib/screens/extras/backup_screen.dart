@@ -1,8 +1,7 @@
 import 'dart:convert';
-import 'dart:html' as html;
+import 'dart:html' as html; // ✅ Para descarga confiable en Web
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 
 class BackupScreen extends StatefulWidget {
@@ -13,194 +12,165 @@ class BackupScreen extends StatefulWidget {
 }
 
 class _BackupScreenState extends State<BackupScreen> {
-  final _supabase = Supabase.instance.client;
-  bool _loading = false;
-  Map<String, int> _stats = {};
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  Map<String, int> _registros = {
+    'Clientes': 0,
+    'Asesores': 0,
+    'Inmuebles': 0,
+    'Ingresos': 0,
+    'Gastos': 0,
+  };
+  bool _cargando = true;
 
   @override
   void initState() {
     super.initState();
-    _cargarStats();
+    _cargarConteos();
   }
 
-  Future<void> _cargarStats() async {
-    setState(() => _loading = true);
+  Future<void> _cargarConteos() async {
+    setState(() => _cargando = true);
     try {
-      final clientes = await _supabase.from('clientes').select('id');
-      final asesores = await _supabase.from('asesores').select('id');
-      final inmuebles = await _supabase.from('inmuebles').select('id');
-      
-      final prefs = await SharedPreferences.getInstance();
-      final ingresosData = prefs.getString('finanzas_ingresos');
-      final gastosData = prefs.getString('finanzas_gastos');
-      final operacionesData = prefs.getString('finanzas_operaciones');
-      final negociosData = prefs.getString('finanzas_negocios');
-      
-      List ingresos = ingresosData != null ? jsonDecode(ingresosData) : [];
-      List gastos = gastosData != null ? jsonDecode(gastosData) : [];
-      List operaciones = operacionesData != null ? jsonDecode(operacionesData) : [];
-      List negocios = negociosData != null ? jsonDecode(negociosData) : [];
+      final clientes = await _firestore.collection('clientes').count().get();
+      final asesores = await _firestore.collection('asesores').count().get();
+      final inmuebles = await _firestore.collection('inmuebles').count().get();
+      final ingresos = await _firestore.collection('ingresos').count().get();
+      final gastos = await _firestore.collection('gastos').count().get();
 
       setState(() {
-        _stats = {
-          'clientes': clientes.length,
-          'asesores': asesores.length,
-          'inmuebles': inmuebles.length,
-          'ingresos': ingresos.length,
-          'gastos': gastos.length,
-          'operaciones': operaciones.length,
-          'negocios': negocios.length,
+        _registros = {
+          'Clientes': clientes.count ?? 0,
+          'Asesores': asesores.count ?? 0,
+          'Inmuebles': inmuebles.count ?? 0,
+          'Ingresos': ingresos.count ?? 0,
+          'Gastos': gastos.count ?? 0,
         };
-        _loading = false;
+        _cargando = false;
       });
     } catch (e) {
-      setState(() => _loading = false);
+      setState(() => _cargando = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error al cargar conteos: $e'), backgroundColor: Colors.red),
         );
       }
     }
   }
 
   Future<void> _crearRespaldo() async {
-    setState(() => _loading = true);
-    try {
-      final clientes = await _supabase.from('clientes').select('*');
-      final asesores = await _supabase.from('asesores').select('*');
-      final inmuebles = await _supabase.from('inmuebles').select('*');
+    if (_cargando) return;
+    setState(() => _cargando = true);
 
-      final prefs = await SharedPreferences.getInstance();
-      final finanzasData = {
-        'ingresos': prefs.getString('finanzas_ingresos') ?? '[]',
-        'gastos': prefs.getString('finanzas_gastos') ?? '[]',
-        'operaciones': prefs.getString('finanzas_operaciones') ?? '[]',
-        'negocios': prefs.getString('finanzas_negocios') ?? '[]',
-        'metas': prefs.getString('finanzas_metas') ?? '{}',
-      };
+    try {
+      final clientesSnap = await _firestore.collection('clientes').get();
+      final asesoresSnap = await _firestore.collection('asesores').get();
+      final inmueblesSnap = await _firestore.collection('inmuebles').get();
+      final ingresosSnap = await _firestore.collection('ingresos').get();
+      final gastosSnap = await _firestore.collection('gastos').get();
 
       final respaldo = {
-        'version': '2.0',
         'fecha': DateTime.now().toIso8601String(),
-        'datos': {
-          'clientes': clientes,
-          'asesores': asesores,
-          'inmuebles': inmuebles,
-          'finanzas': finanzasData,
-        },
+        'version': '1.0',
+        'clientes': clientesSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList(),
+        'asesores': asesoresSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList(),
+        'inmuebles': inmueblesSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList(),
+        'ingresos': ingresosSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList(),
+        'gastos': gastosSnap.docs.map((d) => {'id': d.id, ...d.data()}).toList(),
       };
 
-      final jsonString = jsonEncode(respaldo);
+      final jsonString = const JsonEncoder.withIndent('  ').convert(respaldo);
       final bytes = utf8.encode(jsonString);
 
-      if (mounted) {
-        final blob = html.Blob([bytes], 'application/json');
-        final url = html.Url.createObjectUrlFromBlob(blob);
-        final anchor = html.AnchorElement(href: url)
-          ..setAttribute('download', 'respaldo_crm_${DateTime.now().millisecondsSinceEpoch}.json')
-          ..click();
-        html.Url.revokeObjectUrl(url);
+      // ✅ MÉTODO SEGURO PARA DESCARGAR EN FLUTTER WEB
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute("download", "respaldo_crm_${DateTime.now().millisecondsSinceEpoch}.json")
+        ..click();
+      html.Url.revokeObjectUrl(url);
 
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ Respaldo creado: ${clientes.length} clientes, ${asesores.length} asesores'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 4),
-          ),
+          const SnackBar(content: Text('✅ Respaldo descargado exitosamente'), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error al crear respaldo: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      setState(() => _cargando = false);
     }
   }
 
   Future<void> _importarRespaldo() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
       );
 
-      if (result == null || result.files.isEmpty) return;
+      if (result == null || result.files.single.bytes == null) return;
 
-      setState(() => _loading = true);
+      final fileBytes = result.files.single.bytes!;
+      final jsonString = utf8.decode(fileBytes);
+      final respaldo = jsonDecode(jsonString) as Map<String, dynamic>;
 
-      final bytes = result.files.single.bytes;
-      if (bytes == null) {
-        throw Exception('No se pudieron leer los bytes del archivo');
-      }
-      
-      final jsonString = utf8.decode(bytes);
-      final respaldo = jsonDecode(jsonString);
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          title: const Text('Importar Respaldo', style: TextStyle(color: Colors.white)),
+          content: const Text(
+            '⚠️ Esto reemplazará todos los datos actuales.\n\n¿Continuar?',
+            style: TextStyle(color: Colors.grey),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
+            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Importar', style: TextStyle(color: Colors.orange))),
+          ],
+        ),
+      );
 
-      Map<String, dynamic> datos;
-      if (respaldo.containsKey('datos')) {
-        datos = respaldo['datos'];
-      } else if (respaldo.containsKey('clientes') || respaldo.containsKey('asesores')) {
-        datos = respaldo;
-      } else {
-        throw Exception('Estructura de respaldo no reconocida.');
-      }
+      if (confirm != true) return;
 
-      int clientesImportados = 0;
-      int asesoresImportados = 0;
-      int inmueblesImportados = 0;
+      setState(() => _cargando = true);
+      final batch = _firestore.batch();
 
-      if (datos['clientes'] != null) {
-        final clientes = List<Map<String, dynamic>>.from(datos['clientes']);
-        for (var cliente in clientes) {
-          try {
-            await _supabase.from('clientes').upsert(cliente);
-            clientesImportados++;
-          } catch (e) { print('Error cliente: $e'); }
+      // 1. Eliminar datos existentes
+      final colecciones = ['clientes', 'asesores', 'inmuebles', 'ingresos', 'gastos'];
+      for (final col in colecciones) {
+        final snap = await _firestore.collection(col).get();
+        for (final doc in snap.docs) {
+          batch.delete(doc.reference);
         }
       }
 
-      if (datos['asesores'] != null) {
-        final asesores = List<Map<String, dynamic>>.from(datos['asesores']);
-        for (var asesor in asesores) {
-          try {
-            await _supabase.from('asesores').upsert(asesor);
-            asesoresImportados++;
-          } catch (e) { print('Error asesor: $e'); }
+      // 2. Insertar nuevos datos
+      for (final col in colecciones) {
+        final datos = respaldo[col] as List? ?? [];
+        for (final item in datos) {
+          final data = Map<String, dynamic>.from(item as Map);
+          final id = data.remove('id') as String?;
+          
+          // ✅ CORRECCIÓN: Usar batch.set() con referencia generada en lugar de batch.add()
+          if (id != null && id.isNotEmpty) {
+            batch.set(_firestore.collection(col).doc(id), data);
+          } else {
+            final newDocRef = _firestore.collection(col).doc(); // Genera ID automático
+            batch.set(newDocRef, data);
+          }
         }
       }
 
-      if (datos['inmuebles'] != null) {
-        final inmuebles = List<Map<String, dynamic>>.from(datos['inmuebles']);
-        for (var inmueble in inmuebles) {
-          try {
-            await _supabase.from('inmuebles').upsert(inmueble);
-            inmueblesImportados++;
-          } catch (e) { print('Error inmueble: $e'); }
-        }
-      }
-
-      if (datos['finanzas'] != null) {
-        final prefs = await SharedPreferences.getInstance();
-        final finanzas = datos['finanzas'];
-        if (finanzas['ingresos'] != null) await prefs.setString('finanzas_ingresos', finanzas['ingresos']);
-        if (finanzas['gastos'] != null) await prefs.setString('finanzas_gastos', finanzas['gastos']);
-        if (finanzas['operaciones'] != null) await prefs.setString('finanzas_operaciones', finanzas['operaciones']);
-        if (finanzas['negocios'] != null) await prefs.setString('finanzas_negocios', finanzas['negocios']);
-        if (finanzas['metas'] != null) await prefs.setString('finanzas_metas', finanzas['metas']);
-      }
-
-      await _cargarStats();
+      await batch.commit();
+      await _cargarConteos();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ Importado: $clientesImportados clientes, $asesoresImportados asesores, $inmueblesImportados inmuebles'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 5),
-          ),
+          const SnackBar(content: Text('✅ Respaldo importado exitosamente'), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
@@ -210,14 +180,14 @@ class _BackupScreenState extends State<BackupScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      setState(() => _cargando = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A), // ✅ FONDO NEGRO FORZADO
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0066FF),
         title: const Row(children: [
@@ -225,62 +195,86 @@ class _BackupScreenState extends State<BackupScreen> {
           SizedBox(width: 8),
           Text('Respaldo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ]),
-        actions: [
-          IconButton(icon: const Icon(Icons.refresh, color: Colors.white), onPressed: _cargarStats),
-        ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF0066FF)))
-          : SingleChildScrollView(
+      body: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Respaldo y Restauración',
+              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 24),
+            Container(
+              width: double.infinity,
               padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Respaldo y Restauración', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildStatRow('Clientes', _stats['clientes'] ?? 0),
-                        _buildStatRow('Asesores', _stats['asesores'] ?? 0),
-                        _buildStatRow('Inmuebles', _stats['inmuebles'] ?? 0),
-                        _buildStatRow('Ingresos', _stats['ingresos'] ?? 0),
-                        _buildStatRow('Gastos', _stats['gastos'] ?? 0),
-                      ],
+              decoration: BoxDecoration(
+                color: const Color(0xFF111111),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF222222)),
+              ),
+              child: _cargando
+                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF0066FF)))
+                  : Column(
+                      children: _registros.entries.map((entry) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(entry.key, style: const TextStyle(color: Colors.white, fontSize: 16)),
+                              Text(
+                                '${entry.value} registros',
+                                style: TextStyle(
+                                  color: entry.value > 0 ? Colors.green : Colors.red,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: _crearRespaldo,
-                    icon: const Icon(Icons.download),
-                    label: const Text('Crear Respaldo'),
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 50)),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: _importarRespaldo,
-                    icon: const Icon(Icons.upload),
-                    label: const Text('Importar Respaldo'),
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6), foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 50)),
-                  ),
-                ],
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: _cargando ? null : _crearRespaldo,
+                icon: const Icon(Icons.download, color: Colors.white),
+                label: Text(
+                  _cargando ? 'Creando respaldo...' : 'Crear Respaldo',
+                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
               ),
             ),
-    );
-  }
-
-  Widget _buildStatRow(String label, int count) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
-          Text('$count registros', style: TextStyle(color: count > 0 ? const Color(0xFF10B981) : Colors.red, fontWeight: FontWeight.bold)),
-        ],
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: _cargando ? null : _importarRespaldo,
+                icon: const Icon(Icons.upload, color: Colors.white),
+                label: Text(
+                  _cargando ? 'Importando...' : 'Importar Respaldo',
+                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3B82F6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
