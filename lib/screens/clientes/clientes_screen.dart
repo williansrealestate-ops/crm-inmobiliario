@@ -12,24 +12,52 @@ class _ClientesScreenState extends State<ClientesScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String _search = '';
 
-  // Tipos de propiedades disponibles
   final List<String> _tiposPropiedad = [
-    'Casa',
-    'Departamento',
-    'Terreno',
-    'Local Comercial',
-    'Hotel',
-    'Oficina',
-    'ave Industrial',
-    'Rancho',
-    'Hacienda',
-    'Combustible',
-    'Gasolinera',
-    'Refinería',
-    'Mina',
-    'Minerales',
-    'Otro',
+    'Casa', 'Departamento', 'Terreno', 'Local Comercial', 'Oficina',
+    'Bodega', 'Rancho', 'Hacienda', 'Lote', 'Edificio', 'Nave Industrial', 'Otro',
   ];
+
+  // Cache para evitar recargas constantes
+  List<String> _asesoresCache = [];
+  List<String> _inmueblesCache = [];
+  bool _asesoresCargados = false;
+  bool _inmueblesCargados = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarDatos();
+  }
+
+  Future<void> _cargarDatos() async {
+    try {
+      // Cargar asesores
+      final asesoresSnap = await _firestore.collection('asesores').get();
+      setState(() {
+        _asesoresCache = asesoresSnap.docs
+            .map((doc) => (doc.data() as Map<String, dynamic>)['nombre'] as String? ?? '')
+            .where((nombre) => nombre.isNotEmpty)
+            .toList();
+        _asesoresCargados = true;
+      });
+
+      // Cargar inmuebles
+      final inmueblesSnap = await _firestore.collection('inmuebles').get();
+      setState(() {
+        _inmueblesCache = inmueblesSnap.docs
+            .map((doc) => (doc.data() as Map<String, dynamic>)['titulo'] as String? ?? '')
+            .where((titulo) => titulo.isNotEmpty)
+            .toList();
+        _inmueblesCargados = true;
+      });
+    } catch (e) {
+      print('Error cargando datos: $e');
+      setState(() {
+        _asesoresCargados = true;
+        _inmueblesCargados = true;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +143,6 @@ class _ClientesScreenState extends State<ClientesScreen> {
     final presupuestoCtrl = TextEditingController(text: cliente?['presupuesto']?.toString() ?? '0');
     final notasCtrl = TextEditingController(text: cliente?['notas'] ?? '');
     
-    // Valores seleccionados para dropdowns
     String tipoSeleccionado = cliente?['tipo'] ?? 'Casa';
     String interesSeleccionado = cliente?['interes'] ?? 'Casa';
     String asesorSeleccionado = cliente?['asesor'] ?? '';
@@ -143,13 +170,11 @@ class _ClientesScreenState extends State<ClientesScreen> {
                 ]),
                 const SizedBox(height: 20),
                 
-                // Sección: Información Personal
                 _buildSeccion('👤 Información Personal'),
                 _buildCampo('Nombre completo *', nombreCtrl, icon: Icons.person),
                 _buildCampo('Teléfono', telefonoCtrl, icon: Icons.phone, tipo: TextInputType.phone),
                 
                 const SizedBox(height: 12),
-                // Sección: Ubicación
                 _buildSeccion('📍 Ubicación'),
                 _buildCampo('Ubicación', ubicacionCtrl, icon: Icons.location_on),
                 Row(children: [
@@ -159,10 +184,8 @@ class _ClientesScreenState extends State<ClientesScreen> {
                 ]),
                 
                 const SizedBox(height: 12),
-                // Sección: Información del Proyecto
                 _buildSeccion('🏠 Información del Proyecto'),
                 
-                // Dropdown TIPO
                 _buildDropdown(
                   label: 'Tipo de Propiedad',
                   value: tipoSeleccionado,
@@ -171,7 +194,6 @@ class _ClientesScreenState extends State<ClientesScreen> {
                   onChanged: (v) => setSheetState(() => tipoSeleccionado = v!),
                 ),
                 
-                // Dropdown INTERÉS
                 _buildDropdown(
                   label: 'Interés',
                   value: interesSeleccionado,
@@ -180,25 +202,33 @@ class _ClientesScreenState extends State<ClientesScreen> {
                   onChanged: (v) => setSheetState(() => interesSeleccionado = v!),
                 ),
                 
-                // Dropdown ELEGIO (desde Firebase - colección inmuebles)
-                _buildDropdownInmuebles(
+                // Dropdown ELEGIO (inmuebles) - USANDO CACHE
+                _buildDropdownSimple(
+                  label: 'Elegio (Inmueble)',
                   value: elegioSeleccionado,
-                  onChanged: (v) => setSheetState(() => elegioSeleccionado = v ?? ''),
+                  icon: Icons.home,
+                  items: _inmueblesCache,
+                  hint: _inmueblesCargados ? 'Seleccionar inmueble' : 'Cargando...',
+                  onChanged: _inmueblesCargados ? (v) => setSheetState(() => elegioSeleccionado = v ?? '') : null,
                 ),
                 
                 _buildCampo('Presupuesto (MXN)', presupuestoCtrl, icon: Icons.attach_money, tipo: TextInputType.number),
                 
                 const SizedBox(height: 12),
-                // Sección: Asesor (Dropdown desde Firebase)
-                _buildSeccion(' Asesor Asignado'),
-                _buildDropdownAsesor(
+                _buildSeccion('👥 Asesor Asignado'),
+                
+                // Dropdown ASESOR - USANDO CACHE
+                _buildDropdownSimple(
+                  label: 'Asesor',
                   value: asesorSeleccionado,
-                  onChanged: (v) => setSheetState(() => asesorSeleccionado = v ?? ''),
+                  icon: Icons.person,
+                  items: _asesoresCache,
+                  hint: _asesoresCargados ? 'Seleccionar asesor' : 'Cargando...',
+                  onChanged: _asesoresCargados ? (v) => setSheetState(() => asesorSeleccionado = v ?? '') : null,
                 ),
                 
                 const SizedBox(height: 12),
-                // Sección: Notas
-                _buildSeccion(' Notas'),
+                _buildSeccion('📝 Notas'),
                 _buildCampoMultilinea('Notas / Observaciones', notasCtrl),
                 
                 const SizedBox(height: 16),
@@ -221,7 +251,6 @@ class _ClientesScreenState extends State<ClientesScreen> {
     );
   }
 
-  // Widget para dropdowns de tipo/interés
   Widget _buildDropdown({
     required String label,
     required String value,
@@ -249,117 +278,32 @@ class _ClientesScreenState extends State<ClientesScreen> {
     );
   }
 
-  // Widget para dropdown de Inmuebles (desde Firebase - colección inmuebles)
-  Widget _buildDropdownInmuebles({
+  Widget _buildDropdownSimple({
+    required String label,
     required String value,
-    required ValueChanged<String?> onChanged,
+    required IconData icon,
+    required List<String> items,
+    required String hint,
+    required ValueChanged<String?>? onChanged,
   }) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: _firestore.collection('inmuebles').where('activo', isEqualTo: true).orderBy('titulo').snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-              decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
-              child: const Row(children: [
-                Icon(Icons.home, color: Color(0xFF0066FF)),
-                SizedBox(width: 12),
-                Text('Cargando inmuebles...', style: TextStyle(color: Colors.grey)),
-              ]),
-            ),
-          );
-        }
-        
-        final inmuebles = snapshot.data!.docs;
-        final items = inmuebles.map((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          return data['titulo'] as String;
-        }).toList();
-        
-        // Si el inmueble seleccionado no está en la lista, agregarlo
-        if (value.isNotEmpty && !items.contains(value)) {
-          items.insert(0, value);
-        }
-        
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: DropdownButtonFormField<String>(
-            value: items.contains(value) ? value : null,
-            decoration: InputDecoration(
-              labelText: 'Elegio (Inmueble)',
-              labelStyle: const TextStyle(color: Colors.grey),
-              prefixIcon: const Icon(Icons.home, color: Color(0xFF0066FF)),
-              filled: true,
-              fillColor: const Color(0xFF1A1A1A),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-            ),
-            dropdownColor: const Color(0xFF1A1A1A),
-            style: const TextStyle(color: Colors.white),
-            hint: const Text('Seleccionar inmueble', style: TextStyle(color: Colors.grey)),
-            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
-            onChanged: onChanged,
-          ),
-        );
-      },
-    );
-  }
-
-  // Widget para dropdown de Asesores (desde Firebase)
-  Widget _buildDropdownAsesor({
-    required String value,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: _firestore.collection('asesores').where('activo', isEqualTo: true).orderBy('nombre').snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-              decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
-              child: const Row(children: [
-                Icon(Icons.person, color: Color(0xFF0066FF)),
-                SizedBox(width: 12),
-                Text('Cargando asesores...', style: TextStyle(color: Colors.grey)),
-              ]),
-            ),
-          );
-        }
-        
-        final asesores = snapshot.data!.docs;
-        final items = asesores.map((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          return data['nombre'] as String;
-        }).toList();
-        
-        // Si el asesor seleccionado no está en la lista, agregarlo
-        if (value.isNotEmpty && !items.contains(value)) {
-          items.insert(0, value);
-        }
-        
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: DropdownButtonFormField<String>(
-            value: items.contains(value) ? value : (items.isNotEmpty ? items.first : null),
-            decoration: InputDecoration(
-              labelText: 'Asesor',
-              labelStyle: const TextStyle(color: Colors.grey),
-              prefixIcon: const Icon(Icons.person, color: Color(0xFF0066FF)),
-              filled: true,
-              fillColor: const Color(0xFF1A1A1A),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-            ),
-            dropdownColor: const Color(0xFF1A1A1A),
-            style: const TextStyle(color: Colors.white),
-            hint: const Text('Seleccionar asesor', style: TextStyle(color: Colors.grey)),
-            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
-            onChanged: onChanged,
-          ),
-        );
-      },
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: DropdownButtonFormField<String>(
+        value: items.contains(value) ? value : null,
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(color: Colors.grey),
+          prefixIcon: Icon(icon, color: const Color(0xFF0066FF)),
+          filled: true,
+          fillColor: const Color(0xFF1A1A1A),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+        ),
+        dropdownColor: const Color(0xFF1A1A1A),
+        style: const TextStyle(color: Colors.white),
+        hint: Text(hint, style: const TextStyle(color: Colors.grey)),
+        items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
+        onChanged: onChanged,
+      ),
     );
   }
 
@@ -377,7 +321,7 @@ class _ClientesScreenState extends State<ClientesScreen> {
 
   Future<void> _guardarCliente(BuildContext ctx, TextEditingController nombre, TextEditingController telefono, TextEditingController ubicacion, TextEditingController pais, TextEditingController estado, TextEditingController presupuesto, TextEditingController notas, String tipo, String interes, String asesor, String elegio, String? docId) async {
     if (nombre.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ El nombre es obligatorio'), backgroundColor: Colors.orange));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('️ El nombre es obligatorio'), backgroundColor: Colors.orange));
       return;
     }
     try {
