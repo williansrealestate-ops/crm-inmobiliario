@@ -92,15 +92,13 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
     final nombreCtrl = TextEditingController(text: asesor?['nombre'] ?? '');
     final emailCtrl = TextEditingController(text: asesor?['email'] ?? '');
     final telefonoCtrl = TextEditingController(text: asesor?['telefono'] ?? '');
-    final rfcCtrl = TextEditingController(text: asesor?['rfc'] ?? '');
-    final curpCtrl = TextEditingController(text: asesor?['curp'] ?? '');
-    final direccionCtrl = TextEditingController(text: asesor?['direccion'] ?? '');
+    final facebookCtrl = TextEditingController(text: asesor?['facebook'] ?? '');
+    final linkedinCtrl = TextEditingController(text: asesor?['linkedin'] ?? '');
+    final paisCtrl = TextEditingController(text: asesor?['pais'] ?? 'México');
+    final estadoCtrl = TextEditingController(text: asesor?['estado'] ?? '');
     final zonaCoberturaCtrl = TextEditingController(text: asesor?['zona_cobertura'] ?? '');
     final especialidadCtrl = TextEditingController(text: asesor?['especialidad'] ?? '');
     final comisionCtrl = TextEditingController(text: asesor?['comision']?.toString() ?? '5');
-    final cedulaCtrl = TextEditingController(text: asesor?['cedula_profesional'] ?? '');
-    final linkedinCtrl = TextEditingController(text: asesor?['linkedin'] ?? '');
-    final whatsappCtrl = TextEditingController(text: asesor?['whatsapp'] ?? '');
     final fechaIngresoCtrl = TextEditingController(text: asesor?['fecha_ingreso'] ?? '');
     final notasCtrl = TextEditingController(text: asesor?['notas'] ?? '');
     bool activo = asesor?['activo'] ?? true;
@@ -128,31 +126,91 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
                 const SizedBox(height: 20),
                 
                 // Sección: Información Personal
-                _buildSeccion(' Información Personal'),
+                _buildSeccion('👤 Información Personal'),
                 _buildCampo('Nombre completo *', nombreCtrl, icon: Icons.person),
                 _buildCampo('Email', emailCtrl, icon: Icons.email, tipo: TextInputType.emailAddress),
                 _buildCampo('Teléfono', telefonoCtrl, icon: Icons.phone, tipo: TextInputType.phone),
-                _buildCampo('WhatsApp', whatsappCtrl, icon: Icons.message, tipo: TextInputType.phone),
+                _buildCampo('Facebook', facebookCtrl, icon: Icons.facebook),
                 _buildCampo('LinkedIn', linkedinCtrl, icon: Icons.link),
                 
                 const SizedBox(height: 12),
-                _buildSeccion(' Identificación Fiscal'),
-                _buildCampo('RFC', rfcCtrl, icon: Icons.badge),
-                _buildCampo('CURP', curpCtrl, icon: Icons.credit_card),
-                _buildCampo('Cédula Profesional', cedulaCtrl, icon: Icons.school),
+                // Sección: Ubicación
+                _buildSeccion('📍 Ubicación'),
+                _buildCampo('Ubicación', paisCtrl, icon: Icons.location_on),
+                Row(children: [
+                  Expanded(child: _buildCampo('País', paisCtrl, icon: Icons.flag)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildCampo('Estado', estadoCtrl, icon: Icons.map)),
+                ]),
+                _buildCampo('Zona de Cobertura', zonaCoberturaCtrl, icon: Icons.public),
                 
                 const SizedBox(height: 12),
-                _buildSeccion('📍 Dirección y Cobertura'),
-                _buildCampo('Dirección', direccionCtrl, icon: Icons.home),
-                _buildCampo('Zona de Cobertura', zonaCoberturaCtrl, icon: Icons.map),
-                
-                const SizedBox(height: 12),
+                // Sección: Información Profesional
                 _buildSeccion('💼 Información Profesional'),
                 _buildCampo('Especialidad', especialidadCtrl, icon: Icons.star),
                 _buildCampo('Comisión (%)', comisionCtrl, icon: Icons.percent, tipo: TextInputType.number),
-                _buildCampo('Fecha de Ingreso', fechaIngresoCtrl, icon: Icons.calendar_today),
+                
+                // Campo de Fecha con calendario
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: InkWell(
+                    onTap: () async {
+                      final fecha = await showDatePicker(
+                        context: ctx,
+                        initialDate: fechaIngresoCtrl.text.isNotEmpty ? DateTime.tryParse(fechaIngresoCtrl.text) ?? DateTime.now() : DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2030),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: const ColorScheme.dark(
+                                primary: Color(0xFF0066FF),
+                                onPrimary: Colors.white,
+                                onSurface: Colors.white,
+                              ),
+                              dialogBackgroundColor: const Color(0xFF1A1A1A),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (fecha != null) {
+                        setSheetState(() {
+                          fechaIngresoCtrl.text = '${fecha.year}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}';
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A1A1A),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today, color: Color(0xFF0066FF), size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Fecha de Ingreso', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                Text(
+                                  fechaIngresoCtrl.text.isNotEmpty ? fechaIngresoCtrl.text : 'Seleccionar fecha',
+                                  style: TextStyle(color: fechaIngresoCtrl.text.isNotEmpty ? Colors.white : Colors.grey, fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
                 
                 const SizedBox(height: 12),
+                // Sección: Estado y Notas
                 _buildSeccion('📝 Estado y Notas'),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
@@ -169,7 +227,7 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton.icon(
-                    onPressed: () => _guardarAsesor(ctx, nombreCtrl, emailCtrl, telefonoCtrl, rfcCtrl, curpCtrl, direccionCtrl, zonaCoberturaCtrl, especialidadCtrl, comisionCtrl, cedulaCtrl, linkedinCtrl, whatsappCtrl, fechaIngresoCtrl, notasCtrl, activo, docId),
+                    onPressed: () => _guardarAsesor(ctx, nombreCtrl, emailCtrl, telefonoCtrl, facebookCtrl, linkedinCtrl, paisCtrl, estadoCtrl, zonaCoberturaCtrl, especialidadCtrl, comisionCtrl, fechaIngresoCtrl, notasCtrl, activo, docId),
                     icon: const Icon(Icons.save, color: Colors.white),
                     label: Text(asesor == null ? 'Crear Asesor' : 'Guardar Cambios', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
@@ -202,7 +260,7 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
     return Padding(padding: const EdgeInsets.only(bottom: 12), child: TextField(controller: ctrl, maxLines: 4, style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: label, labelStyle: const TextStyle(color: Colors.grey), prefixIcon: const Icon(Icons.notes, color: Color(0xFF0066FF)), filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none))));
   }
 
-  Future<void> _guardarAsesor(BuildContext ctx, TextEditingController nombre, TextEditingController email, TextEditingController telefono, TextEditingController rfc, TextEditingController curp, TextEditingController direccion, TextEditingController zonaCobertura, TextEditingController especialidad, TextEditingController comision, TextEditingController cedula, TextEditingController linkedin, TextEditingController whatsapp, TextEditingController fechaIngreso, TextEditingController notas, bool activo, String? docId) async {
+  Future<void> _guardarAsesor(BuildContext ctx, TextEditingController nombre, TextEditingController email, TextEditingController telefono, TextEditingController facebook, TextEditingController linkedin, TextEditingController pais, TextEditingController estado, TextEditingController zonaCobertura, TextEditingController especialidad, TextEditingController comision, TextEditingController fechaIngreso, TextEditingController notas, bool activo, String? docId) async {
     if (nombre.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ El nombre es obligatorio'), backgroundColor: Colors.orange));
       return;
@@ -212,12 +270,10 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
         'nombre': nombre.text.trim(),
         'email': email.text.trim(),
         'telefono': telefono.text.trim(),
-        'whatsapp': whatsapp.text.trim(),
+        'facebook': facebook.text.trim(),
         'linkedin': linkedin.text.trim(),
-        'rfc': rfc.text.trim(),
-        'curp': curp.text.trim(),
-        'cedula_profesional': cedula.text.trim(),
-        'direccion': direccion.text.trim(),
+        'pais': pais.text.trim(),
+        'estado': estado.text.trim(),
         'zona_cobertura': zonaCobertura.text.trim(),
         'especialidad': especialidad.text.trim(),
         'comision': double.tryParse(comision.text) ?? 5,
@@ -246,3 +302,4 @@ class _AsesoresScreenState extends State<AsesoresScreen> {
     }
   }
 }
+// Versión actualizada: 2026-10-25
