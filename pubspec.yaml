@@ -12,7 +12,7 @@ dependencies:
   
   # ✅ Dependencias principales
   cupertino_icons: ^1.0.8
-  supabase_flutter: ^2.0.0
+  supabase_flutter: ^2.8.4
   
   # ✅ Mapa
   flutter_map: ^6.1.0

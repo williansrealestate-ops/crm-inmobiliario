@@ -17,10 +17,10 @@ import 'screens/inmuebles/lista_inmuebles.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // ✅ USAR NUEVA PUBLISHABLE KEY (la Legacy está deprecada)
+  // ✅ INICIALIZAR SUPABASE CON LEGACY ANON KEY (compatible con v2.8.4)
   await Supabase.initialize(
     url: 'https://qbuknjiqrzxqrqpoixio.supabase.co',
-    anonKey: 'sb_publishable_phlPx9hNs6-6yTTauRNdYQ_0UpY-9wB',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFidWtuamlxcnp4cXJxcG9peGlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTUxNzIsImV4cCI6MjEwNzg3MTE3Mn0.4JzL_b2EnryLo_D3FEyWGR5Skkawhx2QvydaO1i1gRA',
   );
   
   runApp(const MyApp());

@@ -8416,7 +8416,7 @@ var $async$aPk=A.B(function(a,b){if(a===1)return A.x(b,r)
 for(;;)switch(s){case 0:if($.a9==null)A.ax9()
 $.a9.toString
 s=2
-return A.m(A.auX("sb_publishable_phlPx9hNs6-6yTTauRNdYQ_0UpY-9wB","https://qbuknjiqrzxqrqpoixio.supabase.co"),$async$aPk)
+return A.m(A.auX("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFidWtuamlxcnp4cXJxcG9peGlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTUxNzIsImV4cCI6MjEwNzg3MTE3Mn0.4JzL_b2EnryLo_D3FEyWGR5Skkawhx2QvydaO1i1gRA","https://qbuknjiqrzxqrqpoixio.supabase.co"),$async$aPk)
 case 2:if($.a9==null)A.ax9()
 q=$.a9
 q.toString
