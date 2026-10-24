@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// ✅ IMPORTS DE TODAS TUS PANTALLAS REALES
 import 'screens/guiones/guiones_screen.dart';
 import 'screens/dashboard/dashboard_asesores.dart';
 import 'screens/reportes/reportes_screen.dart';
@@ -73,20 +72,31 @@ class _MainScreenState extends State<MainScreen> {
     {'icon': Icons.home, 'label': 'Inmuebles', 'color': const Color(0xFF00BCD4)},
   ];
 
-  final List<Widget> _screens = [
-    const GuionesScreen(),
-    const DashboardAsesores(),
-    const ReportesScreen(),
-    const AcademiaScreen(),
-    const ChatIAScreen(),
-    const CalculadorasScreen(),
-    const FinanzasScreen(),
-    const BackupScreen(),
-    const DashboardNegociosScreen(),
-    const ClientesScreen(),
-    const AsesoresScreen(),
-    const ListaInmuebles(),
-  ];
+  // ✅ WRAPPER NEGRO para pantallas problemáticas
+  Widget _wrapBlack(Widget child) {
+    return ColoredBox(
+      color: const Color(0xFF0A0A0A),
+      child: child,
+    );
+  }
+
+  Widget _buildCurrentScreen() {
+    switch (_selectedIndex) {
+      case 0: return _wrapBlack(const GuionesScreen());
+      case 1: return _wrapBlack(const DashboardAsesores());
+      case 2: return _wrapBlack(const ReportesScreen());
+      case 3: return _wrapBlack(const AcademiaScreen());
+      case 4: return _wrapBlack(const ChatIAScreen());
+      case 5: return _wrapBlack(const CalculadorasScreen());
+      case 6: return _wrapBlack(const FinanzasScreen());
+      case 7: return _wrapBlack(const BackupScreen());
+      case 8: return _wrapBlack(const DashboardNegociosScreen());
+      case 9: return _wrapBlack(const ClientesScreen());
+      case 10: return _wrapBlack(const AsesoresScreen());
+      case 11: return _wrapBlack(const ListaInmuebles());
+      default: return const SizedBox.shrink();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,13 +104,11 @@ class _MainScreenState extends State<MainScreen> {
       backgroundColor: const Color(0xFF0A0A0A),
       body: Row(
         children: [
-          // ✅ SIDEBAR IZQUIERDO
           Container(
             width: _isSidebarExpanded ? 220 : 70,
             color: const Color(0xFF000000),
             child: Column(
               children: [
-                // Logo superior
                 Container(
                   height: 60,
                   color: const Color(0xFF0066FF),
@@ -110,10 +118,7 @@ class _MainScreenState extends State<MainScreen> {
                       const Icon(Icons.home, color: Colors.white, size: 24),
                       if (_isSidebarExpanded) ...[
                         const SizedBox(width: 8),
-                        const Text(
-                          'REAL ESTATE',
-                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
+                        const Text('REAL ESTATE', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                       ],
                       const Spacer(),
                       IconButton(
@@ -124,7 +129,6 @@ class _MainScreenState extends State<MainScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Lista de módulos
                 Expanded(
                   child: ListView.builder(
                     itemCount: _menuItems.length,
@@ -146,14 +150,7 @@ class _MainScreenState extends State<MainScreen> {
                               Icon(item['icon'] as IconData, color: isSelected ? item['color'] as Color : Colors.grey, size: 20),
                               if (_isSidebarExpanded) ...[
                                 const SizedBox(width: 12),
-                                Text(
-                                  item['label'] as String,
-                                  style: TextStyle(
-                                    color: isSelected ? Colors.white : Colors.grey,
-                                    fontSize: 13,
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                  ),
-                                ),
+                                Text(item['label'] as String, style: TextStyle(color: isSelected ? Colors.white : Colors.grey, fontSize: 13, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
                               ],
                             ],
                           ),
@@ -162,60 +159,32 @@ class _MainScreenState extends State<MainScreen> {
                     },
                   ),
                 ),
-                // Perfil de usuario
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF0A0A0A),
-                    border: Border(top: BorderSide(color: Color(0xFF222222))),
-                  ),
+                  decoration: const BoxDecoration(color: Color(0xFF0A0A0A), border: Border(top: BorderSide(color: Color(0xFF222222)))),
                   child: Row(
                     children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF0066FF),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Center(
-                          child: Text('W', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        ),
-                      ),
+                      Container(width: 36, height: 36, decoration: const BoxDecoration(color: Color(0xFF0066FF), shape: BoxShape.circle), child: const Center(child: Text('W', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)))),
                       if (_isSidebarExpanded) ...[
                         const SizedBox(width: 10),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Williams', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-                              Text('Modo Automático', style: TextStyle(color: Colors.grey, fontSize: 11)),
-                            ],
-                          ),
-                        ),
+                        const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Williams', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)), Text('Modo Automático', style: TextStyle(color: Colors.grey, fontSize: 11))])),
                       ],
                     ],
                   ),
                 ),
-                // Botones de tema
                 Container(
                   padding: const EdgeInsets.all(8),
                   color: const Color(0xFF0A0A0A),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildThemeButton(Icons.light_mode, 'Claro'),
-                      _buildThemeButton(Icons.dark_mode, 'Oscuro'),
-                      _buildThemeButton(Icons.settings, 'Auto', isSelected: true),
-                    ],
-                  ),
+                  child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [_buildThemeButton(Icons.light_mode, 'Claro'), _buildThemeButton(Icons.dark_mode, 'Oscuro'), _buildThemeButton(Icons.settings, 'Auto', isSelected: true)]),
                 ),
               ],
             ),
           ),
-          // ✅ CONTENIDO PRINCIPAL
           Expanded(
-            child: _screens[_selectedIndex],
+            child: Container(
+              color: const Color(0xFF0A0A0A),
+              child: _buildCurrentScreen(),
+            ),
           ),
         ],
       ),
@@ -223,21 +192,6 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildThemeButton(IconData icon, String label, {bool isSelected = false}) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF0066FF) : const Color(0xFF1A1A1A),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: isSelected ? const Color(0xFF0066FF) : const Color(0xFF333333)),
-          ),
-          child: Icon(icon, color: isSelected ? Colors.white : Colors.grey, size: 16),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: TextStyle(color: isSelected ? const Color(0xFF0066FF) : Colors.grey, fontSize: 10)),
-      ],
-    );
+    return Column(mainAxisSize: MainAxisSize.min, children: [Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: isSelected ? const Color(0xFF0066FF) : const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(6), border: Border.all(color: isSelected ? const Color(0xFF0066FF) : const Color(0xFF333333))), child: Icon(icon, color: isSelected ? Colors.white : Colors.grey, size: 16)), const SizedBox(height: 4), Text(label, style: TextStyle(color: isSelected ? const Color(0xFF0066FF) : Colors.grey, fontSize: 10))]);
   }
 }
