@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../config/theme.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DashboardNegociosScreen extends StatefulWidget {
   const DashboardNegociosScreen({super.key});
@@ -9,312 +9,262 @@ class DashboardNegociosScreen extends StatefulWidget {
 }
 
 class _DashboardNegociosScreenState extends State<DashboardNegociosScreen> {
-  int _negocioSeleccionado = 0;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String _negocioSeleccionado = 'Minerales';
 
   final List<Map<String, dynamic>> _negocios = [
-    {'id': 'minerales', 'nombre': 'Minerales', 'icono': Icons.diamond, 'color': const Color(0xFFF59E0B), 'colorGradiente': const Color(0xFFD97706)},
-    {'id': 'combustible', 'nombre': 'Combustible', 'icono': Icons.local_gas_station, 'color': const Color(0xFF10B981), 'colorGradiente': const Color(0xFF059669)},
-    {'id': 'agropecuario', 'nombre': 'Agropecuario', 'icono': Icons.agriculture, 'color': const Color(0xFF8B5CF6), 'colorGradiente': const Color(0xFF7C3AED)},
-    {'id': 'proyectos', 'nombre': 'Proyectos', 'icono': Icons.business_center, 'color': const Color(0xFFEC4899), 'colorGradiente': const Color(0xFFDB2777)},
+    {'nombre': 'Minerales', 'icon': Icons.diamond, 'color': Colors.orange},
+    {'nombre': 'Combustible', 'icon': Icons.local_gas_station, 'color': Colors.green},
+    {'nombre': 'Agropecuario', 'icon': Icons.agriculture, 'color': Colors.purple},
+    {'nombre': 'Proyectos', 'icon': Icons.business_center, 'color': Colors.pink},
   ];
-
-  final Map<String, Map<String, dynamic>> _datosNegocios = {
-    'minerales': {
-      'produccionMes': 1250, 'produccionUnidad': 'toneladas', 'reservas': 45000, 'reservasUnidad': 'toneladas',
-      'precioActual': 1850, 'precioUnidad': 'USD/ton', 'operacionesActivas': 3, 'empleados': 47, 'maquinaria': 12,
-      'ingresosMes': 2312500, 'gastosMes': 1450000,
-      'operaciones': [
-        {'nombre': 'Mina El Dorado', 'estado': 'Activa', 'produccion': 450, 'icono': Icons.landscape}, // ✅ CORREGIDO
-        {'nombre': 'Mina La Esperanza', 'estado': 'Activa', 'produccion': 520, 'icono': Icons.terrain},
-        {'nombre': 'Mina San José', 'estado': 'Mantenimiento', 'produccion': 0, 'icono': Icons.build},
-      ],
-      'alertas': [
-        {'tipo': 'warning', 'mensaje': 'Mina San José en mantenimiento programado'},
-        {'tipo': 'success', 'mensaje': 'Producción mensual +12% vs mes anterior'},
-      ],
-    },
-    'combustible': {
-      'ventasDia': 8500, 'ventasUnidad': 'litros', 'inventario': 125000, 'inventarioUnidad': 'litros',
-      'precioMagna': 22.50, 'precioPremium': 24.80, 'precioDiesel': 23.90, 'estaciones': 4, 'empleados': 28, 'tanques': 16,
-      'ingresosMes': 1912500, 'gastosMes': 1650000,
-      'operaciones': [
-        {'nombre': 'Estación Centro', 'ventas': 2800, 'estado': 'Operativa', 'icono': Icons.store},
-        {'nombre': 'Estación Norte', 'ventas': 2200, 'estado': 'Operativa', 'icono': Icons.store},
-        {'nombre': 'Estación Sur', 'ventas': 1900, 'estado': 'Operativa', 'icono': Icons.store},
-        {'nombre': 'Estación Poniente', 'ventas': 1600, 'estado': 'Bajo inventario', 'icono': Icons.store},
-      ],
-      'alertas': [
-        {'tipo': 'danger', 'mensaje': 'Estación Poniente: Inventario bajo (15%)'},
-        {'tipo': 'success', 'mensaje': 'Ventas diarias +8% vs promedio'},
-      ],
-    },
-    'agropecuario': {
-      'hectareas': 2450, 'hectareasUnidad': 'has cultivadas', 'ganado': 850, 'ganadoUnidad': 'cabezas',
-      'cosechaEsperada': 18500, 'cosechaUnidad': 'toneladas', 'temporada': 'Otoño-Invierno 2026', 'empleados': 65, 'tractores': 8,
-      'ingresosMes': 1250000, 'gastosMes': 890000,
-      'operaciones': [
-        {'nombre': 'Rancho El Paraíso', 'tipo': 'Ganado bovino', 'cantidad': 420, 'icono': Icons.pets},
-        {'nombre': 'Campo Los Álamos', 'tipo': 'Maíz', 'cantidad': 850, 'icono': Icons.grass},
-        {'nombre': 'Hacienda San Miguel', 'tipo': 'Sorgo', 'cantidad': 620, 'icono': Icons.eco},
-      ],
-      'alertas': [
-        {'tipo': 'warning', 'mensaje': 'Se acerca temporada de siembra'},
-        {'tipo': 'success', 'mensaje': 'Ganado en excelente estado sanitario'},
-      ],
-    },
-    'proyectos': {
-      'proyectosActivos': 7, 'proyectosCompletados': 23, 'inversionTotal': 15800000, 'roi': 18.5, 'empleados': 120, 'contratistas': 8, 'enTiempo': 5, 'retrasados': 2,
-      'ingresosMes': 3200000, 'gastosMes': 2750000,
-      'operaciones': [
-        {'nombre': 'Torre Corporativa A', 'progreso': 75, 'inversion': 4500000, 'icono': Icons.apartment},
-        {'nombre': 'Desarrollo Habitacional B', 'progreso': 45, 'inversion': 3200000, 'icono': Icons.home},
-        {'nombre': 'Plaza Comercial C', 'progreso': 90, 'inversion': 2800000, 'icono': Icons.store},
-        {'nombre': 'Infraestructura Vial D', 'progreso': 30, 'inversion': 1900000, 'icono': Icons.route}, // ✅ CORREGIDO
-      ],
-      'alertas': [
-        {'tipo': 'danger', 'mensaje': '2 proyectos con retraso > 15 días'},
-        {'tipo': 'success', 'mensaje': 'ROI promedio +18.5% este trimestre'},
-      ],
-    },
-  };
 
   @override
   Widget build(BuildContext context) {
-    final negocioActual = _negocios[_negocioSeleccionado];
-    final datos = _datosNegocios[negocioActual['id']]!;
-    final balance = datos['ingresosMes'] - datos['gastosMes'];
-
     return Scaffold(
-      backgroundColor: AppTheme.getBackgroundColor(context),
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
-        title: const Row(children: [Icon(Icons.dashboard, color: Colors.white), SizedBox(width: 8), Text('Dashboard de Negocios')]),
-        backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: const Color(0xFF0066FF),
+        title: const Row(children: [
+          Icon(Icons.dashboard, color: Colors.white),
+          SizedBox(width: 8),
+          Text('Dashboard de Negocios', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        ]),
       ),
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: AppTheme.getSurfaceColor(context),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
+      body: Container(
+        width: double.infinity,
+        child: Column(
+          children: [
+            // Selector de negocio
+            Container(
+              padding: const EdgeInsets.all(16),
+              color: const Color(0xFF111111),
               child: Row(
-                children: List.generate(_negocios.length, (index) {
-                  final neg = _negocios[index];
-                  final isSelected = _negocioSeleccionado == index;
-                  return GestureDetector(
-                    onTap: () => setState(() => _negocioSeleccionado = index),
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: isSelected ? neg['color'] : AppTheme.getBackgroundColor(context),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: isSelected ? neg['color'] : AppTheme.getDividerColor(context), width: isSelected ? 2 : 1),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(neg['icono'], color: isSelected ? Colors.white : neg['color'], size: 20),
-                          const SizedBox(width: 8),
-                          Text(neg['nombre'], style: TextStyle(color: isSelected ? Colors.white : AppTheme.getTextColor(context), fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500, fontSize: 13)),
-                        ],
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: _negocios.map((negocio) {
+                  final isSelected = _negocioSeleccionado == negocio['nombre'];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: GestureDetector(
+                      onTap: () => setState(() => _negocioSeleccionado = negocio['nombre'] as String),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected ? negocio['color'] as Color : const Color(0xFF1A1A1A),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: isSelected ? negocio['color'] as Color : const Color(0xFF333333)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(negocio['icon'] as IconData, color: isSelected ? Colors.white : Colors.grey, size: 18),
+                            const SizedBox(width: 6),
+                            Text(negocio['nombre'] as String, style: TextStyle(color: isSelected ? Colors.white : Colors.grey, fontSize: 13, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                          ],
+                        ),
                       ),
                     ),
                   );
-                }),
+                }).toList(),
               ),
             ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeaderNegocio(negocioActual, datos),
-                  const SizedBox(height: 24),
-                  const Text('KPIs Principales', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 12),
-                  _buildKPIsGrid(negocioActual, datos),
-                  const SizedBox(height: 24),
-                  const Text('Balance del Mes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 12),
-                  _buildBalanceCard(datos, balance),
-                  const SizedBox(height: 24),
-                  const Text('Operaciones Activas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 12),
-                  ...List<Map<String, dynamic>>.from(datos['operaciones']).map((op) => _buildOperacionCard(op, negocioActual)),
-                  const SizedBox(height: 24),
-                  const Text('Alertas y Notificaciones', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 12),
-                  ...List<Map<String, dynamic>>.from(datos['alertas']).map((alerta) => _buildAlertaCard(alerta)),
-                  const SizedBox(height: 24),
-                ],
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header del negocio
+                    _buildHeaderNegocio(),
+                    const SizedBox(height: 24),
+                    
+                    // KPIs desde Finanzas
+                    const Text('KPIs Financieros', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    _buildKPIsFinancieros(),
+                    const SizedBox(height: 24),
+                    
+                    // Balance del Mes
+                    const Text('Balance del Mes', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    _buildBalanceDelMes(),
+                    const SizedBox(height: 24),
+                    
+                    // Últimas transacciones
+                    const Text('Últimas Transacciones', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    _buildUltimasTransacciones(),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildHeaderNegocio(Map<String, dynamic> negocio, Map<String, dynamic> datos) {
+  Widget _buildHeaderNegocio() {
+    final negocio = _negocios.firstWhere((n) => n['nombre'] == _negocioSeleccionado);
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [negocio['color'], negocio['colorGradiente']], begin: Alignment.topLeft, end: Alignment.bottomRight),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: negocio['color'].withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
+        gradient: LinearGradient(colors: [negocio['color'] as Color, (negocio['color'] as Color).withOpacity(0.7)]),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(16)), child: Icon(negocio['icono'], color: Colors.white, size: 40)),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+            child: Icon(negocio['icon'] as IconData, color: Colors.white, size: 32),
+          ),
           const SizedBox(width: 16),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(negocio['nombre'], style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 4),
-            Text('Dashboard en tiempo real', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
-          ])),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(_negocioSeleccionado, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                const Text('Dashboard en tiempo real', style: TextStyle(color: Colors.white70, fontSize: 14)),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildKPIsGrid(Map<String, dynamic> negocio, Map<String, dynamic> datos) {
-    final id = negocio['id'];
-    List<Map<String, dynamic>> kpis = [];
-    if (id == 'minerales') {
-      kpis = [
-        {'label': 'Producción Mes', 'valor': '${datos['produccionMes']} ${datos['produccionUnidad']}', 'icono': Icons.factory, 'color': const Color(0xFF3B82F6)},
-        {'label': 'Reservas', 'valor': '${datos['reservas']} ${datos['reservasUnidad']}', 'icono': Icons.inventory, 'color': const Color(0xFF10B981)},
-        {'label': 'Precio Actual', 'valor': '\$${datos['precioActual']} ${datos['precioUnidad']}', 'icono': Icons.trending_up, 'color': const Color(0xFFF59E0B)},
-        {'label': 'Operaciones', 'valor': '${datos['operacionesActivas']} activas', 'icono': Icons.settings, 'color': const Color(0xFF8B5CF6)},
-        {'label': 'Empleados', 'valor': '${datos['empleados']}', 'icono': Icons.people, 'color': const Color(0xFFEC4899)},
-        {'label': 'Maquinaria', 'valor': '${datos['maquinaria']} equipos', 'icono': Icons.build, 'color': const Color(0xFF06B6D4)},
-      ];
-    } else if (id == 'combustible') {
-      kpis = [
-        {'label': 'Ventas Hoy', 'valor': '${datos['ventasDia']} ${datos['ventasUnidad']}', 'icono': Icons.local_gas_station, 'color': const Color(0xFF10B981)},
-        {'label': 'Inventario', 'valor': '${datos['inventario']} ${datos['inventarioUnidad']}', 'icono': Icons.storage, 'color': const Color(0xFF3B82F6)},
-        {'label': 'Magna', 'valor': '\$${datos['precioMagna']}', 'icono': Icons.local_gas_station, 'color': const Color(0xFFF59E0B)}, // ✅ CORREGIDO
-        {'label': 'Premium', 'valor': '\$${datos['precioPremium']}', 'icono': Icons.local_gas_station, 'color': const Color(0xFF8B5CF6)}, // ✅ CORREGIDO
-        {'label': 'Estaciones', 'valor': '${datos['estaciones']}', 'icono': Icons.store, 'color': const Color(0xFFEC4899)},
-        {'label': 'Empleados', 'valor': '${datos['empleados']}', 'icono': Icons.people, 'color': const Color(0xFF06B6D4)},
-      ];
-    } else if (id == 'agropecuario') {
-      kpis = [
-        {'label': 'Hectáreas', 'valor': '${datos['hectareas']} ${datos['hectareasUnidad']}', 'icono': Icons.landscape, 'color': const Color(0xFF10B981)},
-        {'label': 'Ganado', 'valor': '${datos['ganado']} ${datos['ganadoUnidad']}', 'icono': Icons.pets, 'color': const Color(0xFF8B5CF6)},
-        {'label': 'Cosecha Esperada', 'valor': '${datos['cosechaEsperada']} ${datos['cosechaUnidad']}', 'icono': Icons.grass, 'color': const Color(0xFFF59E0B)},
-        {'label': 'Temporada', 'valor': datos['temporada'], 'icono': Icons.calendar_today, 'color': const Color(0xFF3B82F6)},
-        {'label': 'Empleados', 'valor': '${datos['empleados']}', 'icono': Icons.people, 'color': const Color(0xFFEC4899)},
-        {'label': 'Tractores', 'valor': '${datos['tractores']}', 'icono': Icons.agriculture, 'color': const Color(0xFF06B6D4)},
-      ];
-    } else if (id == 'proyectos') {
-      kpis = [
-        {'label': 'Proyectos Activos', 'valor': '${datos['proyectosActivos']}', 'icono': Icons.business_center, 'color': const Color(0xFF3B82F6)},
-        {'label': 'Completados', 'valor': '${datos['proyectosCompletados']}', 'icono': Icons.check_circle, 'color': const Color(0xFF10B981)},
-        {'label': 'Inversión Total', 'valor': '\$${(datos['inversionTotal'] / 1000000).toStringAsFixed(1)}M', 'icono': Icons.attach_money, 'color': const Color(0xFFF59E0B)},
-        {'label': 'ROI', 'valor': '${datos['roi']}%', 'icono': Icons.trending_up, 'color': const Color(0xFF8B5CF6)},
-        {'label': 'En Tiempo', 'valor': '${datos['enTiempo']}', 'icono': Icons.schedule, 'color': const Color(0xFF10B981)},
-        {'label': 'Retrasados', 'valor': '${datos['retrasados']}', 'icono': Icons.warning, 'color': const Color(0xFFEF4444)},
-      ];
-    }
-    return Wrap(spacing: 12, runSpacing: 12, children: kpis.map((kpi) => _buildKPICard(kpi)).toList());
-  }
+  Widget _buildKPIsFinancieros() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore.collection('transacciones').where('negocio', isEqualTo: _negocioSeleccionado).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final docs = snapshot.data!.docs;
+        
+        final ingresos = docs.where((d) => (d.data() as Map)['tipo'] == 'Ingreso').fold<double>(0, (sum, doc) => sum + ((doc.data() as Map)['monto'] ?? 0).toDouble());
+        final gastos = docs.where((d) => (d.data() as Map)['tipo'] == 'Gasto').fold<double>(0, (sum, doc) => sum + ((doc.data() as Map)['monto'] ?? 0).toDouble());
+        final balance = ingresos - gastos;
+        final numTransacciones = docs.length;
 
-  Widget _buildKPICard(Map<String, dynamic> kpi) {
-    return Container(
-      width: 180,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.getSurfaceColor(context), borderRadius: BorderRadius.circular(12), border: Border.all(color: (kpi['color'] as Color).withOpacity(0.3))),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(kpi['icono'], color: kpi['color'], size: 24),
-        const SizedBox(height: 8),
-        Text(kpi['label'], style: TextStyle(fontSize: 11, color: AppTheme.getTextSecondaryColor(context))),
-        const SizedBox(height: 4),
-        Text(kpi['valor'], style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.getTextColor(context))),
-      ]),
-    );
-  }
-
-  Widget _buildBalanceCard(Map<String, dynamic> datos, double balance) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: AppTheme.getSurfaceColor(context), borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.getDividerColor(context))),
-      child: Column(children: [
-        Row(children: [
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Ingresos', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
-            const SizedBox(height: 4),
-            Text('\$${(datos['ingresosMes'] / 1000).toStringAsFixed(0)}K', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF10B981))),
-          ])),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Gastos', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
-            const SizedBox(height: 4),
-            Text('\$${(datos['gastosMes'] / 1000).toStringAsFixed(0)}K', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFFEF4444))),
-          ])),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Balance', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
-            const SizedBox(height: 4),
-            Text('\$${(balance / 1000).toStringAsFixed(0)}K', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: balance >= 0 ? const Color(0xFF3B82F6) : const Color(0xFFEF4444))),
-          ])),
-        ]),
-        const SizedBox(height: 16),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: LinearProgressIndicator(value: datos['gastosMes'] / datos['ingresosMes'], backgroundColor: Colors.grey.shade200, valueColor: AlwaysStoppedAnimation<Color>(balance >= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444)), minHeight: 12),
-        ),
-        const SizedBox(height: 8),
-        Text('Margen: ${((balance / datos['ingresosMes']) * 100).toStringAsFixed(1)}%', style: TextStyle(fontSize: 12, color: AppTheme.getTextSecondaryColor(context))),
-      ]),
-    );
-  }
-
-  Widget _buildOperacionCard(Map<String, dynamic> op, Map<String, dynamic> negocio) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.getSurfaceColor(context), borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.getDividerColor(context))),
-      child: Row(children: [
-        Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: negocio['color'].withOpacity(0.15), borderRadius: BorderRadius.circular(12)), child: Icon(op['icono'], color: negocio['color'], size: 24)),
-        const SizedBox(width: 12),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(op['nombre'], style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-          if (op['tipo'] != null) Text(op['tipo'], style: TextStyle(fontSize: 12, color: AppTheme.getTextSecondaryColor(context))),
-          if (op['progreso'] != null) ...[
-            const SizedBox(height: 8),
-            ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: op['progreso'] / 100, backgroundColor: Colors.grey.shade200, valueColor: AlwaysStoppedAnimation<Color>(negocio['color']), minHeight: 8)),
-            const SizedBox(height: 4),
-            Text('Progreso: ${op['progreso']}%', style: TextStyle(fontSize: 11, color: AppTheme.getTextSecondaryColor(context))),
+        return GridView.count(
+          crossAxisCount: 3,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            _buildKPI('Ingresos', '\$${ingresos.toStringAsFixed(0)}', Icons.arrow_upward, Colors.green),
+            _buildKPI('Gastos', '\$${gastos.toStringAsFixed(0)}', Icons.arrow_downward, Colors.red),
+            _buildKPI('Balance', '\$${balance.toStringAsFixed(0)}', Icons.account_balance_wallet, Colors.blue),
+            _buildKPI('Transacciones', '$numTransacciones', Icons.receipt_long, Colors.purple),
+            _buildKPI('Promedio', numTransacciones > 0 ? '\$${(ingresos / numTransacciones).toStringAsFixed(0)}' : '\$0', Icons.calculate, Colors.orange),
+            _buildKPI('Margen', ingresos > 0 ? '${((balance / ingresos) * 100).toStringAsFixed(1)}%' : '0%', Icons.percent, Colors.teal),
           ],
-        ])),
-        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          if (op['produccion'] != null) Text('${op['produccion']} ton', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF3B82F6))),
-          if (op['ventas'] != null) Text('${op['ventas']} L', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF10B981))),
-          if (op['cantidad'] != null) Text('${op['cantidad']}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF8B5CF6))),
-          if (op['inversion'] != null) Text('\$${(op['inversion'] / 1000000).toStringAsFixed(1)}M', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFFEC4899))),
-          if (op['estado'] != null) Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(color: (op['estado'] == 'Activa' || op['estado'] == 'Operativa') ? const Color(0xFF10B981).withOpacity(0.1) : const Color(0xFFF59E0B).withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-            child: Text(op['estado'], style: TextStyle(fontSize: 10, color: (op['estado'] == 'Activa' || op['estado'] == 'Operativa') ? const Color(0xFF10B981) : const Color(0xFFF59E0B), fontWeight: FontWeight.w700)),
-          ),
-        ]),
-      ]),
+        );
+      },
     );
   }
 
-  Widget _buildAlertaCard(Map<String, dynamic> alerta) {
-    Color color;
-    IconData icono;
-    if (alerta['tipo'] == 'danger') { color = const Color(0xFFEF4444); icono = Icons.error; } 
-    else if (alerta['tipo'] == 'warning') { color = const Color(0xFFF59E0B); icono = Icons.warning; } 
-    else { color = const Color(0xFF10B981); icono = Icons.check_circle; }
+  Widget _buildKPI(String titulo, String valor, IconData icon, Color color) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10), border: Border.all(color: color.withOpacity(0.3))),
-      child: Row(children: [Icon(icono, color: color, size: 20), const SizedBox(width: 12), Expanded(child: Text(alerta['mensaje'], style: TextStyle(fontSize: 13, color: AppTheme.getTextColor(context))))]),
+      decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(8), border: Border.all(color: color.withOpacity(0.3))),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 8),
+          Text(titulo, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+          const SizedBox(height: 4),
+          Text(valor, style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBalanceDelMes() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore.collection('transacciones').where('negocio', isEqualTo: _negocioSeleccionado).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final docs = snapshot.data!.docs;
+        
+        final ingresos = docs.where((d) => (d.data() as Map)['tipo'] == 'Ingreso').fold<double>(0, (sum, doc) => sum + ((doc.data() as Map)['monto'] ?? 0).toDouble());
+        final gastos = docs.where((d) => (d.data() as Map)['tipo'] == 'Gasto').fold<double>(0, (sum, doc) => sum + ((doc.data() as Map)['monto'] ?? 0).toDouble());
+        final balance = ingresos - gastos;
+        final margen = ingresos > 0 ? (balance / ingresos) * 100 : 0;
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Text('Ingresos', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    Text('\$${ingresos.toStringAsFixed(0)}', style: const TextStyle(color: Colors.green, fontSize: 20, fontWeight: FontWeight.bold)),
+                  ]),
+                  Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                    const Text('Gastos', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    Text('\$${gastos.toStringAsFixed(0)}', style: const TextStyle(color: Colors.red, fontSize: 20, fontWeight: FontWeight.bold)),
+                  ]),
+                  Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                    const Text('Balance', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    Text('\$${balance.toStringAsFixed(0)}', style: const TextStyle(color: Colors.blue, fontSize: 20, fontWeight: FontWeight.bold)),
+                  ]),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: margen / 100,
+                  backgroundColor: Colors.grey.shade800,
+                  valueColor: AlwaysStoppedAnimation<Color>(margen >= 0 ? Colors.green : Colors.red),
+                  minHeight: 8,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text('Margen: ${margen.toStringAsFixed(1)}%', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildUltimasTransacciones() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore.collection('transacciones').where('negocio', isEqualTo: _negocioSeleccionado).orderBy('created_at', descending: true).limit(5).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final docs = snapshot.data!.docs;
+        if (docs.isEmpty) return const Text('No hay transacciones', style: TextStyle(color: Colors.grey));
+        
+        return Column(
+          children: docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final esIngreso = data['tipo'] == 'Ingreso';
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF222222))),
+              child: Row(
+                children: [
+                  Container(width: 40, height: 40, decoration: BoxDecoration(color: esIngreso ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2), shape: BoxShape.circle), child: Icon(esIngreso ? Icons.arrow_upward : Icons.arrow_downward, color: esIngreso ? Colors.green : Colors.red, size: 20)),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(data['concepto'] ?? 'Sin concepto', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    Text('${data['categoria'] ?? 'General'} • ${data['fecha'] ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  ])),
+                  Text('${esIngreso ? "+" : "-"}\$${data['monto'] ?? '0'}', style: TextStyle(color: esIngreso ? Colors.green : Colors.red, fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }
