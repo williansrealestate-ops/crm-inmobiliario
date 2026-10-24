@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../config/theme.dart';
-import '../../services/finanzas_service.dart';
-import '../../services/integraciones_service.dart';
-import '../../services/pipeline_service.dart';
-import '../../widgets/money_pro_donut_chart.dart';
+import 'dart:convert';
+import 'dart:html' as html;
 
 class FinanzasScreen extends StatefulWidget {
   const FinanzasScreen({super.key});
@@ -14,57 +12,35 @@ class FinanzasScreen extends StatefulWidget {
 }
 
 class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProviderStateMixin {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late TabController _tabController;
-  bool _isLoading = true;
-  Map<String, dynamic> _resumen = {};
-  List<Map<String, dynamic>> _negocios = [];
-  List<Map<String, dynamic>> _ingresos = [];
-  List<Map<String, dynamic>> _gastos = [];
-  Map<String, double> _ingresosPorNegocio = {};
-  Map<String, double> _gastosPorCategoria = {};
+  String _search = '';
+  String _categoriaFiltro = 'Todas';
+  String _cuentaFiltro = 'Todas';
+  String _negocioFiltro = 'Todos';
+
+  final List<Map<String, dynamic>> _cuentas = [
+    {'nombre': 'Efectivo', 'icon': Icons.money, 'color': Colors.green},
+    {'nombre': 'Banco', 'icon': Icons.account_balance, 'color': Colors.blue},
+    {'nombre': 'Tarjeta', 'icon': Icons.credit_card, 'color': Colors.orange},
+    {'nombre': 'Inversión', 'icon': Icons.trending_up, 'color': Colors.purple},
+  ];
+
+  final List<Map<String, dynamic>> _categoriasGasto = [
+    {'nombre': 'Operación', 'icon': Icons.settings, 'presupuesto': 50000.0},
+    {'nombre': 'Marketing', 'icon': Icons.campaign, 'presupuesto': 30000.0},
+    {'nombre': 'Oficina', 'icon': Icons.business, 'presupuesto': 20000.0},
+    {'nombre': 'Comisiones', 'icon': Icons.handshake, 'presupuesto': 100000.0},
+    {'nombre': 'Servicios', 'icon': Icons.bolt, 'presupuesto': 15000.0},
+    {'nombre': 'Otros', 'icon': Icons.more_horiz, 'presupuesto': 10000.0},
+  ];
+
+  final List<String> _negocios = ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
-    _cargarDatos();
-  }
-
-  Future<void> _cargarDatos() async {
-    setState(() => _isLoading = true);
-    _resumen = await FinanzasService.getResumenFinanciero();
-    _negocios = await FinanzasService.getNegocios();
-    _ingresos = await FinanzasService.getIngresos();
-    _gastos = await FinanzasService.getGastos();
-    _ingresosPorNegocio = await FinanzasService.getIngresosPorNegocio();
-    _gastosPorCategoria = await FinanzasService.getGastosPorCategoria();
-    setState(() => _isLoading = false);
-  }
-
-  String _formatearMoneda(double valor) {
-    return '\$${valor.toStringAsFixed(2).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]},',
-    )}';
-  }
-
-  Color _getColorFromHex(String hex) {
-    try {
-      return Color(int.parse(hex.replaceAll('#', '0xFF')));
-    } catch (e) {
-      return const Color(0xFF3B82F6);
-    }
-  }
-
-  IconData _getIcono(String nombreIcono) {
-    switch (nombreIcono) {
-      case 'home': return Icons.home;
-      case 'mineral': return Icons.landscape;
-      case 'local_gas_station': return Icons.local_gas_station;
-      case 'agriculture': return Icons.agriculture;
-      case 'engineering': return Icons.engineering;
-      default: return Icons.more_horiz;
-    }
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -78,455 +54,475 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
+        backgroundColor: const Color(0xFF0066FF),
         title: const Row(children: [
           Icon(Icons.account_balance_wallet, color: Colors.white),
           SizedBox(width: 8),
           Text('Finanzas', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ]),
-        backgroundColor: const Color(0xFF0066FF),
-        foregroundColor: Colors.white,
+        actions: [
+          IconButton(icon: const Icon(Icons.add, color: Colors.white, size: 28), onPressed: () => _mostrarFormularioTransaccion()),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: Colors.white),
+            onSelected: (value) {
+              if (value == 'exportar') _exportarCSV();
+              if (value == 'presupuestos') _mostrarPresupuestos();
+              if (value == 'metas') _mostrarMetas();
+              if (value == 'recurrentes') _mostrarRecurrentes();
+              if (value == 'calendario') _mostrarCalendario();
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'presupuestos', child: Row(children: [Icon(Icons.pie_chart, color: Color(0xFF0066FF)), SizedBox(width: 8), Text('Presupuestos')])),
+              const PopupMenuItem(value: 'metas', child: Row(children: [Icon(Icons.flag, color: Color(0xFF0066FF)), SizedBox(width: 8), Text('Metas de Ahorro')])),
+              const PopupMenuItem(value: 'recurrentes', child: Row(children: [Icon(Icons.repeat, color: Color(0xFF0066FF)), SizedBox(width: 8), Text('Transacciones Recurrentes')])),
+              const PopupMenuItem(value: 'calendario', child: Row(children: [Icon(Icons.calendar_month, color: Color(0xFF0066FF)), SizedBox(width: 8), Text('Calendario')])),
+              const PopupMenuItem(value: 'exportar', child: Row(children: [Icon(Icons.download, color: Color(0xFF0066FF)), SizedBox(width: 8), Text('Exportar CSV')])),
+            ],
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
+          indicatorColor: Colors.white,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
-          indicatorColor: Colors.white,
           tabs: const [
-            Tab(text: 'Dashboard'),
-            Tab(text: 'Negocios'),
-            Tab(text: 'Transacciones'),
-            Tab(text: 'Presupuestos'),
+            Tab(icon: Icon(Icons.dashboard), text: 'Resumen'),
+            Tab(icon: Icon(Icons.arrow_upward), text: 'Ingresos'),
+            Tab(icon: Icon(Icons.arrow_downward), text: 'Gastos'),
+            Tab(icon: Icon(Icons.credit_card), text: 'Cuentas'),
+            Tab(icon: Icon(Icons.show_chart), text: 'Reportes'),
           ],
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF0066FF)))
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _buildTabDashboard(),
-                _buildTabNegocios(),
-                _buildTabTransacciones(),
-                _buildTabPresupuestos(),
-              ],
-            ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildResumen(),
+          _buildListaTransacciones('Ingreso'),
+          _buildListaTransacciones('Gasto'),
+          _buildCuentas(),
+          _buildReportes(),
+        ],
+      ),
     );
   }
 
-  Widget _buildTabDashboard() {
-    final ingresos = (_resumen['ingresosMes'] ?? 0).toDouble();
-    final gastos = (_resumen['gastosMes'] ?? 0).toDouble();
-    final utilidad = ingresos - gastos;
+  // ============================================
+  // RESUMEN - CORREGIDO: cálculo en memoria
+  // ============================================
+  Widget _buildResumen() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildTarjetaBalance(),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: _buildTarjetaResumen('Ingresos', Colors.green, Icons.arrow_upward)),
+                const SizedBox(width: 12),
+                Expanded(child: _buildTarjetaResumen('Gastos', Colors.red, Icons.arrow_downward)),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const Text('📈 Tendencia Mensual', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            Container(
+              height: 250,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))),
+              child: _buildGraficoLineas(),
+            ),
+            const SizedBox(height: 24),
+            const Text('🕐 Últimas Transacciones', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            _buildUltimasTransacciones(),
+          ],
+        ),
+      ),
+    );
+  }
 
-    return SingleChildScrollView(
+  Widget _buildTarjetaBalance() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Color(0xFF0066FF), Color(0xFF0044AA)]),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(children: [
+            Icon(Icons.account_balance_wallet, color: Colors.white70, size: 20),
+            SizedBox(width: 8),
+            Text('Balance Total', style: TextStyle(color: Colors.white70, fontSize: 14)),
+          ]),
+          const SizedBox(height: 12),
+          StreamBuilder<QuerySnapshot>(
+            stream: _firestore.collection('transacciones').snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const Text('\$0.00', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold));
+              final docs = snapshot.data!.docs;
+              double ingresos = 0, gastos = 0;
+              for (var doc in docs) {
+                final data = doc.data() as Map<String, dynamic>;
+                final monto = (data['monto'] ?? 0).toDouble();
+                if (data['tipo'] == 'Ingreso') ingresos += monto;
+                if (data['tipo'] == 'Gasto') gastos += monto;
+              }
+              final balance = ingresos - gastos;
+              return Text('\$${balance.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold));
+            },
+          ),
+          const SizedBox(height: 8),
+          StreamBuilder<QuerySnapshot>(
+            stream: _firestore.collection('transacciones').snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const Text('0 transacciones', style: TextStyle(color: Colors.white70, fontSize: 12));
+              return Text('${snapshot.data!.docs.length} transacciones', style: const TextStyle(color: Colors.white70, fontSize: 12));
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ✅ CORREGIDO: cálculo en memoria en lugar de where()
+  Widget _buildTarjetaResumen(String titulo, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [Icon(icon, color: color, size: 20), const SizedBox(width: 8), Text(titulo, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold))]),
+          const SizedBox(height: 8),
+          StreamBuilder<QuerySnapshot>(
+            stream: _firestore.collection('transacciones').snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const Text('\$0', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold));
+              final docs = snapshot.data!.docs;
+              double total = 0;
+              for (var doc in docs) {
+                final data = doc.data() as Map<String, dynamic>;
+                if (data['tipo'] == titulo) {
+                  total += (data['monto'] ?? 0).toDouble();
+                }
+              }
+              return Text('\$${total.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold));
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGraficoLineas() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore.collection('transacciones').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final docs = snapshot.data!.docs;
+        Map<String, double> ingresosPorMes = {};
+        Map<String, double> gastosPorMes = {};
+        for (var doc in docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          final fecha = data['fecha'] as String? ?? '';
+          final monto = (data['monto'] ?? 0).toDouble();
+          final tipo = data['tipo'] ?? '';
+          if (fecha.length >= 7) {
+            final mes = fecha.substring(0, 7);
+            if (tipo == 'Ingreso') {
+              ingresosPorMes[mes] = (ingresosPorMes[mes] ?? 0) + monto;
+            } else {
+              gastosPorMes[mes] = (gastosPorMes[mes] ?? 0) + monto;
+            }
+          }
+        }
+        final meses = ingresosPorMes.keys.toList()..sort();
+        if (meses.isEmpty) return const Center(child: Text('Sin datos', style: TextStyle(color: Colors.grey)));
+        final spotsIngresos = <FlSpot>[];
+        final spotsGastos = <FlSpot>[];
+        for (int i = 0; i < meses.length; i++) {
+          spotsIngresos.add(FlSpot(i.toDouble(), ingresosPorMes[meses[i]] ?? 0));
+          spotsGastos.add(FlSpot(i.toDouble(), gastosPorMes[meses[i]] ?? 0));
+        }
+        return LineChart(
+          LineChartData(
+            gridData: const FlGridData(show: false),
+            titlesData: FlTitlesData(
+              bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (value, meta) {
+                final idx = value.toInt();
+                if (idx >= 0 && idx < meses.length) return Text(meses[idx].substring(5), style: const TextStyle(color: Colors.grey, fontSize: 10));
+                return const Text('');
+              })),
+              leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            ),
+            borderData: FlBorderData(show: false),
+            lineBarsData: [
+              LineChartBarData(spots: spotsIngresos, isCurved: true, color: Colors.green, barWidth: 3, dotData: const FlDotData(show: false)),
+              LineChartBarData(spots: spotsGastos, isCurved: true, color: Colors.red, barWidth: 3, dotData: const FlDotData(show: false)),
+            ],
+            minX: 0,
+            maxX: (meses.length - 1).toDouble(),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildUltimasTransacciones() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).limit(5).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final docs = snapshot.data!.docs;
+        if (docs.isEmpty) return const Text('No hay transacciones', style: TextStyle(color: Colors.grey));
+        return Column(
+          children: docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final esIngreso = data['tipo'] == 'Ingreso';
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF222222))),
+              child: Row(
+                children: [
+                  Container(width: 40, height: 40, decoration: BoxDecoration(color: esIngreso ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2), shape: BoxShape.circle), child: Icon(esIngreso ? Icons.arrow_upward : Icons.arrow_downward, color: esIngreso ? Colors.green : Colors.red, size: 20)),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(data['concepto'] ?? 'Sin concepto', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    Text('${data['categoria'] ?? 'General'} • ${data['fecha'] ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  ])),
+                  Text('${esIngreso ? "+" : "-"}\$${data['monto'] ?? '0'}', style: TextStyle(color: esIngreso ? Colors.green : Colors.red, fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  // ============================================
+  // LISTA DE TRANSACCIONES (Ingresos/Gastos)
+  // ============================================
+  Widget _buildListaTransacciones(String tipo) {
+    return Container(
+      width: double.infinity,
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            color: const Color(0xFF111111),
+            child: Column(children: [
+              TextField(decoration: InputDecoration(hintText: 'Buscar transacciones...', prefixIcon: const Icon(Icons.search, color: Colors.grey), filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)), style: const TextStyle(color: Colors.white), onChanged: (v) => setState(() => _search = v.toLowerCase())),
+              const SizedBox(height: 12),
+              Row(children: [
+                Expanded(child: DropdownButtonFormField<String>(value: _categoriaFiltro, decoration: InputDecoration(labelText: 'Categoría', filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Todas', 'General', 'Ventas', 'Comisiones', 'Operación', 'Marketing', 'Oficina', 'Servicios', 'Otros'].map((cat) => DropdownMenuItem(value: cat, child: Text(cat))).toList(), onChanged: (v) => setState(() => _categoriaFiltro = v!))),
+                const SizedBox(width: 12),
+                Expanded(child: DropdownButtonFormField<String>(value: _cuentaFiltro, decoration: InputDecoration(labelText: 'Cuenta', filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Todas', 'Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => setState(() => _cuentaFiltro = v!))),
+              ]),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _negocioFiltro,
+                decoration: InputDecoration(labelText: 'Negocio', filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)),
+                dropdownColor: const Color(0xFF1A1A1A),
+                style: const TextStyle(color: Colors.white),
+                items: ['Todos', 'Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((n) => DropdownMenuItem(value: n, child: Text(n))).toList(),
+                onChanged: (v) => setState(() => _negocioFiltro = v!),
+              ),
+            ]),
+          ),
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: Color(0xFF0066FF)));
+                  if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
+                  final transacciones = snapshot.data?.docs ?? [];
+                  final filtrados = transacciones.where((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final concepto = (data['concepto'] ?? '').toString().toLowerCase();
+                    final categoria = data['categoria'] ?? 'General';
+                    final cuenta = data['cuenta'] ?? 'Efectivo';
+                    final negocio = data['negocio'] ?? 'Minerales';
+                    final matchTipo = data['tipo'] == tipo;
+                    final matchSearch = _search.isEmpty || concepto.contains(_search);
+                    final matchCategoria = _categoriaFiltro == 'Todas' || categoria == _categoriaFiltro;
+                    final matchCuenta = _cuentaFiltro == 'Todas' || cuenta == _cuentaFiltro;
+                    final matchNegocio = _negocioFiltro == 'Todos' || negocio == _negocioFiltro;
+                    return matchTipo && matchSearch && matchCategoria && matchCuenta && matchNegocio;
+                  }).toList();
+                  
+                  if (filtrados.isEmpty) {
+                    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(tipo == 'Ingreso' ? Icons.arrow_upward : Icons.arrow_downward, color: Colors.grey, size: 64), 
+                      const SizedBox(height: 16), 
+                      Text('No hay ${tipo.toLowerCase()}s registrados', style: const TextStyle(color: Colors.grey, fontSize: 16))
+                    ]));
+                  }
+                  
+                  final total = filtrados.fold<double>(0, (sum, doc) => sum + ((doc.data() as Map<String, dynamic>)['monto'] ?? 0).toDouble());
+                  
+                  return Column(children: [
+                    Container(
+                      width: double.infinity, 
+                      padding: const EdgeInsets.all(12), 
+                      margin: const EdgeInsets.only(bottom: 12), 
+                      decoration: BoxDecoration(color: tipo == 'Ingreso' ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: tipo == 'Ingreso' ? Colors.green : Colors.red)), 
+                      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                        Text('Total:', style: TextStyle(color: tipo == 'Ingreso' ? Colors.green : Colors.red, fontSize: 16, fontWeight: FontWeight.bold)), 
+                        Text('\$${total.toStringAsFixed(2)}', style: TextStyle(color: tipo == 'Ingreso' ? Colors.green : Colors.red, fontSize: 20, fontWeight: FontWeight.bold))
+                      ])
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: filtrados.length, 
+                        itemBuilder: (context, index) {
+                          final doc = filtrados[index];
+                          final data = doc.data() as Map<String, dynamic>;
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12), 
+                            decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF222222))), 
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.all(16), 
+                              leading: Container(width: 50, height: 50, decoration: BoxDecoration(color: tipo == 'Ingreso' ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2), shape: BoxShape.circle), child: Icon(tipo == 'Ingreso' ? Icons.arrow_upward : Icons.arrow_downward, color: tipo == 'Ingreso' ? Colors.green : Colors.red, size: 24)), 
+                              title: Text(data['concepto'] ?? 'Sin concepto', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)), 
+                              subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                const SizedBox(height: 4), 
+                                Text('${data['categoria'] ?? 'General'} • ${data['cuenta'] ?? 'Efectivo'} • ${data['negocio'] ?? 'Minerales'}', style: const TextStyle(color: Colors.grey)), 
+                                Text('${data['fecha'] ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 12))
+                              ]), 
+                              trailing: Column(
+                                mainAxisAlignment: MainAxisAlignment.center, 
+                                crossAxisAlignment: CrossAxisAlignment.end, 
+                                children: [
+                                  Text('\$${data['monto'] ?? '0'}', style: TextStyle(color: tipo == 'Ingreso' ? Colors.green : Colors.red, fontSize: 16, fontWeight: FontWeight.bold)), 
+                                  const SizedBox(height: 8), 
+                                  Row(mainAxisSize: MainAxisSize.min, children: [
+                                    IconButton(icon: const Icon(Icons.edit, color: Colors.orange, size: 20), onPressed: () => _mostrarFormularioTransaccion(transaccion: data, docId: doc.id)), 
+                                    IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20), onPressed: () => _eliminarTransaccion(doc.id, data['concepto']))
+                                  ])
+                                ]
+                              )
+                            )
+                          );
+                        }
+                      )
+                    )
+                  ]);
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================
+  // CUENTAS
+  // ============================================
+  Widget _buildCuentas() {
+    return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(child: _buildKpiCard('Ingresos', ingresos, const Color(0xFF10B981), Icons.trending_up)),
-              const SizedBox(width: 12),
-              Expanded(child: _buildKpiCard('Gastos', gastos, const Color(0xFFEF4444), Icons.trending_down)),
-              const SizedBox(width: 12),
-              Expanded(child: _buildKpiCard('Balance', utilidad, utilidad >= 0 ? const Color(0xFF3B82F6) : const Color(0xFFEF4444), Icons.account_balance_wallet)),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF222222))),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Ingresos / Gastos', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                MoneyProDonutChart(
-                  segments: [
-                    DonutSegment(label: 'Ingresos', value: ingresos, color: const Color(0xFF10B981)),
-                    DonutSegment(label: 'Gastos', value: gastos, color: const Color(0xFFEF4444)),
-                  ],
-                  centerTitle: 'Beneficio',
-                  centerValue: utilidad,
-                  size: 280,
-                ),
-              ],
+          const Text('💳 Mis Cuentas', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _firestore.collection('transacciones').snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                final docs = snapshot.data!.docs;
+                return ListView.builder(
+                  itemCount: _cuentas.length,
+                  itemBuilder: (context, index) {
+                    final cuenta = _cuentas[index];
+                    double ingresos = 0, gastos = 0;
+                    for (var doc in docs) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      if (data['cuenta'] == cuenta['nombre']) {
+                        final monto = (data['monto'] ?? 0).toDouble();
+                        if (data['tipo'] == 'Ingreso') ingresos += monto;
+                        if (data['tipo'] == 'Gasto') gastos += monto;
+                      }
+                    }
+                    final balance = ingresos - gastos;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))),
+                      child: Row(
+                        children: [
+                          Container(width: 50, height: 50, decoration: BoxDecoration(color: (cuenta['color'] as Color).withOpacity(0.2), shape: BoxShape.circle), child: Icon(cuenta['icon'] as IconData, color: cuenta['color'] as Color, size: 28)),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(cuenta['nombre'] as String, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                Text('\$${balance.toStringAsFixed(2)}', style: TextStyle(color: balance >= 0 ? Colors.green : Colors.red, fontSize: 14)),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right, color: Colors.grey),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF222222))),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Ingresos por Negocio', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                MoneyProDonutChart(
-                  segments: _negocios.map((n) => DonutSegment(
-                    label: n['nombre'],
-                    value: _ingresosPorNegocio[n['id']] ?? 0.0,
-                    color: _getColorFromHex(n['color']),
-                  )).toList(),
-                  centerTitle: 'Ingresos',
-                  centerValue: ingresos,
-                  size: 280,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          if (_gastosPorCategoria.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF222222))),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Gastos por Categoría', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  MoneyProDonutChart(
-                    segments: _gastosPorCategoria.entries.map((e) => DonutSegment(
-                      label: e.key,
-                      value: e.value,
-                      color: _getColorParaCategoria(e.key),
-                    )).toList(),
-                    centerTitle: 'Gastos',
-                    centerValue: gastos,
-                    size: 280,
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
     );
   }
 
-  Color _getColorParaCategoria(String categoria) {
-    final colores = {
-      'Marketing': const Color(0xFF10B981), 'Transporte': const Color(0xFF3B82F6), 'Oficina': const Color(0xFFF59E0B),
-      'Comidas': const Color(0xFFEF4444), 'Préstamos': const Color(0xFF10B981), 'Personal': const Color(0xFF14B8A6),
-      'Capacitación': const Color(0xFFEF4444), 'Deudas': const Color(0xFFDC2626), 'Mobiliario': const Color(0xFF06B6D4),
-      'Alquiler': const Color(0xFF3B82F6), 'Insumos': const Color(0xFF22C55E), 'Otros': const Color(0xFF6366F1),
-    };
-    return colores[categoria] ?? const Color(0xFF6366F1);
-  }
-
-  Widget _buildKpiCard(String titulo, double valor, Color color, IconData icono) {
+  // ============================================
+  // REPORTES
+  // ============================================
+  Widget _buildReportes() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withOpacity(0.3))),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(icono, color: color, size: 24),
-        const SizedBox(height: 8),
-        Text(titulo, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-        const SizedBox(height: 4),
-        Text(_formatearMoneda(valor), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: color)),
-      ]),
-    );
-  }
-
-  Widget _buildTabNegocios() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Mis Negocios', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 16),
-        ..._negocios.map((negocio) {
-          final color = _getColorFromHex(negocio['color']);
-          final ingresoNegocio = _ingresosPorNegocio[negocio['id']] ?? 0.0;
-          final gastosNegocio = _gastos.where((g) => g['negocioId'] == negocio['id']).fold<double>(0, (s, g) => s + (g['monto'] ?? 0).toDouble());
-          final balance = ingresoNegocio - gastosNegocio;
-          final transacciones = _ingresos.where((i) => i['negocioId'] == negocio['id']).length + _gastos.where((g) => g['negocioId'] == negocio['id']).length;
-
-          return Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(16), border: Border.all(color: color.withOpacity(0.3))),
-            child: Column(children: [
-              Row(children: [
-                Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12)), child: Icon(_getIcono(negocio['icono']), color: Colors.white, size: 24)),
-                const SizedBox(width: 12),
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(negocio['nombre'], style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                  Text('$transacciones transacciones', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                ])),
-                IconButton(icon: const Icon(Icons.more_vert, color: Colors.grey), onPressed: () => _mostrarMenuNegocio(negocio)),
-              ]),
-              const SizedBox(height: 16),
-              Row(children: [
-                Expanded(child: _buildMiniCard('Ingresos', ingresoNegocio, const Color(0xFF10B981), Icons.trending_up)),
-                const SizedBox(width: 8),
-                Expanded(child: _buildMiniCard('Gastos', gastosNegocio, const Color(0xFFEF4444), Icons.trending_down)),
-                const SizedBox(width: 8),
-                Expanded(child: _buildMiniCard('Balance', balance, balance >= 0 ? const Color(0xFF3B82F6) : const Color(0xFFEF4444), Icons.account_balance_wallet)),
-              ]),
-            ]),
-          );
-        }),
-      ]),
-    );
-  }
-
-  Widget _buildMiniCard(String label, double valor, Color color, IconData icono) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-      child: Column(children: [
-        Icon(icono, color: color, size: 18),
-        const SizedBox(height: 4),
-        Text(_formatearMoneda(valor), style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.bold)),
-        Text(label, style: TextStyle(color: color, fontSize: 10)),
-      ]),
-    );
-  }
-
-  void _mostrarMenuNegocio(Map<String, dynamic> negocio) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1A1A1A),
-      builder: (ctx) => Column(mainAxisSize: MainAxisSize.min, children: [
-        ListTile(leading: const Icon(Icons.edit, color: Colors.white), title: const Text('Editar Negocio', style: TextStyle(color: Colors.white)), onTap: () { Navigator.pop(ctx); _editarNegocio(negocio); }),
-        ListTile(leading: const Icon(Icons.visibility, color: Colors.white), title: const Text('Ver Gráfica', style: TextStyle(color: Colors.white)), onTap: () { Navigator.pop(ctx); _verGraficaNegocio(negocio); }),
-      ]),
-    );
-  }
-
-  void _editarNegocio(Map<String, dynamic> negocio) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Editar ${negocio['nombre']} (Función en desarrollo)'), backgroundColor: const Color(0xFF0066FF)),
-    );
-  }
-
-  void _verGraficaNegocio(Map<String, dynamic> negocio) {
-    final ingresosNeg = _ingresos.where((i) => i['negocioId'] == negocio['id']).fold<double>(0, (s, i) => s + (i['monto'] ?? 0).toDouble());
-    final gastosNeg = _gastos.where((g) => g['negocioId'] == negocio['id']).fold<double>(0, (s, g) => s + (g['monto'] ?? 0).toDouble());
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: const Color(0xFF0A0A0A),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(negocio['nombre'], style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('📊 Reporte por Categoría', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            MoneyProDonutChart(
-              segments: [
-                DonutSegment(label: 'Ingresos', value: ingresosNeg, color: const Color(0xFF10B981)),
-                DonutSegment(label: 'Gastos', value: gastosNeg, color: const Color(0xFFEF4444)),
-              ],
-              centerTitle: 'Balance',
-              centerValue: ingresosNeg - gastosNeg,
-              size: 260,
+            Container(
+              height: 250,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))),
+              child: _buildGraficoCategorias(),
             ),
+            const SizedBox(height: 24),
+            const Text('📈 Comparativo Mensual', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cerrar', style: TextStyle(color: Colors.grey))),
-          ]),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTabTransacciones() {
-    final todasTransacciones = [
-      ..._ingresos.map((i) => {...i, 'tipo': 'ingreso'}),
-      ..._gastos.map((g) => {...g, 'tipo': 'gasto'}),
-    ]..sort((a, b) => (b['fecha'] ?? '').compareTo(a['fecha'] ?? ''));
-
-    return Column(children: [
-      Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(children: [
-          Expanded(child: ElevatedButton.icon(onPressed: () => _mostrarDialogoTransaccion(tipo: 'ingreso'), icon: const Icon(Icons.add), label: const Text('Ingreso'), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 12)))),
-          const SizedBox(width: 12),
-          Expanded(child: ElevatedButton.icon(onPressed: () => _mostrarDialogoTransaccion(tipo: 'gasto'), icon: const Icon(Icons.add), label: const Text('Gasto'), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 12)))),
-        ]),
-      ),
-      Expanded(
-        child: todasTransacciones.isEmpty
-            ? const Center(child: Text('No hay transacciones', style: TextStyle(color: Colors.grey)))
-            : ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: todasTransacciones.length,
-                itemBuilder: (context, index) {
-                  final t = todasTransacciones[index];
-                  final esIngreso = t['tipo'] == 'ingreso';
-                  final color = esIngreso ? const Color(0xFF10B981) : const Color(0xFFEF4444);
-                  final icono = esIngreso ? Icons.add : Icons.remove;
-                  final negocio = _negocios.firstWhere((n) => n['id'] == t['negocioId'], orElse: () => {'nombre': 'Otros', 'color': '0xFF6366F1', 'icono': 'more_horiz'});
-                  final colorNegocio = _getColorFromHex(negocio['color']);
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withOpacity(0.3))),
-                    child: Row(children: [
-                      Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icono, color: color)),
-                      const SizedBox(width: 12),
-                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(t['concepto'] ?? 'Sin concepto', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 4),
-                        Row(children: [
-                          Container(width: 8, height: 8, decoration: BoxDecoration(color: colorNegocio, shape: BoxShape.circle)),
-                          const SizedBox(width: 4),
-                          Text(negocio['nombre'] ?? 'Otros', style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                          const SizedBox(width: 8),
-                          Text(t['categoria'] ?? '', style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                        ]),
-                      ])),
-                      Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                        Text(_formatearMoneda(t['monto'] ?? 0), style: TextStyle(fontWeight: FontWeight.w700, color: color, fontSize: 14)),
-                        Text(_formatearFecha(t['fecha'] ?? ''), style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                      ]),
-                      const SizedBox(width: 8),
-                      PopupMenuButton<String>(
-                        icon: const Icon(Icons.more_vert, color: Colors.grey, size: 20),
-                        color: const Color(0xFF1A1A1A),
-                        onSelected: (value) {
-                          if (value == 'editar') _mostrarDialogoTransaccion(tipo: t['tipo'], transaccion: t);
-                          if (value == 'eliminar') _eliminarTransaccion(t);
-                        },
-                        itemBuilder: (ctx) => [
-                          const PopupMenuItem(value: 'editar', child: Row(children: [Icon(Icons.edit, color: Colors.white, size: 18), SizedBox(width: 8), Text('Editar', style: TextStyle(color: Colors.white))])),
-                          const PopupMenuItem(value: 'eliminar', child: Row(children: [Icon(Icons.delete, color: Colors.red, size: 18), SizedBox(width: 8), Text('Eliminar', style: TextStyle(color: Colors.red))])),
-                        ],
-                      ),
-                    ]),
-                  );
-                },
-              ),
-      ),
-    ]);
-  }
-
-  void _eliminarTransaccion(Map<String, dynamic> t) async {
-    if (t['tipo'] == 'ingreso') {
-      await FinanzasService.eliminarIngreso(t['id']);
-    } else {
-      await FinanzasService.eliminarGasto(t['id']);
-    }
-    _cargarDatos();
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Transacción eliminada'), backgroundColor: Color(0xFFEF4444)));
-  }
-
-  void _mostrarDialogoTransaccion({required String tipo, Map<String, dynamic>? transaccion}) {
-    final esEditar = transaccion != null;
-    final conceptoCtrl = TextEditingController(text: transaccion?['concepto'] ?? '');
-    final montoCtrl = TextEditingController(text: transaccion != null ? _formatearMoneda((transaccion['monto'] ?? 0).toDouble()) : '');
-    final categoriaCtrl = TextEditingController(text: transaccion?['categoria'] ?? '');
-    String negocioId = transaccion?['negocioId'] ?? (_negocios.isNotEmpty ? _negocios.first['id'] : 'otros');
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => AlertDialog(
-          backgroundColor: const Color(0xFF1A1A1A),
-          title: Text(esEditar ? 'Editar ${tipo == 'ingreso' ? 'Ingreso' : 'Gasto'}' : 'Nuevo ${tipo == 'ingreso' ? 'Ingreso' : 'Gasto'}', style: const TextStyle(color: Colors.white)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: conceptoCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    labelText: 'Concepto',
-                    labelStyle: TextStyle(color: Colors.grey),
-                    border: OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Color(0xFF0A0A0A),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: montoCtrl,
-                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Monto (MXN)',
-                    labelStyle: TextStyle(color: Colors.grey),
-                    prefixText: '\$ ',
-                    border: OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Color(0xFF0A0A0A),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: negocioId,
-                  decoration: const InputDecoration(
-                    labelText: 'Negocio',
-                    labelStyle: TextStyle(color: Colors.grey),
-                    border: OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Color(0xFF0A0A0A),
-                  ),
-                  dropdownColor: const Color(0xFF0A0A0A),
-                  style: const TextStyle(color: Colors.white),
-                  items: _negocios.map((n) => DropdownMenuItem<String>(
-                    value: n['id'] as String,
-                    child: Text(n['nombre'], style: const TextStyle(color: Colors.white)),
-                  )).toList(),
-                  onChanged: (v) => setState(() => negocioId = v ?? negocioId),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: categoriaCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: 'Categoría ${tipo == 'gasto' ? '(opcional)' : ''}',
-                    labelStyle: const TextStyle(color: Colors.grey),
-                    border: const OutlineInputBorder(),
-                    filled: true,
-                    fillColor: const Color(0xFF0A0A0A),
-                    prefixIcon: const Icon(Icons.category, color: Colors.grey),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
-            ElevatedButton(
-              onPressed: () async {
-                final montoTexto = montoCtrl.text.replaceAll(RegExp(r'[^\d.]'), '');
-                final monto = double.tryParse(montoTexto) ?? 0;
-                if (conceptoCtrl.text.isEmpty || monto <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Completa concepto y monto'), backgroundColor: Color(0xFFEF4444)));
-                  return;
-                }
-                final data = {
-                  'concepto': conceptoCtrl.text,
-                  'monto': monto,
-                  'negocioId': negocioId,
-                  'categoria': categoriaCtrl.text,
-                };
-                if (esEditar) {
-                  data['id'] = transaccion['id'];
-                  data['fecha'] = transaccion['fecha'];
-                  if (tipo == 'ingreso') {
-                    await FinanzasService.actualizarIngreso(data);
-                  } else {
-                    await FinanzasService.actualizarGasto(data);
-                  }
-                } else {
-                  if (tipo == 'ingreso') {
-                    await FinanzasService.agregarIngreso(data);
-                  } else {
-                    await FinanzasService.agregarGasto(data);
-                  }
-                }
-                Navigator.pop(ctx);
-                _cargarDatos();
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(esEditar ? 'Transacción actualizada' : 'Transacción registrada'),
-                    backgroundColor: const Color(0xFF10B981),
-                  ));
-                }
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: tipo == 'ingreso' ? const Color(0xFF10B981) : const Color(0xFFEF4444)),
-              child: Text(esEditar ? 'Actualizar' : 'Guardar', style: const TextStyle(color: Colors.white)),
+            Container(
+              height: 250,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))),
+              child: _buildGraficoBarras(),
             ),
           ],
         ),
@@ -534,116 +530,654 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  Widget _buildTabPresupuestos() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          const Text('Presupuestos por Negocio', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-          IconButton(icon: const Icon(Icons.add_circle, color: Color(0xFF10B981)), onPressed: () => _editarTodosLosPresupuestos()),
-        ]),
-        const SizedBox(height: 16),
-        ..._negocios.map((negocio) {
-          final color = _getColorFromHex(negocio['color']);
-          final gastoNegocio = _gastos.where((g) => g['negocioId'] == negocio['id']).fold<double>(0, (s, g) => s + (g['monto'] ?? 0).toDouble());
-          final presupuesto = (negocio['presupuesto'] ?? 0).toDouble();
-          final progreso = presupuesto > 0 ? (gastoNegocio / presupuesto).clamp(0.0, 1.0) : 0.0;
-          final excedido = progreso >= 1.0 && gastoNegocio > 0;
-
-          return Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: excedido ? const Color(0xFFEF4444) : color.withOpacity(0.3))),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.2), borderRadius: BorderRadius.circular(8)), child: Icon(_getIcono(negocio['icono']), color: color, size: 20)),
-                const SizedBox(width: 12),
-                Expanded(child: Text(negocio['nombre'], style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600))),
-                Text(excedido ? '¡Excedido!' : '${(progreso * 100).toStringAsFixed(0)}%', style: TextStyle(color: excedido ? const Color(0xFFEF4444) : color, fontWeight: FontWeight.bold)),
-              ]),
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(value: progreso, backgroundColor: color.withOpacity(0.2), valueColor: AlwaysStoppedAnimation<Color>(excedido ? const Color(0xFFEF4444) : color), minHeight: 10),
-              ),
-              const SizedBox(height: 8),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('Gastado: ${_formatearMoneda(gastoNegocio)}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                Text('Presupuesto: ${_formatearMoneda(presupuesto)}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-              ]),
-              const SizedBox(height: 12),
-              SizedBox(width: double.infinity, child: OutlinedButton(onPressed: () => _editarPresupuesto(negocio), style: OutlinedButton.styleFrom(side: BorderSide(color: color), foregroundColor: color), child: const Text('Editar Presupuesto'))),
-            ]),
-          );
-        }),
-      ]),
+  Widget _buildGraficoCategorias() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore.collection('transacciones').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final docs = snapshot.data!.docs;
+        Map<String, double> porCategoria = {};
+        for (var doc in docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          if (data['tipo'] == 'Gasto') {
+            final cat = data['categoria'] ?? 'Otros';
+            porCategoria[cat] = (porCategoria[cat] ?? 0) + (data['monto'] ?? 0).toDouble();
+          }
+        }
+        if (porCategoria.isEmpty) return const Center(child: Text('Sin datos', style: TextStyle(color: Colors.grey)));
+        final sections = <PieChartSectionData>[];
+        final colors = [Colors.red, Colors.orange, Colors.yellow, Colors.green, Colors.blue, Colors.purple];
+        int i = 0;
+        porCategoria.forEach((cat, monto) {
+          sections.add(PieChartSectionData(title: cat, value: monto, color: colors[i % colors.length], radius: 60, titleStyle: const TextStyle(color: Colors.white, fontSize: 10)));
+          i++;
+        });
+        return PieChart(PieChartData(sections: sections, centerSpaceRadius: 40));
+      },
     );
   }
 
-  void _editarPresupuesto(Map<String, dynamic> negocio) {
-    final controller = TextEditingController(text: negocio['presupuesto'].toString());
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        title: Text('Presupuesto: ${negocio['nombre']}', style: const TextStyle(color: Colors.white)),
-        content: TextField(controller: controller, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto (MXN)', labelStyle: TextStyle(color: Colors.grey), border: OutlineInputBorder(), filled: true, fillColor: Color(0xFF0A0A0A))),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            onPressed: () async {
-              final nuevo = double.tryParse(controller.text.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0;
-              await FinanzasService.actualizarPresupuestoNegocio(negocio['id'], nuevo);
-              Navigator.pop(ctx);
-              _cargarDatos();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
-            child: const Text('Guardar', style: TextStyle(color: Colors.white)),
+  Widget _buildGraficoBarras() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore.collection('transacciones').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final docs = snapshot.data!.docs;
+        Map<String, double> ingresosPorMes = {};
+        Map<String, double> gastosPorMes = {};
+        for (var doc in docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          final fecha = data['fecha'] as String? ?? '';
+          final monto = (data['monto'] ?? 0).toDouble();
+          final tipo = data['tipo'] ?? '';
+          if (fecha.length >= 7) {
+            final mes = fecha.substring(0, 7);
+            if (tipo == 'Ingreso') {
+              ingresosPorMes[mes] = (ingresosPorMes[mes] ?? 0) + monto;
+            } else {
+              gastosPorMes[mes] = (gastosPorMes[mes] ?? 0) + monto;
+            }
+          }
+        }
+        final meses = ingresosPorMes.keys.toList()..sort();
+        if (meses.isEmpty) return const Center(child: Text('Sin datos', style: TextStyle(color: Colors.grey)));
+        final groups = <BarChartGroupData>[];
+        for (int i = 0; i < meses.length; i++) {
+          groups.add(BarChartGroupData(x: i, barRods: [
+            BarChartRodData(toY: ingresosPorMes[meses[i]] ?? 0, color: Colors.green, width: 16),
+            BarChartRodData(toY: gastosPorMes[meses[i]] ?? 0, color: Colors.red, width: 16),
+          ]));
+        }
+        return BarChart(BarChartData(
+          alignment: BarChartAlignment.spaceAround,
+          barGroups: groups,
+          titlesData: FlTitlesData(
+            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (value, meta) {
+              final idx = value.toInt();
+              if (idx >= 0 && idx < meses.length) return Text(meses[idx].substring(5), style: const TextStyle(color: Colors.grey, fontSize: 10));
+              return const Text('');
+            })),
+            leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
-        ],
+          gridData: const FlGridData(show: false),
+          borderData: FlBorderData(show: false),
+        ));
+      },
+    );
+  }
+
+  // ============================================
+  // PRESUPUESTOS (FUNCIONAL)
+  // ============================================
+  void _mostrarPresupuestos() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF111111),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(20),
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [const Icon(Icons.pie_chart, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text('Presupuestos por Categoría', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
+            const SizedBox(height: 20),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _firestore.collection('transacciones').snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                  final docs = snapshot.data!.docs;
+                  Map<String, double> gastado = {};
+                  for (var doc in docs) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    if (data['tipo'] == 'Gasto') {
+                      final cat = data['categoria'] ?? 'Otros';
+                      gastado[cat] = (gastado[cat] ?? 0) + (data['monto'] ?? 0).toDouble();
+                    }
+                  }
+                  return ListView.builder(
+                    itemCount: _categoriasGasto.length,
+                    itemBuilder: (context, index) {
+                      final cat = _categoriasGasto[index];
+                      final gastadoCat = gastado[cat['nombre']] ?? 0.0;
+                      final presupuesto = cat['presupuesto'] as double;
+                      final porcentaje = (gastadoCat / presupuesto * 100).clamp(0, 100);
+                      final excedido = gastadoCat > presupuesto;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(children: [Icon(cat['icon'] as IconData, color: const Color(0xFF0066FF)), const SizedBox(width: 8), Expanded(child: Text(cat['nombre'] as String, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))), Text('\$${gastadoCat.toStringAsFixed(0)} / \$${presupuesto.toStringAsFixed(0)}', style: TextStyle(color: excedido ? Colors.red : Colors.green, fontSize: 12))]),
+                            const SizedBox(height: 8),
+                            ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: porcentaje / 100, backgroundColor: Colors.grey.shade800, valueColor: AlwaysStoppedAnimation<Color>(excedido ? Colors.red : const Color(0xFF0066FF)), minHeight: 8)),
+                            const SizedBox(height: 4),
+                            Text('${porcentaje.toStringAsFixed(1)}% utilizado', style: TextStyle(color: excedido ? Colors.red : Colors.grey, fontSize: 11)),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  void _editarTodosLosPresupuestos() {
-    showDialog(
+  // ============================================
+  // METAS DE AHORRO (FUNCIONAL - colección "metas")
+  // ============================================
+  void _mostrarMetas() {
+    final nombreCtrl = TextEditingController();
+    final montoCtrl = TextEditingController();
+    final actualCtrl = TextEditingController(text: '0');
+
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        title: const Text('Editar Presupuestos', style: TextStyle(color: Colors.white)),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: Column(mainAxisSize: MainAxisSize.min, children: _negocios.map((n) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(children: [
-              Expanded(child: Text(n['nombre'], style: const TextStyle(color: Colors.white))),
-              SizedBox(
-                width: 120,
-                child: TextField(
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
-                  controller: TextEditingController(text: n['presupuesto'].toString()),
-                  decoration: const InputDecoration(border: OutlineInputBorder(), filled: true, fillColor: Color(0xFF0A0A0A), isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
-                  onChanged: (v) async {
-                    final nuevo = double.tryParse(v.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0;
-                    await FinanzasService.actualizarPresupuestoNegocio(n['id'], nuevo);
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF111111),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(20),
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              const Icon(Icons.flag, color: Color(0xFF0066FF), size: 28),
+              const SizedBox(width: 12),
+              const Expanded(child: Text('🏆 Metas de Ahorro', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
+              IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx)),
+            ]),
+            const SizedBox(height: 20),
+            
+            // Formulario para agregar meta
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Nueva Meta', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  TextField(controller: nombreCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Nombre de la meta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none))),
+                  const SizedBox(height: 8),
+                  TextField(controller: montoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto objetivo', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none))),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        if (nombreCtrl.text.isEmpty || montoCtrl.text.isEmpty) return;
+                        await _firestore.collection('metas').add({
+                          'nombre': nombreCtrl.text.trim(),
+                          'objetivo': double.tryParse(montoCtrl.text) ?? 0,
+                          'actual': 0,
+                          'created_at': FieldValue.serverTimestamp(),
+                        });
+                        Navigator.pop(ctx);
+                        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Meta creada'), backgroundColor: Colors.green));
+                      },
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      label: const Text('Crear Meta', style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text('Mis Metas', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _firestore.collection('metas').orderBy('created_at', descending: true).snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                  final docs = snapshot.data!.docs;
+                  if (docs.isEmpty) return const Center(child: Text('No hay metas creadas', style: TextStyle(color: Colors.grey)));
+                  return ListView.builder(
+                    itemCount: docs.length,
+                    itemBuilder: (context, index) {
+                      final data = docs[index].data() as Map<String, dynamic>;
+                      final nombre = data['nombre'] ?? 'Sin nombre';
+                      final objetivo = (data['objetivo'] ?? 0).toDouble();
+                      final actual = (data['actual'] ?? 0).toDouble();
+                      final porcentaje = objetivo > 0 ? (actual / objetivo * 100).clamp(0, 100) : 0;
+                      final completada = actual >= objetivo;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(children: [
+                              Icon(completada ? Icons.check_circle : Icons.flag, color: completada ? Colors.green : const Color(0xFF0066FF)),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text(nombre, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                              IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20), onPressed: () async {
+                                await _firestore.collection('metas').doc(docs[index].id).delete();
+                              }),
+                            ]),
+                            const SizedBox(height: 8),
+                            Text('\$${actual.toStringAsFixed(0)} / \$${objetivo.toStringAsFixed(0)}', style: TextStyle(color: completada ? Colors.green : Colors.grey, fontSize: 12)),
+                            const SizedBox(height: 8),
+                            ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: porcentaje / 100, backgroundColor: Colors.grey.shade800, valueColor: AlwaysStoppedAnimation<Color>(completada ? Colors.green : const Color(0xFF0066FF)), minHeight: 8)),
+                            const SizedBox(height: 4),
+                            Text('${porcentaje.toStringAsFixed(1)}% completado', style: TextStyle(color: completada ? Colors.green : Colors.grey, fontSize: 11)),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ============================================
+  // TRANSACCIONES RECURRENTES (FUNCIONAL - colección "recurrentes")
+  // ============================================
+  void _mostrarRecurrentes() {
+    final conceptoCtrl = TextEditingController();
+    final montoCtrl = TextEditingController();
+    final categoriaCtrl = TextEditingController(text: 'General');
+    String tipoRec = 'Gasto';
+    String frecuenciaRec = 'Mensual';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF111111),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Container(
+          padding: const EdgeInsets.all(20),
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                const Icon(Icons.repeat, color: Color(0xFF0066FF), size: 28),
+                const SizedBox(width: 12),
+                const Expanded(child: Text('🔄 Transacciones Recurrentes', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
+                IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx)),
+              ]),
+              const SizedBox(height: 20),
+              
+              // Formulario para agregar recurrente
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Nueva Transacción Recurrente', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    TextField(controller: conceptoCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Concepto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none))),
+                    const SizedBox(height: 8),
+                    TextField(controller: montoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none))),
+                    const SizedBox(height: 8),
+                    TextField(controller: categoriaCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Categoría', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none))),
+                    const SizedBox(height: 8),
+                    Row(children: [
+                      Expanded(child: DropdownButtonFormField<String>(value: tipoRec, decoration: const InputDecoration(labelText: 'Tipo', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Ingreso', 'Gasto'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(), onChanged: (v) => setSheetState(() => tipoRec = v!))),
+                      const SizedBox(width: 8),
+                      Expanded(child: DropdownButtonFormField<String>(value: frecuenciaRec, decoration: const InputDecoration(labelText: 'Frecuencia', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Semanal', 'Mensual', 'Anual'].map((f) => DropdownMenuItem(value: f, child: Text(f))).toList(), onChanged: (v) => setSheetState(() => frecuenciaRec = v!))),
+                    ]),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          if (conceptoCtrl.text.isEmpty || montoCtrl.text.isEmpty) return;
+                          await _firestore.collection('recurrentes').add({
+                            'concepto': conceptoCtrl.text.trim(),
+                            'monto': double.tryParse(montoCtrl.text) ?? 0,
+                            'categoria': categoriaCtrl.text.trim(),
+                            'tipo': tipoRec,
+                            'frecuencia': frecuenciaRec,
+                            'activa': true,
+                            'created_at': FieldValue.serverTimestamp(),
+                          });
+                          Navigator.pop(ctx);
+                          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Recurrente creada'), backgroundColor: Colors.green));
+                        },
+                        icon: const Icon(Icons.add, color: Colors.white),
+                        label: const Text('Crear Recurrente', style: TextStyle(color: Colors.white)),
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text('Mis Transacciones Recurrentes', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: _firestore.collection('recurrentes').orderBy('created_at', descending: true).snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                    final docs = snapshot.data!.docs;
+                    if (docs.isEmpty) return const Center(child: Text('No hay transacciones recurrentes', style: TextStyle(color: Colors.grey)));
+                    return ListView.builder(
+                      itemCount: docs.length,
+                      itemBuilder: (context, index) {
+                        final data = docs[index].data() as Map<String, dynamic>;
+                        final concepto = data['concepto'] ?? 'Sin concepto';
+                        final monto = (data['monto'] ?? 0).toDouble();
+                        final frecuencia = data['frecuencia'] ?? 'Mensual';
+                        final tipo = data['tipo'] ?? 'Gasto';
+                        final activa = data['activa'] ?? true;
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
+                          child: Row(
+                            children: [
+                              Container(width: 40, height: 40, decoration: BoxDecoration(color: (tipo == 'Ingreso' ? Colors.green : Colors.red).withOpacity(0.2), shape: BoxShape.circle), child: Icon(tipo == 'Ingreso' ? Icons.arrow_upward : Icons.arrow_downward, color: tipo == 'Ingreso' ? Colors.green : Colors.red, size: 20)),
+                              const SizedBox(width: 12),
+                              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                Text(concepto, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                Text('$frecuencia • \$${monto.toStringAsFixed(2)}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                              ])),
+                              IconButton(icon: Icon(activa ? Icons.toggle_on : Icons.toggle_off, color: activa ? Colors.green : Colors.grey, size: 28), onPressed: () async {
+                                await _firestore.collection('recurrentes').doc(docs[index].id).update({'activa': !activa});
+                              }),
+                              IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20), onPressed: () async {
+                                await _firestore.collection('recurrentes').doc(docs[index].id).delete();
+                              }),
+                            ],
+                          ),
+                        );
+                      },
+                    );
                   },
                 ),
               ),
-            ]),
-          )).toList()),
+            ],
+          ),
         ),
-        actions: [ElevatedButton(onPressed: () { Navigator.pop(ctx); _cargarDatos(); }, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)), child: const Text('Cerrar', style: TextStyle(color: Colors.white)))],
       ),
     );
   }
 
-  String _formatearFecha(String fechaIso) {
+  // ============================================
+  // CALENDARIO (FUNCIONAL)
+  // ============================================
+  void _mostrarCalendario() {
+    DateTime _mesSeleccionado = DateTime.now();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF111111),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Container(
+          padding: const EdgeInsets.all(20),
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.85),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                const Icon(Icons.calendar_month, color: Color(0xFF0066FF), size: 28),
+                const SizedBox(width: 12),
+                const Expanded(child: Text(' Calendario de Transacciones', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
+                IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx)),
+              ]),
+              const SizedBox(height: 20),
+              
+              // Navegación de mes
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(icon: const Icon(Icons.chevron_left, color: Colors.white), onPressed: () => setSheetState(() => _mesSeleccionado = DateTime(_mesSeleccionado.year, _mesSeleccionado.month - 1))),
+                  Text('${_mesSeleccionado.year} - ${['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][_mesSeleccionado.month - 1]}', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  IconButton(icon: const Icon(Icons.chevron_right, color: Colors.white), onPressed: () => setSheetState(() => _mesSeleccionado = DateTime(_mesSeleccionado.year, _mesSeleccionado.month + 1))),
+                ],
+              ),
+              const SizedBox(height: 16),
+              
+              // Lista de transacciones del mes
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                    final docs = snapshot.data!.docs;
+                    final transaccionesDelMes = docs.where((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final fechaStr = data['fecha'] as String? ?? '';
+                      if (fechaStr.length >= 7) {
+                        final fechaParts = fechaStr.split('-');
+                        if (fechaParts.length >= 2) {
+                          final año = int.tryParse(fechaParts[0]);
+                          final mes = int.tryParse(fechaParts[1]);
+                          return año == _mesSeleccionado.year && mes == _mesSeleccionado.month;
+                        }
+                      }
+                      return false;
+                    }).toList();
+                    
+                    if (transaccionesDelMes.isEmpty) {
+                      return const Center(child: Text('No hay transacciones este mes', style: TextStyle(color: Colors.grey)));
+                    }
+                    
+                    // Agrupar por día
+                    Map<String, List<Map<String, dynamic>>> porDia = {};
+                    for (var doc in transaccionesDelMes) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final fechaStr = data['fecha'] as String? ?? '';
+                      if (fechaStr.length >= 10) {
+                        final dia = fechaStr.substring(8, 10);
+                        if (!porDia.containsKey(dia)) porDia[dia] = [];
+                        porDia[dia]!.add(data);
+                      }
+                    }
+                    
+                    return ListView(
+                      children: porDia.entries.map((entry) {
+                        final dia = entry.key;
+                        final transacciones = entry.value;
+                        double totalDia = 0;
+                        for (var t in transacciones) {
+                          final monto = (t['monto'] ?? 0).toDouble();
+                          if (t['tipo'] == 'Ingreso') totalDia += monto;
+                          if (t['tipo'] == 'Gasto') totalDia -= monto;
+                        }
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(children: [
+                                Container(width: 40, height: 40, decoration: BoxDecoration(color: const Color(0xFF0066FF).withOpacity(0.2), borderRadius: BorderRadius.circular(8)), child: Center(child: Text(dia, style: const TextStyle(color: Color(0xFF0066FF), fontWeight: FontWeight.bold)))),
+                                const SizedBox(width: 12),
+                                Expanded(child: Text('Día $dia', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                                Text('\$${totalDia.toStringAsFixed(2)}', style: TextStyle(color: totalDia >= 0 ? Colors.green : Colors.red, fontWeight: FontWeight.bold)),
+                              ]),
+                              const SizedBox(height: 8),
+                              ...transacciones.map((t) => Padding(
+                                padding: const EdgeInsets.only(left: 52, top: 4),
+                                child: Row(children: [
+                                  Icon(t['tipo'] == 'Ingreso' ? Icons.arrow_upward : Icons.arrow_downward, color: t['tipo'] == 'Ingreso' ? Colors.green : Colors.red, size: 16),
+                                  const SizedBox(width: 8),
+                                  Expanded(child: Text(t['concepto'] ?? '', style: const TextStyle(color: Colors.grey, fontSize: 12))),
+                                  Text('\$${(t['monto'] ?? 0).toStringAsFixed(2)}', style: TextStyle(color: t['tipo'] == 'Ingreso' ? Colors.green : Colors.red, fontSize: 12)),
+                                ]),
+                              )),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ============================================
+  // EXPORTAR CSV (FUNCIONAL)
+  // ============================================
+  Future<void> _exportarCSV() async {
     try {
-      final fecha = DateTime.parse(fechaIso);
-      return '${fecha.day}/${fecha.month}/${fecha.year}';
+      final snapshot = await _firestore.collection('transacciones').orderBy('created_at', descending: true).get();
+      final docs = snapshot.docs;
+      final buffer = StringBuffer();
+      buffer.writeln('Fecha,Tipo,Concepto,Categoría,Cuenta,Negocio,Monto,Método de Pago,Referencia,Descripción');
+      for (var doc in docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        buffer.writeln('${data['fecha'] ?? ''},${data['tipo'] ?? ''},"${data['concepto'] ?? ''}","${data['categoria'] ?? ''}","${data['cuenta'] ?? ''}","${data['negocio'] ?? 'Minerales'}",${data['monto'] ?? 0},"${data['metodo_pago'] ?? ''}","${data['referencia'] ?? ''}","${data['descripcion'] ?? ''}"');
+      }
+      final bytes = utf8.encode(buffer.toString());
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.AnchorElement(href: url)..setAttribute("download", "finanzas_${DateTime.now().millisecondsSinceEpoch}.csv")..click();
+      html.Url.revokeObjectUrl(url);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ CSV exportado exitosamente'), backgroundColor: Colors.green));
     } catch (e) {
-      return fechaIso;
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+    }
+  }
+
+  // ============================================
+  // FORMULARIO DE TRANSACCIÓN
+  // ============================================
+  void _mostrarFormularioTransaccion({Map<String, dynamic>? transaccion, String? docId}) {
+    final conceptoCtrl = TextEditingController(text: transaccion?['concepto'] ?? '');
+    final montoCtrl = TextEditingController(text: transaccion?['monto']?.toString() ?? '0');
+    final categoriaCtrl = TextEditingController(text: transaccion?['categoria'] ?? 'General');
+    final fechaCtrl = TextEditingController(text: transaccion?['fecha'] ?? DateTime.now().toIso8601String().split('T')[0]);
+    final descripcionCtrl = TextEditingController(text: transaccion?['descripcion'] ?? '');
+    final metodoPagoCtrl = TextEditingController(text: transaccion?['metodo_pago'] ?? 'Efectivo');
+    final referenciaCtrl = TextEditingController(text: transaccion?['referencia'] ?? '');
+    String tipo = transaccion?['tipo'] ?? 'Ingreso';
+    String cuenta = transaccion?['cuenta'] ?? 'Efectivo';
+    String negocio = transaccion?['negocio'] ?? 'Minerales';
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF111111),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Container(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [Icon(transaccion == null ? Icons.add_circle : Icons.edit, color: const Color(0xFF0066FF), size: 28), const SizedBox(width: 12), Expanded(child: Text(transaccion == null ? 'Nueva Transacción' : 'Editar Transacción', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
+                const SizedBox(height: 20),
+                _buildSeccion('💰 Información'),
+                _buildCampo('Concepto *', conceptoCtrl, icon: Icons.description),
+                _buildCampo('Monto', montoCtrl, icon: Icons.attach_money, tipo: TextInputType.number),
+                const SizedBox(height: 12),
+                _buildSeccion('📋 Clasificación'),
+                Row(children: [Expanded(child: RadioListTile<String>(title: const Text('Ingreso', style: TextStyle(color: Colors.white)), value: 'Ingreso', groupValue: tipo, activeColor: Colors.green, onChanged: (v) => setSheetState(() => tipo = v!))), Expanded(child: RadioListTile<String>(title: const Text('Gasto', style: TextStyle(color: Colors.white)), value: 'Gasto', groupValue: tipo, activeColor: Colors.red, onChanged: (v) => setSheetState(() => tipo = v!)))]),
+                _buildCampo('Categoría', categoriaCtrl, icon: Icons.category),
+                _buildCampo('Fecha', fechaCtrl, icon: Icons.calendar_today),
+                const SizedBox(height: 12),
+                _buildSeccion('💳 Cuenta'),
+                DropdownButtonFormField<String>(value: cuenta, decoration: InputDecoration(labelText: 'Cuenta', labelStyle: const TextStyle(color: Colors.grey), prefixIcon: const Icon(Icons.account_balance_wallet, color: Color(0xFF0066FF)), filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => setSheetState(() => cuenta = v!)),
+                const SizedBox(height: 12),
+                _buildSeccion('🏢 Negocio'),
+                DropdownButtonFormField<String>(value: negocio, decoration: InputDecoration(labelText: 'Negocio', labelStyle: const TextStyle(color: Colors.grey), prefixIcon: const Icon(Icons.business, color: Color(0xFF0066FF)), filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((n) => DropdownMenuItem(value: n, child: Text(n))).toList(), onChanged: (v) => setSheetState(() => negocio = v!)),
+                const SizedBox(height: 12),
+                _buildSeccion('💳 Método de Pago'),
+                _buildCampo('Método de Pago', metodoPagoCtrl, icon: Icons.credit_card),
+                _buildCampo('Referencia / Folio', referenciaCtrl, icon: Icons.receipt),
+                const SizedBox(height: 12),
+                _buildSeccion('📝 Detalles'),
+                _buildCampoMultilinea('Descripción', descripcionCtrl),
+                const SizedBox(height: 16),
+                SizedBox(width: double.infinity, height: 50, child: ElevatedButton.icon(onPressed: () => _guardarTransaccion(ctx, conceptoCtrl, montoCtrl, categoriaCtrl, fechaCtrl, descripcionCtrl, metodoPagoCtrl, referenciaCtrl, tipo, cuenta, negocio, docId), icon: const Icon(Icons.save, color: Colors.white), label: Text(transaccion == null ? 'Crear Transacción' : 'Guardar Cambios', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSeccion(String titulo) {
+    return Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Text(titulo, style: const TextStyle(color: Color(0xFF0066FF), fontSize: 14, fontWeight: FontWeight.bold)));
+  }
+
+  Widget _buildCampo(String label, TextEditingController ctrl, {IconData? icon, TextInputType? tipo}) {
+    return Padding(padding: const EdgeInsets.only(bottom: 12), child: TextField(controller: ctrl, keyboardType: tipo, style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: label, labelStyle: const TextStyle(color: Colors.grey), prefixIcon: icon != null ? Icon(icon, color: const Color(0xFF0066FF)) : null, filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none))));
+  }
+
+  Widget _buildCampoMultilinea(String label, TextEditingController ctrl) {
+    return Padding(padding: const EdgeInsets.only(bottom: 12), child: TextField(controller: ctrl, maxLines: 4, style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: label, labelStyle: const TextStyle(color: Colors.grey), prefixIcon: const Icon(Icons.notes, color: Color(0xFF0066FF)), filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none))));
+  }
+
+  Future<void> _guardarTransaccion(BuildContext ctx, TextEditingController concepto, TextEditingController monto, TextEditingController categoria, TextEditingController fecha, TextEditingController descripcion, TextEditingController metodoPago, TextEditingController referencia, String tipo, String cuenta, String negocio, String? docId) async {
+    if (concepto.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ El concepto es obligatorio'), backgroundColor: Colors.orange));
+      return;
+    }
+    try {
+      final data = {
+        'concepto': concepto.text.trim(),
+        'monto': double.tryParse(monto.text) ?? 0,
+        'categoria': categoria.text.trim(),
+        'fecha': fecha.text.trim(),
+        'descripcion': descripcion.text.trim(),
+        'metodo_pago': metodoPago.text.trim(),
+        'referencia': referencia.text.trim(),
+        'tipo': tipo,
+        'cuenta': cuenta,
+        'negocio': negocio,
+      };
+      if (docId == null) {
+        data['created_at'] = FieldValue.serverTimestamp();
+        await _firestore.collection('transacciones').add(data);
+      } else {
+        await _firestore.collection('transacciones').doc(docId).update(data);
+      }
+      Navigator.pop(ctx);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(docId == null ? '✅ Transacción creada' : '✅ Transacción actualizada'), backgroundColor: Colors.green));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+    }
+  }
+
+  Future<void> _eliminarTransaccion(String id, String concepto) async {
+    final confirm = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(backgroundColor: const Color(0xFF1A1A1A), title: const Text('Eliminar Transacción', style: TextStyle(color: Colors.white)), content: Text('¿Eliminar "$concepto"?', style: const TextStyle(color: Colors.grey)), actions: [TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))), TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Eliminar', style: TextStyle(color: Colors.red)))]));
+    if (confirm == true) {
+      await _firestore.collection('transacciones').doc(id).delete();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🗑️ Eliminado'), backgroundColor: Colors.red));
     }
   }
 }
