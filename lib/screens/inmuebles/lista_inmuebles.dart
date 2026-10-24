@@ -27,24 +27,54 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
         width: double.infinity,
         child: Column(
           children: [
+            // Barra de búsqueda y filtros
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               color: const Color(0xFF111111),
-              child: Column(children: [
-                TextField(decoration: InputDecoration(hintText: 'Buscar por título, ubicación o asesor...', prefixIcon: const Icon(Icons.search, color: Colors.grey), filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)), style: const TextStyle(color: Colors.white), onChanged: (v) => setState(() => _search = v.toLowerCase())),
-                const SizedBox(height: 12),
-                Row(children: [
-                  Expanded(child: DropdownButtonFormField<String>(value: _tipoFiltro, decoration: InputDecoration(labelText: 'Tipo', filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Todos', 'Casa', 'Departamento', 'Terreno', 'Local', 'Oficina'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(), onChanged: (v) => setState(() => _tipoFiltro = v!))),
-                  const SizedBox(width: 12),
-                  Expanded(child: DropdownButtonFormField<String>(value: _asesorFiltro, decoration: InputDecoration(labelText: 'Asesor', filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Todos', 'Williams'].map((a) => DropdownMenuItem(value: a, child: Text(a))).toList(), onChanged: (v) => setState(() => _asesorFiltro = v!))),
-                ]),
-              ]),
+              child: Column(
+                children: [
+                  TextField(
+                    decoration: InputDecoration(hintText: 'Buscar por título, ubicación o asesor...', prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 20), filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    onChanged: (v) => setState(() => _search = v.toLowerCase()),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(child: DropdownButtonFormField<String>(value: _tipoFiltro, decoration: InputDecoration(labelText: 'Tipo', labelStyle: const TextStyle(color: Colors.grey, fontSize: 11), filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none), contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white, fontSize: 12), items: ['Todos', 'Casa', 'Departamento', 'Terreno', 'Local', 'Oficina', 'Bodega', 'Rancho', 'Hacienda', 'Lote', 'Edificio', 'Nave Industrial', 'Otro'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(), onChanged: (v) => setState(() => _tipoFiltro = v!))),
+                      const SizedBox(width: 8),
+                      Expanded(child: DropdownButtonFormField<String>(value: _asesorFiltro, decoration: InputDecoration(labelText: 'Asesor', labelStyle: const TextStyle(color: Colors.grey, fontSize: 11), filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none), contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white, fontSize: 12), items: ['Todos', 'Williams'].map((a) => DropdownMenuItem(value: a, child: Text(a))).toList(), onChanged: (v) => setState(() => _asesorFiltro = v!))),
+                    ],
+                  ),
+                ],
+              ),
             ),
+            
+            // Encabezados de columna
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: const Color(0xFF1A1A1A),
+              child: Row(
+                children: [
+                  const SizedBox(width: 40),
+                  Expanded(flex: 3, child: Text('TÍTULO', style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.bold))),
+                  Expanded(flex: 2, child: Text('TIPO', style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.bold))),
+                  Expanded(flex: 2, child: Text('UBICACIÓN', style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.bold))),
+                  Expanded(flex: 2, child: Text('PRECIO', style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.bold))),
+                  Expanded(flex: 1, child: Text('REC', style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.bold))),
+                  Expanded(flex: 1, child: Text('BAÑOS', style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.bold))),
+                  Expanded(flex: 2, child: Text('ASESOR', style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.bold))),
+                  const SizedBox(width: 100),
+                ],
+              ),
+            ),
+            const Divider(height: 1, color: Color(0xFF222222)),
+            
+            // Lista de inmuebles
             Expanded(
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.zero,
                 child: StreamBuilder<QuerySnapshot>(
                   stream: _firestore.collection('inmuebles').orderBy('created_at', descending: true).snapshots(),
                   builder: (context, snapshot) {
@@ -63,26 +93,69 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
                       return matchSearch && matchTipo && matchAsesor;
                     }).toList();
 
-                    if (filtrados.isEmpty) return const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.home_outlined, color: Colors.grey, size: 64), SizedBox(height: 16), Text('No hay inmuebles registrados', style: TextStyle(color: Colors.grey, fontSize: 16))]));
+                    if (filtrados.isEmpty) return const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.home_outlined, color: Colors.grey, size: 48), SizedBox(height: 12), Text('No hay inmuebles registrados', style: TextStyle(color: Colors.grey, fontSize: 14))]));
 
                     return ListView.builder(
                       itemCount: filtrados.length,
                       itemBuilder: (context, index) {
                         final doc = filtrados[index];
                         final data = doc.data() as Map<String, dynamic>;
+                        final titulo = data['titulo'] ?? 'Sin título';
+                        final tipo = data['tipo'] ?? '-';
+                        final ubicacion = data['ubicacion'] ?? '-';
+                        final precio = data['precio'] ?? 0;
+                        final recamaras = data['recamaras'] ?? 0;
+                        final banos = data['banos'] ?? 0;
+                        final asesor = data['asesor'] ?? '-';
+                        
+                        final colorTipo = _getColorForTipo(tipo.toString());
+                        
                         return Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF222222))),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(16),
-                            leading: Container(width: 80, height: 80, decoration: BoxDecoration(color: Colors.blue.shade700, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.home, color: Colors.white, size: 40)),
-                            title: Text(data['titulo'] ?? 'Sin título', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                            subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const SizedBox(height: 4), Text('${data['tipo'] ?? 'Casa'} - ${data['ubicacion'] ?? 'Sin ubicación'}', style: const TextStyle(color: Colors.grey)), Text('\$${data['precio'] ?? '0'}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold))]),
-                            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                              IconButton(icon: const Icon(Icons.visibility, color: Colors.blue), onPressed: () => _verDetalle(data)),
-                              IconButton(icon: const Icon(Icons.edit, color: Colors.orange), onPressed: () => _mostrarFormularioInmueble(inmueble: data, docId: doc.id)),
-                              IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red), onPressed: () => _eliminarInmueble(doc.id, data['titulo'])),
-                            ]),
+                          decoration: BoxDecoration(
+                            color: index.isEven ? const Color(0xFF0D0D0D) : const Color(0xFF111111),
+                            border: Border(bottom: BorderSide(color: const Color(0xFF1A1A1A), width: 1)),
+                          ),
+                          child: InkWell(
+                            onTap: () => _mostrarFormularioInmueble(inmueble: data, docId: doc.id),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(color: Colors.blue.shade700, borderRadius: BorderRadius.circular(6)),
+                                    child: const Icon(Icons.home, color: Colors.white, size: 18),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(flex: 3, child: Text(titulo.toString(), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500))),
+                                  Expanded(
+                                    flex: 2,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(color: colorTipo.withOpacity(0.15), borderRadius: BorderRadius.circular(12), border: Border.all(color: colorTipo.withOpacity(0.3))),
+                                      child: Text(tipo.toString(), style: TextStyle(color: colorTipo, fontSize: 11, fontWeight: FontWeight.bold)),
+                                    ),
+                                  ),
+                                  Expanded(flex: 2, child: Text(ubicacion.toString(), style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
+                                  Expanded(flex: 2, child: Text('\$${precio.toString()}', style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.w500))),
+                                  Expanded(flex: 1, child: Text('$recamaras', style: const TextStyle(color: Colors.grey, fontSize: 12))),
+                                  Expanded(flex: 1, child: Text('$banos', style: const TextStyle(color: Colors.grey, fontSize: 12))),
+                                  Expanded(flex: 2, child: Text(asesor.toString(), style: const TextStyle(color: Colors.grey, fontSize: 12), overflow: TextOverflow.ellipsis)),
+                                  SizedBox(
+                                    width: 100,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        IconButton(icon: const Icon(Icons.visibility, color: Colors.blue, size: 18), onPressed: () => _verDetalle(data), padding: const EdgeInsets.all(4)),
+                                        IconButton(icon: const Icon(Icons.edit, color: Colors.orange, size: 18), onPressed: () => _mostrarFormularioInmueble(inmueble: data, docId: doc.id), padding: const EdgeInsets.all(4)),
+                                        IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18), onPressed: () => _eliminarInmueble(doc.id, titulo.toString()), padding: const EdgeInsets.all(4)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         );
                       },
@@ -95,6 +168,23 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
         ),
       ),
     );
+  }
+
+  Color _getColorForTipo(String tipo) {
+    switch (tipo.toLowerCase()) {
+      case 'casa': return Colors.blue;
+      case 'departamento': return Colors.purple;
+      case 'terreno': return Colors.green;
+      case 'local': return Colors.orange;
+      case 'oficina': return Colors.teal;
+      case 'bodega': return Colors.brown;
+      case 'rancho': return Colors.amber;
+      case 'hacienda': return Colors.indigo;
+      case 'lote': return Colors.cyan;
+      case 'edificio': return Colors.pink;
+      case 'nave industrial': return Colors.red;
+      default: return Colors.grey;
+    }
   }
 
   void _mostrarFormularioInmueble({Map<String, dynamic>? inmueble, String? docId}) {
@@ -115,47 +205,44 @@ class _ListaInmueblesState extends State<ListaInmuebles> {
       isScrollControlled: true,
       backgroundColor: const Color(0xFF111111),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (ctx) => Container(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                Icon(inmueble == null ? Icons.add_home : Icons.edit, color: const Color(0xFF0066FF), size: 28),
-                const SizedBox(width: 12),
-                Expanded(child: Text(inmueble == null ? 'Nuevo Inmueble' : 'Editar Inmueble', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
-                IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx)),
-              ]),
-              const SizedBox(height: 20),
-              _buildCampo('Título', tituloCtrl, icon: Icons.title),
-              _buildCampo('Tipo', tipoCtrl, icon: Icons.category),
-              _buildCampo('Ubicación', ubicacionCtrl, icon: Icons.location_on),
-              Row(children: [Expanded(child: _buildCampo('País', paisCtrl, icon: Icons.flag)), const SizedBox(width: 12), Expanded(child: _buildCampo('Estado', estadoCtrl, icon: Icons.map))]),
-              _buildCampo('Precio', precioCtrl, icon: Icons.attach_money, tipo: TextInputType.number),
-              _buildCampo('Superficie (m²)', superficieCtrl, icon: Icons.square_foot, tipo: TextInputType.number),
-              Row(children: [Expanded(child: _buildCampo('Recámaras', recamarasCtrl, icon: Icons.bed, tipo: TextInputType.number)), const SizedBox(width: 12), Expanded(child: _buildCampo('Baños', banosCtrl, icon: Icons.bathtub, tipo: TextInputType.number))]),
-              _buildCampo('Asesor', asesorCtrl, icon: Icons.person),
-              _buildCampoMultilinea('Descripción', descripcionCtrl),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton.icon(
-                  onPressed: () => _guardarInmueble(ctx, tituloCtrl, tipoCtrl, ubicacionCtrl, paisCtrl, estadoCtrl, precioCtrl, superficieCtrl, recamarasCtrl, banosCtrl, asesorCtrl, descripcionCtrl, docId),
-                  icon: const Icon(Icons.save, color: Colors.white),
-                  label: Text(inmueble == null ? 'Crear Inmueble' : 'Guardar Cambios', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Container(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [Icon(inmueble == null ? Icons.add_home : Icons.edit, color: const Color(0xFF0066FF), size: 28), const SizedBox(width: 12), Expanded(child: Text(inmueble == null ? 'Nuevo Inmueble' : 'Editar Inmueble', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
+                const SizedBox(height: 20),
+                _buildSeccion('📋 Información General'),
+                _buildCampo('Título *', tituloCtrl, icon: Icons.title),
+                _buildCampo('Tipo', tipoCtrl, icon: Icons.category),
+                _buildCampo('Ubicación', ubicacionCtrl, icon: Icons.location_on),
+                Row(children: [Expanded(child: _buildCampo('País', paisCtrl, icon: Icons.flag)), const SizedBox(width: 12), Expanded(child: _buildCampo('Estado', estadoCtrl, icon: Icons.map))]),
+                const SizedBox(height: 12),
+                _buildSeccion('💰 Precio y Características'),
+                _buildCampo('Precio (MXN)', precioCtrl, icon: Icons.attach_money, tipo: TextInputType.number),
+                _buildCampo('Superficie (m²)', superficieCtrl, icon: Icons.square_foot, tipo: TextInputType.number),
+                Row(children: [Expanded(child: _buildCampo('Recámaras', recamarasCtrl, icon: Icons.bed, tipo: TextInputType.number)), const SizedBox(width: 12), Expanded(child: _buildCampo('Baños', banosCtrl, icon: Icons.bathtub, tipo: TextInputType.number))]),
+                const SizedBox(height: 12),
+                _buildSeccion(' Gestión'),
+                _buildCampo('Asesor', asesorCtrl, icon: Icons.person),
+                _buildCampoMultilinea('Descripción', descripcionCtrl),
+                const SizedBox(height: 16),
+                SizedBox(width: double.infinity, height: 50, child: ElevatedButton.icon(onPressed: () => _guardarInmueble(ctx, tituloCtrl, tipoCtrl, ubicacionCtrl, paisCtrl, estadoCtrl, precioCtrl, superficieCtrl, recamarasCtrl, banosCtrl, asesorCtrl, descripcionCtrl, docId), icon: const Icon(Icons.save, color: Colors.white), label: Text(inmueble == null ? 'Crear Inmueble' : 'Guardar Cambios', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildSeccion(String titulo) {
+    return Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Text(titulo, style: const TextStyle(color: Color(0xFF0066FF), fontSize: 14, fontWeight: FontWeight.bold)));
   }
 
   Widget _buildCampo(String label, TextEditingController ctrl, {IconData? icon, TextInputType? tipo}) {
