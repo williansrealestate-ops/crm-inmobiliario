@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'firebase_options.dart';
 
 import 'screens/guiones/guiones_screen.dart';
 import 'screens/dashboard/dashboard_asesores.dart';
@@ -17,11 +19,22 @@ import 'screens/inmuebles/lista_inmuebles.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // ✅ PUBLISHABLE KEY (nuevo formato de Supabase)
-  await Supabase.initialize(
-    url: 'https://qbuknjiqrzxqrqpoixio.supabase.co',
-    anonKey: 'sb_publishable_phlPx9hNs6-6yTTauRNdYQ_0UpY-9wB',
+  // ✅ 1. INICIALIZAR FIREBASE (Motor principal nuevo)
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
   );
+  
+  // ✅ 2. INICIALIZAR SUPABASE TEMPORALMENTE 
+  // (Esto evita errores rojos en las pantallas que aún no migramos, 
+  // aunque Supabase esté caído, la app no se romperá).
+  try {
+    await Supabase.initialize(
+      url: 'https://qbuknjiqrzxqrqpoixio.supabase.co',
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFidWtuamlxcnp4cXJxcG9peGlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTUxNzIsImV4cCI6MjEwNzg3MTE3Mn0.4JzL_b2EnryLo_D3FEyWGR5Skkawhx2QvydaO1i1gRA',
+    );
+  } catch (e) {
+    print('⚠️ Supabase no se pudo inicializar (posible caída del servicio): $e');
+  }
   
   runApp(const MyApp());
 }
@@ -79,8 +92,11 @@ class _MainScreenState extends State<MainScreen> {
     {'icon': Icons.home, 'label': 'Inmuebles', 'color': const Color(0xFF00BCD4)},
   ];
 
+  // ✅ Wrapper negro para garantizar fondo oscuro en todas las pantallas
   Widget _wrapBlack(Widget child) {
-    return ColoredBox(
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
       color: const Color(0xFF0A0A0A),
       child: child,
     );
@@ -110,6 +126,7 @@ class _MainScreenState extends State<MainScreen> {
       backgroundColor: const Color(0xFF0A0A0A),
       body: Row(
         children: [
+          // SIDEBAR
           Container(
             width: _isSidebarExpanded ? 220 : 70,
             color: const Color(0xFF000000),
@@ -124,7 +141,10 @@ class _MainScreenState extends State<MainScreen> {
                       const Icon(Icons.home, color: Colors.white, size: 24),
                       if (_isSidebarExpanded) ...[
                         const SizedBox(width: 8),
-                        const Text('REAL ESTATE', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                        const Text(
+                          'REAL ESTATE',
+                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
                       ],
                       const Spacer(),
                       IconButton(
@@ -156,7 +176,14 @@ class _MainScreenState extends State<MainScreen> {
                               Icon(item['icon'] as IconData, color: isSelected ? item['color'] as Color : Colors.grey, size: 20),
                               if (_isSidebarExpanded) ...[
                                 const SizedBox(width: 12),
-                                Text(item['label'] as String, style: TextStyle(color: isSelected ? Colors.white : Colors.grey, fontSize: 13, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                                Text(
+                                  item['label'] as String,
+                                  style: TextStyle(
+                                    color: isSelected ? Colors.white : Colors.grey,
+                                    fontSize: 13,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  ),
+                                ),
                               ],
                             ],
                           ),
@@ -167,13 +194,34 @@ class _MainScreenState extends State<MainScreen> {
                 ),
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(color: Color(0xFF0A0A0A), border: Border(top: BorderSide(color: Color(0xFF222222)))),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF0A0A0A),
+                    border: Border(top: BorderSide(color: Color(0xFF222222))),
+                  ),
                   child: Row(
                     children: [
-                      Container(width: 36, height: 36, decoration: const BoxDecoration(color: Color(0xFF0066FF), shape: BoxShape.circle), child: const Center(child: Text('W', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)))),
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF0066FF),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: Text('W', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
                       if (_isSidebarExpanded) ...[
                         const SizedBox(width: 10),
-                        const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Williams', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)), Text('Modo Automático', style: TextStyle(color: Colors.grey, fontSize: 11))])),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Williams', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                              Text('Modo Automático', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                            ],
+                          ),
+                        ),
                       ],
                     ],
                   ),
@@ -181,13 +229,23 @@ class _MainScreenState extends State<MainScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   color: const Color(0xFF0A0A0A),
-                  child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [_buildThemeButton(Icons.light_mode, 'Claro'), _buildThemeButton(Icons.dark_mode, 'Oscuro'), _buildThemeButton(Icons.settings, 'Auto', isSelected: true)]),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildThemeButton(Icons.light_mode, 'Claro'),
+                      _buildThemeButton(Icons.dark_mode, 'Oscuro'),
+                      _buildThemeButton(Icons.settings, 'Auto', isSelected: true),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
+          // ✅ CONTENIDO PRINCIPAL (Ancho y alto infinito garantizados)
           Expanded(
             child: Container(
+              width: double.infinity,
+              height: double.infinity,
               color: const Color(0xFF0A0A0A),
               child: _buildCurrentScreen(),
             ),
@@ -198,6 +256,21 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildThemeButton(IconData icon, String label, {bool isSelected = false}) {
-    return Column(mainAxisSize: MainAxisSize.min, children: [Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: isSelected ? const Color(0xFF0066FF) : const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(6), border: Border.all(color: isSelected ? const Color(0xFF0066FF) : const Color(0xFF333333))), child: Icon(icon, color: isSelected ? Colors.white : Colors.grey, size: 16)), const SizedBox(height: 4), Text(label, style: TextStyle(color: isSelected ? const Color(0xFF0066FF) : Colors.grey, fontSize: 10))]);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF0066FF) : const Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: isSelected ? const Color(0xFF0066FF) : const Color(0xFF333333)),
+          ),
+          child: Icon(icon, color: isSelected ? Colors.white : Colors.grey, size: 16),
+        ),
+        const SizedBox(height: 4),
+        Text(label, style: TextStyle(color: isSelected ? const Color(0xFF0066FF) : Colors.grey, fontSize: 10)),
+      ],
+    );
   }
 }

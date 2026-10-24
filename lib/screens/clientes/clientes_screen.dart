@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../formularios/nuevo_cliente_simple_form.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ClientesScreen extends StatefulWidget {
   const ClientesScreen({super.key});
@@ -10,310 +9,167 @@ class ClientesScreen extends StatefulWidget {
 }
 
 class _ClientesScreenState extends State<ClientesScreen> {
-  final _supabase = Supabase.instance.client;
-  List<Map<String, dynamic>> _clientes = [];
-  List<Map<String, dynamic>> _filtered = [];
-  bool _loading = true;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String _search = '';
-  String _tipoFilter = 'Todos';
-  String _interesFilter = 'Todos';
-
-  final List<String> _tiposInteres = [
-    'Todos', 'Casa', 'Departamento', 'Terreno', 'Local', 'Oficina',
-    'Hotel', 'Hacienda', 'Gasolinera', 'Combustible', 'Refinería', 'Mina', 'Minerales',
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    setState(() => _loading = true);
-    try {
-      final res = await _supabase.from('clientes').select('*').order('created_at', ascending: false);
-      final data = List<Map<String, dynamic>>.from(res);
-      setState(() {
-        _clientes = data;
-        _applyFilters();
-        _loading = false;
-      });
-    } catch (e) {
-      setState(() => _loading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-      }
-    }
-  }
-
-  void _applyFilters() {
-    _filtered = _clientes.where((c) {
-      final s = _search.toLowerCase();
-      final matchSearch = s.isEmpty ||
-          (c['nombre']?.toString().toLowerCase().contains(s) ?? false) ||
-          (c['telefono']?.toString().contains(s) ?? false);
-      final matchTipo = _tipoFilter == 'Todos' || c['tipo'] == _tipoFilter;
-      final matchInteres = _interesFilter == 'Todos' || c['catalogo_interes'] == _interesFilter;
-      return matchSearch && matchTipo && matchInteres;
-    }).toList();
-    if (mounted) setState(() {});
-  }
-
-  void _openForm({Map<String, dynamic>? cliente}) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => NuevoClienteSimpleForm(
-          cliente: cliente,
-          onClienteCreado: _load,
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A), // ✅ FONDO NEGRO FORZADO
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0066FF),
         title: const Row(children: [
           Icon(Icons.people, color: Colors.white),
           SizedBox(width: 8),
-          Text('Clientes', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+          Text('Clientes', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ]),
         actions: [
-          IconButton(icon: const Icon(Icons.add, color: Colors.white, size: 28), onPressed: () => _openForm()),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Buscar clientes...',
-                prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 22),
-                filled: true,
-                fillColor: const Color(0xFF1A1A1A),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-              ),
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-              onChanged: (v) { _search = v; _applyFilters(); },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: _tipoFilter,
-                    decoration: const InputDecoration(labelText: 'Tipo', labelStyle: TextStyle(color: Colors.grey, fontSize: 12), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
-                    dropdownColor: const Color(0xFF1A1A1A),
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
-                    items: ['Todos', 'Comprador', 'Vendedor', 'Inversionista', 'Rentador'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-                    onChanged: (v) { _tipoFilter = v ?? 'Todos'; _applyFilters(); },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: _interesFilter,
-                    decoration: const InputDecoration(labelText: 'Interés', labelStyle: TextStyle(color: Colors.grey, fontSize: 12), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
-                    dropdownColor: const Color(0xFF1A1A1A),
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
-                    items: _tiposInteres.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-                    onChanged: (v) { _interesFilter = v ?? 'Todos'; _applyFilters(); },
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            color: const Color(0xFF111111),
-            child: _buildHeader(),
-          ),
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _filtered.isEmpty
-                    ? const Center(child: Text('No hay clientes', style: TextStyle(color: Colors.grey, fontSize: 14)))
-                    : LayoutBuilder(
-                        builder: (context, constraints) {
-                          final totalWidth = constraints.maxWidth;
-                          return ScrollConfiguration(
-                            behavior: ScrollConfiguration.of(context).copyWith(scrollbars: true),
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.vertical,
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              child: SizedBox(
-                                width: totalWidth > 1400 ? totalWidth : 1400,
-                                child: Column(
-                                  children: _filtered.map((c) => _buildRow(c)).toList(),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+          IconButton(
+            icon: const Icon(Icons.add, color: Colors.white, size: 28),
+            onPressed: () => _mostrarFormularioCliente(),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-      color: const Color(0xFF111111),
-      child: Row(
-        children: [
-          SizedBox(width: 80, child: Text('', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
-          SizedBox(width: 240, child: Text('NOMBRE', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
-          SizedBox(width: 130, child: Text('TIPO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
-          SizedBox(width: 150, child: Text('TELÉFONO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
-          SizedBox(width: 200, child: Text('UBICACIÓN', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
-          SizedBox(width: 110, child: Text('PAÍS', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
-          SizedBox(width: 130, child: Text('ESTADO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
-          SizedBox(width: 140, child: Text('PRESUPUESTO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
-          SizedBox(width: 140, child: Text('INTERÉS', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
-          SizedBox(width: 200, child: Text('ASESOR', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
-          SizedBox(width: 110, child: Text('ESTADO', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
-          SizedBox(width: 200, child: Text('NOTAS', style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAvatar(String nombre, Color color) {
-    final inicial = nombre.toString().isNotEmpty ? nombre.toString().substring(0, 1).toUpperCase() : 'S';
-    return Container(
-      width: 38,
-      height: 38,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.3),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Text(
-          inicial,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRow(Map<String, dynamic> c) {
-    final nombre = c['nombre'] ?? 'Sin nombre';
-    final tipo = c['tipo'] ?? 'Comprador';
-    final tel = c['telefono'] ?? '---';
-    final ubicacion = c['ubicacion'] ?? '---';
-    final pais = c['pais'] ?? 'México';
-    final estado = c['estado'] ?? '---';
-    final presupuesto = c['presupuesto'] ?? 0;
-    final interes = c['catalogo_interes'] ?? '---';
-    final asesor = c['asesor'] ?? '---';
-    final activo = c['activo'] ?? true;
-    final notas = c['notas'] ?? '---';
-
-    Color tipoColor;
-    switch (tipo) {
-      case 'Comprador': tipoColor = Colors.orange; break;
-      case 'Vendedor': tipoColor = Colors.blue; break;
-      case 'Inversionista': tipoColor = Colors.purple; break;
-      case 'Rentador': tipoColor = Colors.green; break;
-      default: tipoColor = Colors.grey;
-    }
-
-    return InkWell(
-      onTap: () => _showDetails(c),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.grey.shade900, width: 0.5)),
-        ),
-        child: Row(
+      body: Container(
+        width: double.infinity,
+        child: Column(
           children: [
-            SizedBox(width: 80, child: Padding(padding: const EdgeInsets.only(right: 8), child: _buildAvatar(nombre, Colors.orange.shade700))),
-            SizedBox(width: 240, child: Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 130, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: tipoColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4)), child: Text(tipo, style: TextStyle(color: tipoColor, fontSize: 13, fontWeight: FontWeight.w500)))),
-            SizedBox(width: 150, child: Text(tel, style: const TextStyle(color: Colors.grey, fontSize: 13))),
-            SizedBox(width: 200, child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 13), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 110, child: Text(pais, style: const TextStyle(color: Colors.grey, fontSize: 13))),
-            SizedBox(width: 130, child: Text(estado, style: const TextStyle(color: Colors.grey, fontSize: 13))),
-            SizedBox(width: 140, child: Text(presupuesto > 0 ? '\$${(presupuesto / 1000000).toStringAsFixed(1)} M' : '---', style: const TextStyle(color: Colors.green, fontSize: 13, fontWeight: FontWeight.w500))),
-            SizedBox(width: 140, child: Text(interes, style: const TextStyle(color: Colors.amber, fontSize: 13, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 200, child: Text(asesor, style: const TextStyle(color: Colors.grey, fontSize: 13), overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 110, child: Row(children: [Container(width: 10, height: 10, decoration: BoxDecoration(color: activo ? Colors.green : Colors.red, shape: BoxShape.circle)), const SizedBox(width: 6), Text(activo ? 'Activo' : 'Inactivo', style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 13, fontWeight: FontWeight.w500))])),
-            SizedBox(width: 200, child: Text(notas, style: const TextStyle(color: Colors.grey, fontSize: 13), overflow: TextOverflow.ellipsis)),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              color: const Color(0xFF111111),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Buscar clientes...',
+                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  filled: true,
+                  fillColor: const Color(0xFF1A1A1A),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
+                style: const TextStyle(color: Colors.white),
+                onChanged: (v) => setState(() => _search = v.toLowerCase()),
+              ),
+            ),
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: _firestore.collection('clientes').orderBy('created_at', descending: true).snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator(color: Color(0xFF0066FF)));
+                    }
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
+                    }
+                    final clientes = snapshot.data?.docs ?? [];
+                    final filtrados = clientes.where((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final nombre = (data['nombre'] ?? '').toString().toLowerCase();
+                      return _search.isEmpty || nombre.contains(_search);
+                    }).toList();
+
+                    if (filtrados.isEmpty) {
+                      return const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Icon(Icons.people_outline, color: Colors.grey, size: 64),
+                        SizedBox(height: 16),
+                        Text('No hay clientes registrados', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                      ]));
+                    }
+
+                    return ListView.builder(
+                      itemCount: filtrados.length,
+                      itemBuilder: (context, index) {
+                        final doc = filtrados[index];
+                        final data = doc.data() as Map<String, dynamic>;
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF222222))),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            leading: CircleAvatar(backgroundColor: Colors.blue.shade700, radius: 24, child: Text((data['nombre'] ?? '?').toString().substring(0, 1).toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                            title: Text(data['nombre'] ?? 'Sin nombre', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                            subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              const SizedBox(height: 4),
+                              Text('${data['tipo'] ?? 'Comprador'}', style: const TextStyle(color: Colors.blue)),
+                              Text('${data['telefono'] ?? 'Sin teléfono'}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                            ]),
+                            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                              IconButton(icon: const Icon(Icons.visibility, color: Colors.blue), onPressed: () => _verDetalle(data)),
+                              IconButton(icon: const Icon(Icons.edit, color: Colors.orange), onPressed: () => _mostrarFormularioCliente(cliente: data, docId: doc.id)),
+                              IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red), onPressed: () => _eliminarCliente(doc.id, data['nombre'])),
+                            ]),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  void _showDetails(Map<String, dynamic> c) {
+  void _mostrarFormularioCliente({Map<String, dynamic>? cliente, String? docId}) {
+    final nombreCtrl = TextEditingController(text: cliente?['nombre'] ?? '');
+    final tipoCtrl = TextEditingController(text: cliente?['tipo'] ?? 'Comprador');
+    final telefonoCtrl = TextEditingController(text: cliente?['telefono'] ?? '');
+    final ubicacionCtrl = TextEditingController(text: cliente?['ubicacion'] ?? '');
+    final paisCtrl = TextEditingController(text: cliente?['pais'] ?? 'México');
+    final estadoCtrl = TextEditingController(text: cliente?['estado'] ?? '');
+    final presupuestoCtrl = TextEditingController(text: cliente?['presupuesto']?.toString() ?? '0');
+    final interesCtrl = TextEditingController(text: cliente?['interes'] ?? '');
+    final asesorCtrl = TextEditingController(text: cliente?['asesor'] ?? 'Williams');
+    final notasCtrl = TextEditingController(text: cliente?['notas'] ?? '');
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: const Color(0xFF111111),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        maxChildSize: 0.95,
-        minChildSize: 0.4,
-        expand: false,
-        builder: (_, controller) => SingleChildScrollView(
-          controller: controller,
+      builder: (ctx) => Container(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade700, borderRadius: BorderRadius.circular(2)))),
+              Row(children: [
+                Icon(cliente == null ? Icons.person_add : Icons.edit, color: const Color(0xFF0066FF), size: 28),
+                const SizedBox(width: 12),
+                Expanded(child: Text(cliente == null ? 'Nuevo Cliente' : 'Editar Cliente', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
+                IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx)),
+              ]),
               const SizedBox(height: 20),
-              Row(
-                children: [
-                  Container(width: 50, height: 50, decoration: BoxDecoration(color: Colors.orange.shade700, borderRadius: BorderRadius.circular(8)), child: Center(child: Text((c['nombre'] ?? 'S').toString().substring(0, 1).toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)))),
-                  const SizedBox(width: 12),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(c['nombre'] ?? 'Sin nombre', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text(c['tipo'] ?? 'Comprador', style: TextStyle(color: Colors.orange.shade300, fontSize: 14)),
-                  ])),
-                  IconButton(icon: const Icon(Icons.edit, color: Colors.blue), onPressed: () { Navigator.pop(ctx); _openForm(cliente: c); }),
-                ],
+              _buildCampo('Nombre', nombreCtrl, icon: Icons.person),
+              _buildCampo('Teléfono', telefonoCtrl, icon: Icons.phone, tipo: TextInputType.phone),
+              _buildCampo('Ubicación', ubicacionCtrl, icon: Icons.location_on),
+              Row(children: [
+                Expanded(child: _buildCampo('País', paisCtrl, icon: Icons.flag)),
+                const SizedBox(width: 12),
+                Expanded(child: _buildCampo('Estado', estadoCtrl, icon: Icons.map)),
+              ]),
+              _buildCampo('Presupuesto', presupuestoCtrl, icon: Icons.attach_money, tipo: TextInputType.number),
+              _buildCampo('Interés', interesCtrl, icon: Icons.favorite),
+              _buildCampo('Asesor', asesorCtrl, icon: Icons.person),
+              _buildCampoMultilinea('Notas', notasCtrl),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: () => _guardarCliente(ctx, nombreCtrl, tipoCtrl, telefonoCtrl, ubicacionCtrl, paisCtrl, estadoCtrl, presupuestoCtrl, interesCtrl, asesorCtrl, notasCtrl, docId),
+                  icon: const Icon(Icons.save, color: Colors.white),
+                  label: Text(cliente == null ? 'Crear Cliente' : 'Guardar Cambios', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                ),
               ),
               const SizedBox(height: 20),
-              const Divider(color: Color(0xFF333333)),
-              const SizedBox(height: 16),
-              _detailRow(Icons.phone, 'Teléfono', c['telefono'] ?? '---'),
-              _detailRow(Icons.location_on, 'Ubicación', c['ubicacion'] ?? '---'),
-              _detailRow(Icons.flag, 'País', c['pais'] ?? 'México'),
-              _detailRow(Icons.map, 'Estado', c['estado'] ?? '---'),
-              _detailRow(Icons.attach_money, 'Presupuesto', '\$${c['presupuesto'] ?? 0} MXN'),
-              _detailRow(Icons.folder, 'Interés', c['catalogo_interes'] ?? '---'),
-              _detailRow(Icons.person, 'Asesor', c['asesor'] ?? '---'),
-              _detailRow(Icons.handshake, 'Estado de negociación', c['estado_negociacion'] ?? 'Inicial'),
-              const SizedBox(height: 16),
-              const Text('Notas', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Container(width: double.infinity, padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF0A0A0A), borderRadius: BorderRadius.circular(8)), child: Text(c['notas'] ?? 'Sin notas', style: const TextStyle(color: Colors.white, fontSize: 13))),
-              const SizedBox(height: 20),
-              Row(children: [Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx), style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.grey)), child: const Text('Cerrar', style: TextStyle(color: Colors.white))))]),
             ],
           ),
         ),
@@ -321,18 +177,88 @@ class _ClientesScreenState extends State<ClientesScreen> {
     );
   }
 
-  Widget _detailRow(IconData icon, String label, String value) {
+  Widget _buildCampo(String label, TextEditingController ctrl, {IconData? icon, TextInputType? tipo}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.grey, size: 20),
-          const SizedBox(width: 12),
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-          const Spacer(),
-          Expanded(child: Text(value, style: const TextStyle(color: Colors.white, fontSize: 13), textAlign: TextAlign.right, overflow: TextOverflow.ellipsis)),
-        ],
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextField(
+        controller: ctrl,
+        keyboardType: tipo,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(color: Colors.grey),
+          prefixIcon: icon != null ? Icon(icon, color: const Color(0xFF0066FF)) : null,
+          filled: true,
+          fillColor: const Color(0xFF1A1A1A),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+        ),
       ),
     );
+  }
+
+  Widget _buildCampoMultilinea(String label, TextEditingController ctrl) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextField(
+        controller: ctrl,
+        maxLines: 4,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(color: Colors.grey),
+          prefixIcon: const Icon(Icons.notes, color: Color(0xFF0066FF)),
+          filled: true,
+          fillColor: const Color(0xFF1A1A1A),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _guardarCliente(BuildContext ctx, TextEditingController nombre, TextEditingController tipo, TextEditingController telefono, TextEditingController ubicacion, TextEditingController pais, TextEditingController estado, TextEditingController presupuesto, TextEditingController interes, TextEditingController asesor, TextEditingController notas, String? docId) async {
+    if (nombre.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ El nombre es obligatorio'), backgroundColor: Colors.orange));
+      return;
+    }
+    try {
+      final data = {
+        'nombre': nombre.text.trim(),
+        'tipo': tipo.text.trim(),
+        'telefono': telefono.text.trim(),
+        'ubicacion': ubicacion.text.trim(),
+        'pais': pais.text.trim(),
+        'estado': estado.text.trim(),
+        'presupuesto': double.tryParse(presupuesto.text) ?? 0,
+        'interes': interes.text.trim(),
+        'asesor': asesor.text.trim(),
+        'notas': notas.text.trim(),
+        'activo': true,
+      };
+      if (docId == null) {
+        data['created_at'] = FieldValue.serverTimestamp();
+        await _firestore.collection('clientes').add(data);
+      } else {
+        await _firestore.collection('clientes').doc(docId).update(data);
+      }
+      Navigator.pop(ctx);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(docId == null ? '✅ Cliente creado' : '✅ Cliente actualizado'), backgroundColor: Colors.green));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+    }
+  }
+
+  Future<void> _eliminarCliente(String id, String nombre) async {
+    final confirm = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(backgroundColor: const Color(0xFF1A1A1A), title: const Text('Eliminar Cliente', style: TextStyle(color: Colors.white)), content: Text('¿Eliminar a $nombre?', style: const TextStyle(color: Colors.grey)), actions: [
+      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
+      TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Eliminar', style: TextStyle(color: Colors.red))),
+    ]));
+    if (confirm == true) {
+      await _firestore.collection('clientes').doc(id).delete();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🗑️ Eliminado'), backgroundColor: Colors.red));
+    }
+  }
+
+  void _verDetalle(Map<String, dynamic> data) {
+    showDialog(context: context, builder: (ctx) => AlertDialog(backgroundColor: const Color(0xFF1A1A1A), title: Text(data['nombre'] ?? 'Detalle', style: const TextStyle(color: Colors.white)), content: SizedBox(width: 400, child: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: data.entries.where((e) => e.key != 'created_at').map((e) => Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [SizedBox(width: 120, child: Text(e.key.toUpperCase(), style: const TextStyle(color: Colors.blue, fontSize: 12, fontWeight: FontWeight.bold))), Expanded(child: Text('${e.value}', style: const TextStyle(color: Colors.white, fontSize: 14)))]))).toList()))), actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cerrar', style: TextStyle(color: Colors.white)))]));
   }
 }
