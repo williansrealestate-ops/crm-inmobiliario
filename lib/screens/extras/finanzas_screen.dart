@@ -330,7 +330,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               TextField(decoration: InputDecoration(hintText: 'Buscar transacciones...', prefixIcon: const Icon(Icons.search, color: Colors.grey), filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)), style: const TextStyle(color: Colors.white), onChanged: (v) => setState(() => _search = v.toLowerCase())),
               const SizedBox(height: 12),
               Row(children: [
-                Expanded(child: DropdownButtonFormField<String>(value: _categoriaFiltro, decoration: InputDecoration(labelText: 'Categoría', filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Todas', 'General', 'Ventas', 'Comisiones', 'Operación', 'Marketing', 'Oficina', 'Servicios', 'Otros'].map((cat) => DropdownMenuItem(value: cat, child: Text(cat))).toList(), onChanged: (v) => setState(() => _categoriaFiltro = v!))),
+                Expanded(child: DropdownButtonFormField<String>(value: _categoriaFiltro, decoration: InputDecoration(labelText: 'Categoría', filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Todas', 'Ventas', 'Comisiones', 'Renta', 'Servicios', 'Consultoría', 'Operación', 'Marketing', 'Oficina', 'Otros'].map((cat) => DropdownMenuItem(value: cat, child: Text(cat))).toList(), onChanged: (v) => setState(() => _categoriaFiltro = v!))),
                 const SizedBox(width: 12),
                 Expanded(child: DropdownButtonFormField<String>(value: _cuentaFiltro, decoration: InputDecoration(labelText: 'Cuenta', filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Todas', 'Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => setState(() => _cuentaFiltro = v!))),
               ]),
@@ -396,7 +396,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                         itemBuilder: (context, index) {
                           final doc = filtrados[index];
                           final data = doc.data() as Map<String, dynamic>;
-                          final acreedor = data['acreedor'] ?? '-';
+                          final acreedor = data['acreedor'] ?? '';
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12), 
                             decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF222222))), 
@@ -407,7 +407,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                               subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                 const SizedBox(height: 4), 
                                 Text('${data['categoria'] ?? 'General'} • ${data['cuenta'] ?? 'Efectivo'} • ${data['negocio'] ?? 'Minerales'}', style: const TextStyle(color: Colors.grey)),
-                                if (acreedor != '-') Text('Acreedor: $acreedor', style: const TextStyle(color: Colors.orange, fontSize: 11)),
+                                if (acreedor.isNotEmpty) Text('Acreedor: $acreedor', style: const TextStyle(color: Colors.orange, fontSize: 11)),
                                 Text('${data['fecha'] ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 12))
                               ]), 
                               trailing: Column(
@@ -547,7 +547,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               child: _buildGraficoGastosPorCategoria(),
             ),
             const SizedBox(height: 24),
-            const Text('📈 Comparativo Mensual', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text(' Comparativo Mensual', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Container(
               height: 250,
@@ -855,7 +855,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(children: [const Icon(Icons.repeat, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text('🔄 Transacciones Recurrentes', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
+              Row(children: [const Icon(Icons.repeat, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text(' Transacciones Recurrentes', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
               const SizedBox(height: 20),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -1111,17 +1111,17 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               children: [
                 Row(children: [Icon(transaccion == null ? Icons.add_circle : Icons.edit, color: const Color(0xFF0066FF), size: 28), const SizedBox(width: 12), Expanded(child: Text(transaccion == null ? 'Nueva Transacción' : 'Editar Transacción', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
                 const SizedBox(height: 20),
-                _buildSeccion('💰 Información'),
+                _buildSeccion(' Información'),
                 _buildCampo('Concepto *', conceptoCtrl, icon: Icons.description),
                 _buildCampo('Monto', montoCtrl, icon: Icons.attach_money, tipo: TextInputType.number),
                 _buildCampo('Acreedor', acreedorCtrl, icon: Icons.person),
                 const SizedBox(height: 12),
-                _buildSeccion('📋 Clasificación'),
+                _buildSeccion(' Clasificación'),
                 Row(children: [Expanded(child: RadioListTile<String>(title: const Text('Ingreso', style: TextStyle(color: Colors.white)), value: 'Ingreso', groupValue: tipo, activeColor: Colors.green, onChanged: (v) => setSheetState(() => tipo = v!))), Expanded(child: RadioListTile<String>(title: const Text('Gasto', style: TextStyle(color: Colors.white)), value: 'Gasto', groupValue: tipo, activeColor: Colors.red, onChanged: (v) => setSheetState(() => tipo = v!)))]),
                 _buildDropdownCategoria(categoriaCtrl, tipo),
                 _buildCampo('Fecha', fechaCtrl, icon: Icons.calendar_today),
                 const SizedBox(height: 12),
-                _buildSeccion(' Cuenta'),
+                _buildSeccion('💳 Cuenta'),
                 DropdownButtonFormField<String>(value: cuenta, decoration: InputDecoration(labelText: 'Cuenta', labelStyle: const TextStyle(color: Colors.grey), prefixIcon: const Icon(Icons.account_balance_wallet, color: Color(0xFF0066FF)), filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => setSheetState(() => cuenta = v!)),
                 const SizedBox(height: 12),
                 _buildSeccion('🏢 Negocio'),
@@ -1131,7 +1131,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 _buildCampo('Método de Pago', metodoPagoCtrl, icon: Icons.credit_card),
                 _buildCampo('Referencia / Folio', referenciaCtrl, icon: Icons.receipt),
                 const SizedBox(height: 12),
-                _buildSeccion('📝 Detalles'),
+                _buildSeccion(' Detalles'),
                 _buildCampoMultilinea('Descripción', descripcionCtrl),
                 const SizedBox(height: 16),
                 SizedBox(width: double.infinity, height: 50, child: ElevatedButton.icon(onPressed: () => _guardarTransaccion(ctx, conceptoCtrl, montoCtrl, categoriaCtrl, fechaCtrl, descripcionCtrl, metodoPagoCtrl, referenciaCtrl, acreedorCtrl, tipo, cuenta, negocio, docId), icon: const Icon(Icons.save, color: Colors.white), label: Text(transaccion == null ? 'Crear Transacción' : 'Guardar Cambios', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
