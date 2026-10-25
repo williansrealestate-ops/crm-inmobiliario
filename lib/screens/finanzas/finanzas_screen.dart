@@ -130,9 +130,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // VISTA DE HOY (Nuevo estilo Money Pro)
-  // ============================================
   Widget _buildVistaHoy() {
     final hoy = DateTime.now();
     final fechaHoy = '${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}';
@@ -144,7 +141,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header con fecha
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -171,11 +167,8 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               ),
             ),
             const SizedBox(height: 24),
-            
-            // Facturas/Transacciones del día
             const Text('📋 Transacciones de Hoy', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            
             StreamBuilder<QuerySnapshot>(
               stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).snapshots(),
               builder: (context, snapshot) {
@@ -266,9 +259,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Transacción aprobada'), backgroundColor: Colors.green));
   }
 
-  // ============================================
-  // RESUMEN
-  // ============================================
   Widget _buildResumen() {
     return Container(
       width: double.infinity,
@@ -469,9 +459,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // LISTA DE TRANSACCIONES (con mejoras Money Pro)
-  // ============================================
   Widget _buildListaTransacciones(String tipo) {
     return Container(
       width: double.infinity,
@@ -675,12 +662,32 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               }),
               const SizedBox(height: 12),
               Row(children: [
-                Expanded(child: TextField(controller: TextEditingController(), style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Categoría', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none)))),
+                Expanded(child: TextField(
+                  controller: TextEditingController(), 
+                  style: const TextStyle(color: Colors.white), 
+                  decoration: InputDecoration(
+                    labelText: 'Categoría', 
+                    labelStyle: const TextStyle(color: Colors.grey), 
+                    filled: true, 
+                    fillColor: const Color(0xFF1A1A1A), 
+                    border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(6)), borderSide: BorderSide.none)
+                  )
+                )),
                 const SizedBox(width: 8),
-                Expanded(child: TextField(controller: TextEditingController(), keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none)))),
+                Expanded(child: TextField(
+                  controller: TextEditingController(), 
+                  keyboardType: TextInputType.number, 
+                  style: const TextStyle(color: Colors.white), 
+                  decoration: InputDecoration(
+                    labelText: 'Monto', 
+                    labelStyle: const TextStyle(color: Colors.grey), 
+                    filled: true, 
+                    fillColor: const Color(0xFF1A1A1A), 
+                    border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(6)), borderSide: BorderSide.none)
+                  )
+                )),
                 const SizedBox(width: 8),
                 IconButton(icon: const Icon(Icons.add_circle, color: Color(0xFF0066FF)), onPressed: () {
-                  // Simplificado para demo
                   setSheetState(() {});
                 }),
               ]),
@@ -721,9 +728,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     }
   }
 
-  // ============================================
-  // CUENTAS (mejorado con historial)
-  // ============================================
   Widget _buildCuentas() {
     return Container(
       width: double.infinity,
@@ -787,9 +791,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // CALENDARIO COMPLETO (Nuevo estilo Money Pro)
-  // ============================================
   Widget _buildCalendarioCompleto() {
     DateTime _mesSeleccionado = DateTime.now();
 
@@ -895,9 +896,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // REPORTES (mejorado con más tipos)
-  // ============================================
   Widget _buildReportes() {
     return Container(
       width: double.infinity,
@@ -915,7 +913,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               child: _buildGraficoIngresosPorCategoria(),
             ),
             const SizedBox(height: 24),
-            const Text(' Gastos por Categoría', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text('📊 Gastos por Categoría', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Container(
               height: 250,
@@ -933,7 +931,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               child: _buildGraficoBarras(),
             ),
             const SizedBox(height: 24),
-            const Text(' Flujo de Caja', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text('💵 Flujo de Caja', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             _buildFlujoDeCaja(),
           ],
@@ -1078,9 +1076,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // PRESUPUESTOS (mejorado con subcategorías)
-  // ============================================
   void _mostrarPresupuestos() {
     showModalBottomSheet(
       context: context,
@@ -1094,7 +1089,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [const Icon(Icons.pie_chart, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text(' Presupuestos por Categoría', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
+            Row(children: [const Icon(Icons.pie_chart, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text('📊 Presupuestos por Categoría', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
             const SizedBox(height: 20),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
@@ -1134,7 +1129,17 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                             if (subcategorias.isNotEmpty) ...[
                               const SizedBox(height: 8),
                               const Text('Subcategorías:', style: TextStyle(color: Colors.grey, fontSize: 10)),
-                              Wrap(children: (subcategorias as List).map((s) => Container(margin: const EdgeInsets.only(right: 4, top: 4), padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: const Color(0xFF0066FF).withOpacity(0.2), borderRadius: BorderRadius.circular(4)), child: Text(s.toString(), style: const TextStyle(color: Color(0xFF0066FF), fontSize: 10)))),
+                              Wrap(
+                                children: (subcategorias as List).map((s) => Container(
+                                  margin: const EdgeInsets.only(right: 4, top: 4), 
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), 
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF0066FF).withOpacity(0.2), 
+                                    borderRadius: BorderRadius.circular(4)
+                                  ), 
+                                  child: Text(s.toString(), style: const TextStyle(color: Color(0xFF0066FF), fontSize: 10))
+                                )).toList(),
+                              ),
                             ],
                           ],
                         ),
@@ -1150,9 +1155,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // METAS DE AHORRO
-  // ============================================
   void _mostrarMetas() {
     final nombreCtrl = TextEditingController();
     final montoCtrl = TextEditingController();
@@ -1259,9 +1261,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // TRANSACCIONES RECURRENTES
-  // ============================================
   void _mostrarRecurrentes() {
     final conceptoCtrl = TextEditingController();
     final montoCtrl = TextEditingController();
@@ -1378,16 +1377,10 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // VISTA DE HOY (Modal)
-  // ============================================
   void _mostrarVistaHoy() {
     _tabController.animateTo(0);
   }
 
-  // ============================================
-  // RECONCILIACIÓN
-  // ============================================
   void _mostrarReconciliacion() {
     showModalBottomSheet(
       context: context,
@@ -1446,9 +1439,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // INFORMES DETALLADOS
-  // ============================================
   void _mostrarInformes() {
     showModalBottomSheet(
       context: context,
@@ -1462,17 +1452,17 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [const Icon(Icons.analytics, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text(' Informes Detallados', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
+            Row(children: [const Icon(Icons.analytics, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text('📊 Informes Detallados', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
             const SizedBox(height: 20),
             Expanded(
               child: ListView(
                 children: [
-                  _buildInformeItem(' Ingresos/Gastos', 'Resumen de ingresos y gastos por periodo', Icons.show_chart),
+                  _buildInformeItem('📈 Ingresos/Gastos', 'Resumen de ingresos y gastos por periodo', Icons.show_chart),
                   _buildInformeItem('💵 Flujo de Caja', 'Entradas y salidas de efectivo', Icons.currency_exchange),
                   _buildInformeItem('📋 Transacciones', 'Listado detallado de todas las transacciones', Icons.receipt_long),
                   _buildInformeItem('💳 Activos/Pasivos', 'Balance de cuentas y obligaciones', Icons.account_balance),
                   _buildInformeItem('📈 Saldo Proyectado', 'Proyección de saldo futuro', Icons.trending_up),
-                  _buildInformeItem(' Tendencia', 'Gráfico de tendencia por días/semanas/meses', Icons.date_range),
+                  _buildInformeItem('📅 Tendencia', 'Gráfico de tendencia por días/semanas/meses', Icons.date_range),
                 ],
               ),
             ),
@@ -1501,16 +1491,10 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // CALENDARIO (Modal)
-  // ============================================
   void _mostrarCalendario() {
     _tabController.animateTo(5);
   }
 
-  // ============================================
-  // IMPORTAR CSV (Nuevo)
-  // ============================================
   Future<void> _importarCSV() async {
     final input = html.FileUploadInputElement()..accept = '.csv';
     input.click();
@@ -1557,9 +1541,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     });
   }
 
-  // ============================================
-  // EXPORTAR CSV
-  // ============================================
   Future<void> _exportarCSV() async {
     try {
       final snapshot = await _firestore.collection('transacciones').orderBy('created_at', descending: true).get();
@@ -1581,9 +1562,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     }
   }
 
-  // ============================================
-  // FORMULARIO DE TRANSACCIÓN (mejorado)
-  // ============================================
   void _mostrarFormularioTransaccion({Map<String, dynamic>? transaccion, String? docId}) {
     final conceptoCtrl = TextEditingController(text: transaccion?['concepto'] ?? '');
     final montoCtrl = TextEditingController(text: transaccion?['monto']?.toString() ?? '0');
@@ -1640,7 +1618,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 _buildCampo('Método de Pago', metodoPagoCtrl, icon: Icons.credit_card),
                 _buildCampo('Referencia / Folio', referenciaCtrl, icon: Icons.receipt),
                 const SizedBox(height: 12),
-                _buildSeccion(' Detalles'),
+                _buildSeccion('📝 Detalles'),
                 _buildCampoMultilinea('Descripción', descripcionCtrl),
                 CheckboxListTile(
                   title: const Text('Marcar como reconciliada', style: TextStyle(color: Colors.white)),
