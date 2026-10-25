@@ -110,7 +110,7 @@ class _MainScreenState extends State<MainScreen> {
       case 3: return _wrapBlack(const AcademiaScreen());
       case 4: return _wrapBlack(const ChatIAScreen());
       case 5: return _wrapBlack(const CalculadorasScreen());
-      case 6: return _wrapBlack(const FinanzasScreen());
+      case 6: return _wrapBlack(FinanzasScreen());
       case 7: return _wrapBlack(const BackupScreen());
       case 8: return _wrapBlack(const DashboardNegociosScreen());
       case 9: return _wrapBlack(const ClientesScreen());
