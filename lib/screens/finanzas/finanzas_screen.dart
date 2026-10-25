@@ -24,6 +24,23 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   String? _cuentaSeleccionada;
   List<Map<String, dynamic>> _presupuestosPersonalizados = [];
   Set<String> _tagsSeleccionados = {};
+  
+  // Datos editables para Reportes
+  List<Map<String, dynamic>> _datosIngresosEjemplo = [
+    {'categoria': 'SERVICIOS', 'monto': 19000.00, 'color': Colors.green},
+    {'categoria': 'COMISIONES', 'monto': 100000.00, 'color': Colors.teal},
+    {'categoria': 'TRANSFERENCIA', 'monto': 5000.00, 'color': Colors.amber},
+    {'categoria': 'RENTA', 'monto': 8000.00, 'color': Colors.blue},
+    {'categoria': 'PROYECTO', 'monto': 15000.00, 'color': Colors.purple},
+  ];
+  
+  List<Map<String, dynamic>> _datosGastosEjemplo = [
+    {'categoria': 'TRANSPORTE', 'monto': 13.00, 'color': Colors.green},
+    {'categoria': 'PERSONAL', 'monto': 15000.00, 'color': Colors.teal},
+    {'categoria': 'ALIMENTOS', 'monto': 5000.00, 'color': Colors.amber},
+    {'categoria': 'MOBILIARIO', 'monto': 45000.00, 'color': Colors.red},
+    {'categoria': 'ALQUILER', 'monto': 8000.00, 'color': Colors.orange},
+  ];
 
   final List<Map<String, dynamic>> _cuentas = [
     {'nombre': 'Efectivo', 'icon': Icons.money, 'color': Colors.green},
@@ -630,7 +647,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('🎯 Plan de Ahorro Recomendado', style: TextStyle(color: Color(0xFF0066FF), fontSize: 12, fontWeight: FontWeight.bold)),
+                                  const Text(' Plan de Ahorro Recomendado', style: TextStyle(color: Color(0xFF0066FF), fontSize: 12, fontWeight: FontWeight.bold)),
                                   const SizedBox(height: 8),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1995,6 +2012,9 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
+  // ============================================
+  // NUEVA SECCIÓN DE REPORTES CON DATOS EDITABLES
+  // ============================================
   Widget _buildReportes() {
     return Container(
       width: double.infinity,
@@ -2003,13 +2023,32 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('📊 Resumen Financiero', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('📊 Reportes Editables', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      onPressed: () => _mostrarDialogoAgregarDatoEjemplo(),
+                      tooltip: 'Agregar dato',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.refresh, color: Colors.white),
+                      onPressed: () => _resetearDatosEjemplo(),
+                      tooltip: 'Restaurar datos',
+                    ),
+                  ],
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
-            _buildGraficaCircularMoneyPro(),
+            _buildGraficaCircularEditable(),
             const SizedBox(height: 24),
-            const Text('💵 Flujo de Caja', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text(' Flujo de Caja', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            _buildFlujoDeCaja(),
+            _buildFlujoDeCajaEditable(),
             const SizedBox(height: 24),
             _buildBenchmarkingSection(),
           ],
@@ -2018,241 +2057,390 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  Widget _buildGraficaCircularMoneyPro() {
+  Widget _buildGraficaCircularEditable() {
     final colors = [Colors.green, Colors.teal, Colors.amber, Colors.red.shade700, Colors.red, Colors.cyan, Colors.blue.shade300, Colors.indigo, Colors.lightGreen, Colors.teal.shade700, Colors.amber.shade700, Colors.red.shade900];
-    return StreamBuilder<QuerySnapshot>(
-      stream: _firestore.collection('transacciones').snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-        final docs = snapshot.data!.docs;
-        double totalIngresos = 0, totalGastos = 0;
-        Map<String, double> ingresosPorCategoria = {}, gastosPorCategoria = {}, porCuenta = {};
-        
-        for (var doc in docs) {
-          final data = doc.data() as Map<String, dynamic>;
-          final monto = (data['monto'] ?? 0).toDouble();
-          final tipo = data['tipo'] ?? '';
-          final categoria = data['categoria'] ?? 'Otros';
-          final cuenta = data['cuenta'] ?? 'Efectivo';
-          
-          if (tipo == 'Ingreso') {
-            totalIngresos += monto;
-            ingresosPorCategoria[categoria] = (ingresosPorCategoria[categoria] ?? 0) + monto;
-            porCuenta[cuenta] = (porCuenta[cuenta] ?? 0) + monto;
-          } else if (tipo == 'Gasto') {
-            totalGastos += monto;
-            gastosPorCategoria[categoria] = (gastosPorCategoria[categoria] ?? 0) + monto;
-            porCuenta[cuenta] = (porCuenta[cuenta] ?? 0) - monto;
-          }
-        }
-        
-        final beneficio = totalIngresos - totalGastos;
-        final totalActivos = porCuenta.values.fold(0.0, (sum, v) => sum + (v > 0 ? v : 0));
-        
-        List<PieChartSectionData> sections;
-        switch (_vistaActual) {
-          case 0:
-            sections = [
-              PieChartSectionData(value: totalIngresos, title: totalIngresos + totalGastos > 0 ? '${((totalIngresos / (totalIngresos + totalGastos)) * 100).toStringAsFixed(0)}%' : '0%', color: Colors.green, radius: 140, titleStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-              PieChartSectionData(value: totalGastos, title: totalIngresos + totalGastos > 0 ? '${((totalGastos / (totalIngresos + totalGastos)) * 100).toStringAsFixed(0)}%' : '0%', color: Colors.red, radius: 140, titleStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-            ];
-            break;
-          case 1:
-            sections = ingresosPorCategoria.entries.map((e) {
-              final idx = ingresosPorCategoria.keys.toList().indexOf(e.key);
-              return PieChartSectionData(value: e.value, title: totalIngresos > 0 ? '${((e.value / totalIngresos) * 100).toStringAsFixed(0)}%' : '0%', color: colors[idx % colors.length], radius: 140, titleStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold));
-            }).toList();
-            break;
-          case 2:
-            sections = gastosPorCategoria.entries.map((e) {
-              final idx = gastosPorCategoria.keys.toList().indexOf(e.key);
-              return PieChartSectionData(value: e.value, title: totalGastos > 0 ? '${((e.value / totalGastos) * 100).toStringAsFixed(0)}%' : '0%', color: colors[idx % colors.length], radius: 140, titleStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold));
-            }).toList();
-            break;
-          case 3:
-            sections = [PieChartSectionData(value: totalActivos, title: '100%', color: Colors.green, radius: 140, titleStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold))];
-            break;
-          case 4:
-            sections = porCuenta.entries.map((e) {
-              final idx = porCuenta.keys.toList().indexOf(e.key);
-              return PieChartSectionData(value: e.value.abs(), title: totalActivos > 0 ? '${((e.value.abs() / totalActivos) * 100).toStringAsFixed(0)}%' : '0%', color: colors[idx % colors.length], radius: 140, titleStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold));
-            }).toList();
-            break;
-          default:
-            sections = [];
-        }
-        
-        List<Map<String, dynamic>> items;
-        Map<String, double> datosDesglose;
-        String tituloDesglose;
-        
-        switch (_vistaActual) {
-          case 0:
-            items = [{'label': 'Ingresos', 'value': '\$${totalIngresos.toStringAsFixed(2)}', 'color': Colors.green}, {'label': 'Gastos', 'value': '\$${totalGastos.toStringAsFixed(2)}', 'color': Colors.red}];
-            datosDesglose = {'Ingresos': totalIngresos, 'Gastos': totalGastos};
-            tituloDesglose = 'Ingresos vs Gastos';
-            break;
-          case 1:
-            items = ingresosPorCategoria.entries.map((e) {
-              final idx = ingresosPorCategoria.keys.toList().indexOf(e.key);
-              return {'label': e.key.toUpperCase(), 'value': '\$${e.value.toStringAsFixed(2)}', 'color': colors[idx % colors.length]};
-            }).toList();
-            datosDesglose = ingresosPorCategoria;
-            tituloDesglose = 'Ingresos por Categoría';
-            break;
-          case 2:
-            items = gastosPorCategoria.entries.map((e) {
-              final idx = gastosPorCategoria.keys.toList().indexOf(e.key);
-              return {'label': e.key.toUpperCase(), 'value': '\$${e.value.toStringAsFixed(2)}', 'color': colors[idx % colors.length]};
-            }).toList();
-            datosDesglose = gastosPorCategoria;
-            tituloDesglose = 'Gastos por Categoría';
-            break;
-          case 3:
-            items = [{'label': 'Total Activos', 'value': '\$${totalActivos.toStringAsFixed(2)}', 'color': Colors.green}];
-            datosDesglose = {'Activos': totalActivos};
-            tituloDesglose = 'Activos';
-            break;
-          case 4:
-            items = porCuenta.entries.map((e) {
-              final idx = porCuenta.keys.toList().indexOf(e.key);
-              return {'label': e.key.toUpperCase(), 'value': '\$${e.value.toStringAsFixed(2)}', 'color': colors[idx % colors.length]};
-            }).toList();
-            datosDesglose = porCuenta.map((k, v) => MapEntry(k, v.abs()));
-            tituloDesglose = 'Cuentas';
-            break;
-          default:
-            items = [];
-            datosDesglose = {};
-            tituloDesglose = '';
-        }
-        
-        final titulos = ['Ingresos vs Gastos', 'Ingresos', 'Gastos', 'Activos', 'Cuentas'];
-        final labelsCentro = ['BENEFICIO', 'INGRESOS', 'GASTOS', 'ACTIVOS', 'CUENTAS'];
-        String totalCentro;
-        switch (_vistaActual) {
-          case 0: totalCentro = '\$${beneficio.toStringAsFixed(2)}'; break;
-          case 1: totalCentro = '\$${totalIngresos.toStringAsFixed(2)}'; break;
-          case 2: totalCentro = '\$${totalGastos.toStringAsFixed(2)}'; break;
-          case 3: totalCentro = '\$${totalActivos.toStringAsFixed(2)}'; break;
-          case 4: totalCentro = '\$${totalActivos.toStringAsFixed(2)}'; break;
-          default: totalCentro = '\$0';
-        }
-        
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(16)),
-          child: Column(
+    
+    List<Map<String, dynamic>> datosActuales;
+    String tituloGrafica;
+    double total;
+    
+    if (_vistaActual == 0) {
+      // Vista Ingresos vs Gastos
+      final totalIngresos = _datosIngresosEjemplo.fold<double>(0, (sum, item) => sum + (item['monto'] as double));
+      final totalGastos = _datosGastosEjemplo.fold<double>(0, (sum, item) => sum + (item['monto'] as double));
+      datosActuales = [
+        {'categoria': 'INGRESOS', 'monto': totalIngresos, 'color': Colors.green},
+        {'categoria': 'GASTOS', 'monto': totalGastos, 'color': Colors.red},
+      ];
+      tituloGrafica = 'INGRESOS VS GASTOS';
+      total = totalIngresos + totalGastos;
+    } else if (_vistaActual == 1) {
+      // Vista Ingresos
+      datosActuales = List<Map<String, dynamic>>.from(_datosIngresosEjemplo);
+      tituloGrafica = 'INGRESOS';
+      total = _datosIngresosEjemplo.fold<double>(0, (sum, item) => sum + (item['monto'] as double));
+    } else {
+      // Vista Gastos
+      datosActuales = List<Map<String, dynamic>>.from(_datosGastosEjemplo);
+      tituloGrafica = 'GASTOS';
+      total = _datosGastosEjemplo.fold<double>(0, (sum, item) => sum + (item['monto'] as double));
+    }
+
+    final sections = datosActuales.asMap().entries.map((entry) {
+      final index = entry.key;
+      final item = entry.value;
+      final porcentaje = total > 0 ? ((item['monto'] as double) / total * 100) : 0;
+      return PieChartSectionData(
+        value: item['monto'] as double,
+        title: '${porcentaje.toStringAsFixed(0)}%',
+        color: item['color'] as Color,
+        radius: 140,
+        titleStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+      );
+    }).toList();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left, color: Colors.white),
-                    onPressed: () => setState(() => _vistaActual = (_vistaActual - 1 + 5) % 5),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
-                    child: Text(titulos[_vistaActual], style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right, color: Colors.white),
-                    onPressed: () => setState(() => _vistaActual = (_vistaActual + 1) % 5),
-                  ),
-                ],
+              IconButton(
+                icon: const Icon(Icons.chevron_left, color: Colors.white),
+                onPressed: () => setState(() => _vistaActual = (_vistaActual - 1 + 3) % 3),
               ),
-              const SizedBox(height: 24),
-              SizedBox(
-                height: 450,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    sections.isEmpty
-                        ? const Center(child: Text('Sin datos', style: TextStyle(color: Colors.grey)))
-                        : PieChart(
-                            PieChartData(
-                              sections: sections.map((section) {
-                                return PieChartSectionData(
-                                  value: section.value,
-                                  title: section.title,
-                                  color: section.color,
-                                  radius: section.radius,
-                                  titleStyle: section.titleStyle,
-                                  badgeWidget: null,
-                                );
-                              }).toList(),
-                              sectionsSpace: 2,
-                              centerSpaceRadius: 100,
-                              startDegreeOffset: 270,
-                            ),
-                          ),
-                    GestureDetector(
-                      onTap: () => setState(() => _vistaActual = (_vistaActual + 1) % 5),
-                      child: Container(
-                        width: 180,
-                        height: 180,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF111111),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.grey.shade700, width: 2),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(totalCentro, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 4),
-                            Text(labelsCentro[_vistaActual], style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Toca un color\npara ver detalles',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.grey, fontSize: 10),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
               Container(
-                constraints: const BoxConstraints(maxHeight: 250),
-                child: ListView.builder(
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return GestureDetector(
-                      onTap: () {},
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          children: [
-                            Container(width: 14, height: 14, decoration: BoxDecoration(color: item['color'] as Color, borderRadius: BorderRadius.circular(4))),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                item['label'] as String,
-                                style: const TextStyle(color: Colors.white70, fontSize: 12),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Text(item['value'] as String, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
-                            const SizedBox(width: 8),
-                            const Icon(Icons.chevron_right, color: Colors.grey, size: 16),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
+                child: Text(['Ingresos vs Gastos', 'Ingresos', 'Gastos'][_vistaActual], style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right, color: Colors.white),
+                onPressed: () => setState(() => _vistaActual = (_vistaActual + 1) % 3),
               ),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 24),
+          SizedBox(
+            height: 450,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                sections.isEmpty
+                    ? const Center(child: Text('Sin datos', style: TextStyle(color: Colors.grey)))
+                    : PieChart(
+                        PieChartData(
+                          sections: sections,
+                          sectionsSpace: 2,
+                          centerSpaceRadius: 100,
+                          startDegreeOffset: 270,
+                        ),
+                      ),
+                Container(
+                  width: 180,
+                  height: 180,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF111111),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.grey.shade700, width: 2),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('\$${total.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Text(tituloGrafica, style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Toca un color\npara ver detalles',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey, fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            constraints: const BoxConstraints(maxHeight: 250),
+            child: ListView.builder(
+              itemCount: datosActuales.length,
+              itemBuilder: (context, index) {
+                final item = datosActuales[index];
+                return GestureDetector(
+                  onTap: () => _editarDatoEjemplo(index, item),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Container(width: 14, height: 14, decoration: BoxDecoration(color: item['color'] as Color, borderRadius: BorderRadius.circular(4))),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            item['categoria'] as String,
+                            style: const TextStyle(color: Colors.white70, fontSize: 12),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Text('\$${(item['monto'] as double).toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Color(0xFF0066FF), size: 16),
+                          onPressed: () => _editarDatoEjemplo(index, item),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red, size: 16),
+                          onPressed: () => _eliminarDatoEjemplo(index, item),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _mostrarDialogoAgregarDatoEjemplo() {
+    final categoriaCtrl = TextEditingController();
+    final montoCtrl = TextEditingController();
+    String tipo = _vistaActual == 1 ? 'ingreso' : 'gasto';
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        title: const Text('Agregar Dato de Ejemplo', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DropdownButtonFormField<String>(
+              value: tipo,
+              decoration: const InputDecoration(labelText: 'Tipo', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder()),
+              dropdownColor: const Color(0xFF1A1A1A),
+              style: const TextStyle(color: Colors.white),
+              items: const [
+                DropdownMenuItem(value: 'ingreso', child: Text('Ingreso')),
+                DropdownMenuItem(value: 'gasto', child: Text('Gasto')),
+              ],
+              onChanged: (v) => tipo = v!,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: categoriaCtrl,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(labelText: 'Categoría', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: montoCtrl,
+              keyboardType: TextInputType.number,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder()),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
+          ElevatedButton(
+            onPressed: () {
+              if (categoriaCtrl.text.isEmpty || montoCtrl.text.isEmpty) return;
+              final monto = double.tryParse(montoCtrl.text);
+              if (monto == null) return;
+              
+              setState(() {
+                if (tipo == 'ingreso') {
+                  _datosIngresosEjemplo.add({
+                    'categoria': categoriaCtrl.text.toUpperCase(),
+                    'monto': monto,
+                    'color': Colors.primaries[_datosIngresosEjemplo.length % Colors.primaries.length],
+                  });
+                } else {
+                  _datosGastosEjemplo.add({
+                    'categoria': categoriaCtrl.text.toUpperCase(),
+                    'monto': monto,
+                    'color': Colors.primaries[_datosGastosEjemplo.length % Colors.primaries.length],
+                  });
+                }
+              });
+              Navigator.pop(ctx);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Dato agregado'), backgroundColor: Colors.green));
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
+            child: const Text('Agregar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _editarDatoEjemplo(int index, Map<String, dynamic> item) {
+    final categoriaCtrl = TextEditingController(text: item['categoria']);
+    final montoCtrl = TextEditingController(text: item['monto'].toString());
+    final esIngreso = _vistaActual == 1 || (_vistaActual == 0 && index == 0);
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        title: const Text('Editar Dato', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: categoriaCtrl,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(labelText: 'Categoría', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: montoCtrl,
+              keyboardType: TextInputType.number,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder()),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
+          ElevatedButton(
+            onPressed: () {
+              if (categoriaCtrl.text.isEmpty || montoCtrl.text.isEmpty) return;
+              final monto = double.tryParse(montoCtrl.text);
+              if (monto == null) return;
+              
+              setState(() {
+                if (esIngreso) {
+                  _datosIngresosEjemplo[index] = {
+                    'categoria': categoriaCtrl.text.toUpperCase(),
+                    'monto': monto,
+                    'color': item['color'],
+                  };
+                } else {
+                  _datosGastosEjemplo[index] = {
+                    'categoria': categoriaCtrl.text.toUpperCase(),
+                    'monto': monto,
+                    'color': item['color'],
+                  };
+                }
+              });
+              Navigator.pop(ctx);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Dato actualizado'), backgroundColor: Colors.green));
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
+            child: const Text('Guardar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _eliminarDatoEjemplo(int index, Map<String, dynamic> item) {
+    final esIngreso = _vistaActual == 1 || (_vistaActual == 0 && index == 0);
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        title: const Text('Eliminar Dato', style: TextStyle(color: Colors.white)),
+        content: Text('¿Eliminar "${item['categoria']}"?', style: const TextStyle(color: Colors.grey)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                if (esIngreso) {
+                  _datosIngresosEjemplo.removeAt(index);
+                } else {
+                  _datosGastosEjemplo.removeAt(index);
+                }
+              });
+              Navigator.pop(ctx);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🗑️ Eliminado'), backgroundColor: Colors.red));
+              }
+            },
+            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _resetearDatosEjemplo() {
+    setState(() {
+      _datosIngresosEjemplo = [
+        {'categoria': 'SERVICIOS', 'monto': 19000.00, 'color': Colors.green},
+        {'categoria': 'COMISIONES', 'monto': 100000.00, 'color': Colors.teal},
+        {'categoria': 'TRANSFERENCIA', 'monto': 5000.00, 'color': Colors.amber},
+        {'categoria': 'RENTA', 'monto': 8000.00, 'color': Colors.blue},
+        {'categoria': 'PROYECTO', 'monto': 15000.00, 'color': Colors.purple},
+      ];
+      _datosGastosEjemplo = [
+        {'categoria': 'TRANSPORTE', 'monto': 13.00, 'color': Colors.green},
+        {'categoria': 'PERSONAL', 'monto': 15000.00, 'color': Colors.teal},
+        {'categoria': 'ALIMENTOS', 'monto': 5000.00, 'color': Colors.amber},
+        {'categoria': 'MOBILIARIO', 'monto': 45000.00, 'color': Colors.red},
+        {'categoria': 'ALQUILER', 'monto': 8000.00, 'color': Colors.orange},
+      ];
+      _vistaActual = 0;
+    });
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Datos restaurados'), backgroundColor: Colors.green));
+    }
+  }
+
+  Widget _buildFlujoDeCajaEditable() {
+    final totalIngresos = _datosIngresosEjemplo.fold<double>(0, (sum, item) => sum + (item['monto'] as double));
+    final totalGastos = _datosGastosEjemplo.fold<double>(0, (sum, item) => sum + (item['monto'] as double));
+    final flujo = totalIngresos - totalGastos;
+    
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111111),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF222222)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          Column(
+            children: [
+              const Text('Ingresos', style: TextStyle(color: Colors.grey, fontSize: 12)),
+              Text('\$${totalIngresos.toStringAsFixed(2)}', style: const TextStyle(color: Colors.green, fontSize: 20, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          Column(
+            children: [
+              const Text('Gastos', style: TextStyle(color: Colors.grey, fontSize: 12)),
+              Text('\$${totalGastos.toStringAsFixed(2)}', style: const TextStyle(color: Colors.red, fontSize: 20, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          Column(
+            children: [
+              const Text('Flujo', style: TextStyle(color: Colors.grey, fontSize: 12)),
+              Text('\$${flujo.toStringAsFixed(2)}', style: TextStyle(color: flujo >= 0 ? Colors.green : Colors.red, fontSize: 20, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -2314,7 +2502,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('📊 Mis Presupuestos', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(' Mis Presupuestos', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
               ElevatedButton.icon(
                 onPressed: () => _mostrarFormularioNuevoPresupuesto(context),
                 icon: const Icon(Icons.add, color: Colors.white),
