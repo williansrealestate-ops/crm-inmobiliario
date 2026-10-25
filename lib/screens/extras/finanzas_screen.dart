@@ -35,6 +35,15 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     {'nombre': 'Otros', 'icon': Icons.more_horiz, 'presupuesto': 10000.0},
   ];
 
+  final List<Map<String, dynamic>> _categoriasIngreso = [
+    {'nombre': 'Ventas', 'icon': Icons.shopping_cart},
+    {'nombre': 'Comisiones', 'icon': Icons.handshake},
+    {'nombre': 'Renta', 'icon': Icons.home},
+    {'nombre': 'Servicios', 'icon': Icons.build},
+    {'nombre': 'Consultoría', 'icon': Icons.lightbulb},
+    {'nombre': 'Otros', 'icon': Icons.more_horiz},
+  ];
+
   final List<String> _negocios = ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'];
 
   @override
@@ -108,9 +117,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // RESUMEN - CORREGIDO: cálculo en memoria
-  // ============================================
   Widget _buildResumen() {
     return Container(
       width: double.infinity,
@@ -193,7 +199,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ✅ CORREGIDO: cálculo en memoria en lugar de where()
   Widget _buildTarjetaResumen(String titulo, Color color, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -312,9 +317,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // LISTA DE TRANSACCIONES (Ingresos/Gastos)
-  // ============================================
   Widget _buildListaTransacciones(String tipo) {
     return Container(
       width: double.infinity,
@@ -394,6 +396,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                         itemBuilder: (context, index) {
                           final doc = filtrados[index];
                           final data = doc.data() as Map<String, dynamic>;
+                          final acreedor = data['acreedor'] ?? '-';
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12), 
                             decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF222222))), 
@@ -403,7 +406,8 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                               title: Text(data['concepto'] ?? 'Sin concepto', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)), 
                               subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                 const SizedBox(height: 4), 
-                                Text('${data['categoria'] ?? 'General'} • ${data['cuenta'] ?? 'Efectivo'} • ${data['negocio'] ?? 'Minerales'}', style: const TextStyle(color: Colors.grey)), 
+                                Text('${data['categoria'] ?? 'General'} • ${data['cuenta'] ?? 'Efectivo'} • ${data['negocio'] ?? 'Minerales'}', style: const TextStyle(color: Colors.grey)),
+                                if (acreedor != '-') Text('Acreedor: $acreedor', style: const TextStyle(color: Colors.orange, fontSize: 11)),
                                 Text('${data['fecha'] ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 12))
                               ]), 
                               trailing: Column(
@@ -413,6 +417,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                                   Text('\$${data['monto'] ?? '0'}', style: TextStyle(color: tipo == 'Ingreso' ? Colors.green : Colors.red, fontSize: 16, fontWeight: FontWeight.bold)), 
                                   const SizedBox(height: 8), 
                                   Row(mainAxisSize: MainAxisSize.min, children: [
+                                    IconButton(icon: const Icon(Icons.copy, color: Colors.blue, size: 20), onPressed: () => _duplicarTransaccion(data)),
                                     IconButton(icon: const Icon(Icons.edit, color: Colors.orange, size: 20), onPressed: () => _mostrarFormularioTransaccion(transaccion: data, docId: doc.id)), 
                                     IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20), onPressed: () => _eliminarTransaccion(doc.id, data['concepto']))
                                   ])
@@ -433,9 +438,29 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // CUENTAS
-  // ============================================
+  Future<void> _duplicarTransaccion(Map<String, dynamic> data) async {
+    try {
+      final nuevaTransaccion = {
+        'concepto': '${data['concepto']} (copia)',
+        'monto': data['monto'] ?? 0,
+        'categoria': data['categoria'] ?? 'General',
+        'fecha': DateTime.now().toIso8601String().split('T')[0],
+        'descripcion': data['descripcion'] ?? '',
+        'metodo_pago': data['metodo_pago'] ?? 'Efectivo',
+        'referencia': data['referencia'] ?? '',
+        'tipo': data['tipo'] ?? 'Ingreso',
+        'cuenta': data['cuenta'] ?? 'Efectivo',
+        'negocio': data['negocio'] ?? 'Minerales',
+        'acreedor': data['acreedor'] ?? '',
+        'created_at': FieldValue.serverTimestamp(),
+      };
+      await _firestore.collection('transacciones').add(nuevaTransaccion);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Transacción duplicada'), backgroundColor: Colors.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+    }
+  }
+
   Widget _buildCuentas() {
     return Container(
       width: double.infinity,
@@ -496,9 +521,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // REPORTES
-  // ============================================
   Widget _buildReportes() {
     return Container(
       width: double.infinity,
@@ -507,13 +529,22 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('📊 Reporte por Categoría', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text('📊 Ingresos por Categoría', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Container(
               height: 250,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))),
-              child: _buildGraficoCategorias(),
+              child: _buildGraficoIngresosPorCategoria(),
+            ),
+            const SizedBox(height: 24),
+            const Text('📊 Gastos por Categoría', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            Container(
+              height: 250,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))),
+              child: _buildGraficoGastosPorCategoria(),
             ),
             const SizedBox(height: 24),
             const Text('📈 Comparativo Mensual', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
@@ -530,7 +561,34 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  Widget _buildGraficoCategorias() {
+  Widget _buildGraficoIngresosPorCategoria() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore.collection('transacciones').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final docs = snapshot.data!.docs;
+        Map<String, double> porCategoria = {};
+        for (var doc in docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          if (data['tipo'] == 'Ingreso') {
+            final cat = data['categoria'] ?? 'Otros';
+            porCategoria[cat] = (porCategoria[cat] ?? 0) + (data['monto'] ?? 0).toDouble();
+          }
+        }
+        if (porCategoria.isEmpty) return const Center(child: Text('Sin datos', style: TextStyle(color: Colors.grey)));
+        final sections = <PieChartSectionData>[];
+        final colors = [Colors.green, Colors.blue, Colors.orange, Colors.purple, Colors.teal, Colors.pink];
+        int i = 0;
+        porCategoria.forEach((cat, monto) {
+          sections.add(PieChartSectionData(title: cat, value: monto, color: colors[i % colors.length], radius: 60, titleStyle: const TextStyle(color: Colors.white, fontSize: 10)));
+          i++;
+        });
+        return PieChart(PieChartData(sections: sections, centerSpaceRadius: 40));
+      },
+    );
+  }
+
+  Widget _buildGraficoGastosPorCategoria() {
     return StreamBuilder<QuerySnapshot>(
       stream: _firestore.collection('transacciones').snapshots(),
       builder: (context, snapshot) {
@@ -546,7 +604,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         }
         if (porCategoria.isEmpty) return const Center(child: Text('Sin datos', style: TextStyle(color: Colors.grey)));
         final sections = <PieChartSectionData>[];
-        final colors = [Colors.red, Colors.orange, Colors.yellow, Colors.green, Colors.blue, Colors.purple];
+        final colors = [Colors.red, Colors.orange, Colors.yellow, Colors.brown, Colors.purple, Colors.grey];
         int i = 0;
         porCategoria.forEach((cat, monto) {
           sections.add(PieChartSectionData(title: cat, value: monto, color: colors[i % colors.length], radius: 60, titleStyle: const TextStyle(color: Colors.white, fontSize: 10)));
@@ -608,9 +666,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // PRESUPUESTOS (FUNCIONAL)
-  // ============================================
   void _mostrarPresupuestos() {
     showModalBottomSheet(
       context: context,
@@ -674,13 +729,9 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // METAS DE AHORRO (FUNCIONAL - colección "metas")
-  // ============================================
   void _mostrarMetas() {
     final nombreCtrl = TextEditingController();
     final montoCtrl = TextEditingController();
-    final actualCtrl = TextEditingController(text: '0');
 
     showModalBottomSheet(
       context: context,
@@ -694,15 +745,8 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              const Icon(Icons.flag, color: Color(0xFF0066FF), size: 28),
-              const SizedBox(width: 12),
-              const Expanded(child: Text('🏆 Metas de Ahorro', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
-              IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx)),
-            ]),
+            Row(children: [const Icon(Icons.flag, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text('🏆 Metas de Ahorro', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
             const SizedBox(height: 20),
-            
-            // Formulario para agregar meta
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
@@ -791,9 +835,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // TRANSACCIONES RECURRENTES (FUNCIONAL - colección "recurrentes")
-  // ============================================
   void _mostrarRecurrentes() {
     final conceptoCtrl = TextEditingController();
     final montoCtrl = TextEditingController();
@@ -814,15 +855,8 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(children: [
-                const Icon(Icons.repeat, color: Color(0xFF0066FF), size: 28),
-                const SizedBox(width: 12),
-                const Expanded(child: Text('🔄 Transacciones Recurrentes', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
-                IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx)),
-              ]),
+              Row(children: [const Icon(Icons.repeat, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text('🔄 Transacciones Recurrentes', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
               const SizedBox(height: 20),
-              
-              // Formulario para agregar recurrente
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
@@ -895,10 +929,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                             children: [
                               Container(width: 40, height: 40, decoration: BoxDecoration(color: (tipo == 'Ingreso' ? Colors.green : Colors.red).withOpacity(0.2), shape: BoxShape.circle), child: Icon(tipo == 'Ingreso' ? Icons.arrow_upward : Icons.arrow_downward, color: tipo == 'Ingreso' ? Colors.green : Colors.red, size: 20)),
                               const SizedBox(width: 12),
-                              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                Text(concepto, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                Text('$frecuencia • \$${monto.toStringAsFixed(2)}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                              ])),
+                              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(concepto, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), Text('$frecuencia • \$${monto.toStringAsFixed(2)}', style: const TextStyle(color: Colors.grey, fontSize: 12))])),
                               IconButton(icon: Icon(activa ? Icons.toggle_on : Icons.toggle_off, color: activa ? Colors.green : Colors.grey, size: 28), onPressed: () async {
                                 await _firestore.collection('recurrentes').doc(docs[index].id).update({'activa': !activa});
                               }),
@@ -920,9 +951,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // CALENDARIO (FUNCIONAL)
-  // ============================================
   void _mostrarCalendario() {
     DateTime _mesSeleccionado = DateTime.now();
 
@@ -939,15 +967,8 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(children: [
-                const Icon(Icons.calendar_month, color: Color(0xFF0066FF), size: 28),
-                const SizedBox(width: 12),
-                const Expanded(child: Text(' Calendario de Transacciones', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
-                IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx)),
-              ]),
+              Row(children: [const Icon(Icons.calendar_month, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text('📅 Calendario de Transacciones', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
               const SizedBox(height: 20),
-              
-              // Navegación de mes
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -957,8 +978,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 ],
               ),
               const SizedBox(height: 16),
-              
-              // Lista de transacciones del mes
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).snapshots(),
@@ -983,7 +1002,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                       return const Center(child: Text('No hay transacciones este mes', style: TextStyle(color: Colors.grey)));
                     }
                     
-                    // Agrupar por día
                     Map<String, List<Map<String, dynamic>>> porDia = {};
                     for (var doc in transaccionesDelMes) {
                       final data = doc.data() as Map<String, dynamic>;
@@ -1043,18 +1061,15 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // EXPORTAR CSV (FUNCIONAL)
-  // ============================================
   Future<void> _exportarCSV() async {
     try {
       final snapshot = await _firestore.collection('transacciones').orderBy('created_at', descending: true).get();
       final docs = snapshot.docs;
       final buffer = StringBuffer();
-      buffer.writeln('Fecha,Tipo,Concepto,Categoría,Cuenta,Negocio,Monto,Método de Pago,Referencia,Descripción');
+      buffer.writeln('Fecha,Tipo,Concepto,Categoría,Acreedor,Cuenta,Negocio,Monto,Método de Pago,Referencia,Descripción');
       for (var doc in docs) {
         final data = doc.data() as Map<String, dynamic>;
-        buffer.writeln('${data['fecha'] ?? ''},${data['tipo'] ?? ''},"${data['concepto'] ?? ''}","${data['categoria'] ?? ''}","${data['cuenta'] ?? ''}","${data['negocio'] ?? 'Minerales'}",${data['monto'] ?? 0},"${data['metodo_pago'] ?? ''}","${data['referencia'] ?? ''}","${data['descripcion'] ?? ''}"');
+        buffer.writeln('${data['fecha'] ?? ''},${data['tipo'] ?? ''},"${data['concepto'] ?? ''}","${data['categoria'] ?? ''}","${data['acreedor'] ?? ''}","${data['cuenta'] ?? ''}","${data['negocio'] ?? 'Minerales'}",${data['monto'] ?? 0},"${data['metodo_pago'] ?? ''}","${data['referencia'] ?? ''}","${data['descripcion'] ?? ''}"');
       }
       final bytes = utf8.encode(buffer.toString());
       final blob = html.Blob([bytes]);
@@ -1067,9 +1082,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     }
   }
 
-  // ============================================
-  // FORMULARIO DE TRANSACCIÓN
-  // ============================================
   void _mostrarFormularioTransaccion({Map<String, dynamic>? transaccion, String? docId}) {
     final conceptoCtrl = TextEditingController(text: transaccion?['concepto'] ?? '');
     final montoCtrl = TextEditingController(text: transaccion?['monto']?.toString() ?? '0');
@@ -1078,6 +1090,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     final descripcionCtrl = TextEditingController(text: transaccion?['descripcion'] ?? '');
     final metodoPagoCtrl = TextEditingController(text: transaccion?['metodo_pago'] ?? 'Efectivo');
     final referenciaCtrl = TextEditingController(text: transaccion?['referencia'] ?? '');
+    final acreedorCtrl = TextEditingController(text: transaccion?['acreedor'] ?? '');
     String tipo = transaccion?['tipo'] ?? 'Ingreso';
     String cuenta = transaccion?['cuenta'] ?? 'Efectivo';
     String negocio = transaccion?['negocio'] ?? 'Minerales';
@@ -1101,13 +1114,14 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 _buildSeccion('💰 Información'),
                 _buildCampo('Concepto *', conceptoCtrl, icon: Icons.description),
                 _buildCampo('Monto', montoCtrl, icon: Icons.attach_money, tipo: TextInputType.number),
+                _buildCampo('Acreedor', acreedorCtrl, icon: Icons.person),
                 const SizedBox(height: 12),
                 _buildSeccion('📋 Clasificación'),
                 Row(children: [Expanded(child: RadioListTile<String>(title: const Text('Ingreso', style: TextStyle(color: Colors.white)), value: 'Ingreso', groupValue: tipo, activeColor: Colors.green, onChanged: (v) => setSheetState(() => tipo = v!))), Expanded(child: RadioListTile<String>(title: const Text('Gasto', style: TextStyle(color: Colors.white)), value: 'Gasto', groupValue: tipo, activeColor: Colors.red, onChanged: (v) => setSheetState(() => tipo = v!)))]),
-                _buildCampo('Categoría', categoriaCtrl, icon: Icons.category),
+                _buildDropdownCategoria(categoriaCtrl, tipo),
                 _buildCampo('Fecha', fechaCtrl, icon: Icons.calendar_today),
                 const SizedBox(height: 12),
-                _buildSeccion('💳 Cuenta'),
+                _buildSeccion(' Cuenta'),
                 DropdownButtonFormField<String>(value: cuenta, decoration: InputDecoration(labelText: 'Cuenta', labelStyle: const TextStyle(color: Colors.grey), prefixIcon: const Icon(Icons.account_balance_wallet, color: Color(0xFF0066FF)), filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => setSheetState(() => cuenta = v!)),
                 const SizedBox(height: 12),
                 _buildSeccion('🏢 Negocio'),
@@ -1120,12 +1134,34 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 _buildSeccion('📝 Detalles'),
                 _buildCampoMultilinea('Descripción', descripcionCtrl),
                 const SizedBox(height: 16),
-                SizedBox(width: double.infinity, height: 50, child: ElevatedButton.icon(onPressed: () => _guardarTransaccion(ctx, conceptoCtrl, montoCtrl, categoriaCtrl, fechaCtrl, descripcionCtrl, metodoPagoCtrl, referenciaCtrl, tipo, cuenta, negocio, docId), icon: const Icon(Icons.save, color: Colors.white), label: Text(transaccion == null ? 'Crear Transacción' : 'Guardar Cambios', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
+                SizedBox(width: double.infinity, height: 50, child: ElevatedButton.icon(onPressed: () => _guardarTransaccion(ctx, conceptoCtrl, montoCtrl, categoriaCtrl, fechaCtrl, descripcionCtrl, metodoPagoCtrl, referenciaCtrl, acreedorCtrl, tipo, cuenta, negocio, docId), icon: const Icon(Icons.save, color: Colors.white), label: Text(transaccion == null ? 'Crear Transacción' : 'Guardar Cambios', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
                 const SizedBox(height: 20),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDropdownCategoria(TextEditingController ctrl, String tipo) {
+    final categorias = tipo == 'Ingreso' ? _categoriasIngreso : _categoriasGasto;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: DropdownButtonFormField<String>(
+        value: categorias.any((c) => c['nombre'] == ctrl.text) ? ctrl.text : categorias.first['nombre'],
+        decoration: InputDecoration(
+          labelText: 'Categoría',
+          labelStyle: const TextStyle(color: Colors.grey),
+          prefixIcon: Icon(categorias.first['icon'] as IconData, color: const Color(0xFF0066FF)),
+          filled: true,
+          fillColor: const Color(0xFF1A1A1A),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+        ),
+        dropdownColor: const Color(0xFF1A1A1A),
+        style: const TextStyle(color: Colors.white),
+        items: categorias.map((cat) => DropdownMenuItem(value: cat['nombre'] as String, child: Row(children: [Icon(cat['icon'] as IconData, color: const Color(0xFF0066FF), size: 20), const SizedBox(width: 8), Text(cat['nombre'] as String)]))).toList(),
+        onChanged: (v) => ctrl.text = v ?? '',
       ),
     );
   }
@@ -1142,7 +1178,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     return Padding(padding: const EdgeInsets.only(bottom: 12), child: TextField(controller: ctrl, maxLines: 4, style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: label, labelStyle: const TextStyle(color: Colors.grey), prefixIcon: const Icon(Icons.notes, color: Color(0xFF0066FF)), filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none))));
   }
 
-  Future<void> _guardarTransaccion(BuildContext ctx, TextEditingController concepto, TextEditingController monto, TextEditingController categoria, TextEditingController fecha, TextEditingController descripcion, TextEditingController metodoPago, TextEditingController referencia, String tipo, String cuenta, String negocio, String? docId) async {
+  Future<void> _guardarTransaccion(BuildContext ctx, TextEditingController concepto, TextEditingController monto, TextEditingController categoria, TextEditingController fecha, TextEditingController descripcion, TextEditingController metodoPago, TextEditingController referencia, TextEditingController acreedor, String tipo, String cuenta, String negocio, String? docId) async {
     if (concepto.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ El concepto es obligatorio'), backgroundColor: Colors.orange));
       return;
@@ -1156,6 +1192,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         'descripcion': descripcion.text.trim(),
         'metodo_pago': metodoPago.text.trim(),
         'referencia': referencia.text.trim(),
+        'acreedor': acreedor.text.trim(),
         'tipo': tipo,
         'cuenta': cuenta,
         'negocio': negocio,
