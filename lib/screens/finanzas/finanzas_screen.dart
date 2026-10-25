@@ -547,7 +547,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               child: _buildGraficoGastosPorCategoria(),
             ),
             const SizedBox(height: 24),
-            const Text(' Comparativo Mensual', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text('📈 Comparativo Mensual', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Container(
               height: 250,
@@ -855,7 +855,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(children: [const Icon(Icons.repeat, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text(' Transacciones Recurrentes', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
+              Row(children: [const Icon(Icons.repeat, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text('🔄 Transacciones Recurrentes', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
               const SizedBox(height: 20),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -990,9 +990,9 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                       if (fechaStr.length >= 7) {
                         final fechaParts = fechaStr.split('-');
                         if (fechaParts.length >= 2) {
-                          final año = int.tryParse(fechaParts[0]);
+                          final anio = int.tryParse(fechaParts[0]);
                           final mes = int.tryParse(fechaParts[1]);
-                          return año == _mesSeleccionado.year && mes == _mesSeleccionado.month;
+                          return anio == _mesSeleccionado.year && mes == _mesSeleccionado.month;
                         }
                       }
                       return false;
@@ -1111,12 +1111,12 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               children: [
                 Row(children: [Icon(transaccion == null ? Icons.add_circle : Icons.edit, color: const Color(0xFF0066FF), size: 28), const SizedBox(width: 12), Expanded(child: Text(transaccion == null ? 'Nueva Transacción' : 'Editar Transacción', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
                 const SizedBox(height: 20),
-                _buildSeccion(' Información'),
+                _buildSeccion('💰 Información'),
                 _buildCampo('Concepto *', conceptoCtrl, icon: Icons.description),
                 _buildCampo('Monto', montoCtrl, icon: Icons.attach_money, tipo: TextInputType.number),
                 _buildCampo('Acreedor', acreedorCtrl, icon: Icons.person),
                 const SizedBox(height: 12),
-                _buildSeccion(' Clasificación'),
+                _buildSeccion('📋 Clasificación'),
                 Row(children: [Expanded(child: RadioListTile<String>(title: const Text('Ingreso', style: TextStyle(color: Colors.white)), value: 'Ingreso', groupValue: tipo, activeColor: Colors.green, onChanged: (v) => setSheetState(() => tipo = v!))), Expanded(child: RadioListTile<String>(title: const Text('Gasto', style: TextStyle(color: Colors.white)), value: 'Gasto', groupValue: tipo, activeColor: Colors.red, onChanged: (v) => setSheetState(() => tipo = v!)))]),
                 _buildDropdownCategoria(categoriaCtrl, tipo),
                 _buildCampo('Fecha', fechaCtrl, icon: Icons.calendar_today),
@@ -1131,7 +1131,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 _buildCampo('Método de Pago', metodoPagoCtrl, icon: Icons.credit_card),
                 _buildCampo('Referencia / Folio', referenciaCtrl, icon: Icons.receipt),
                 const SizedBox(height: 12),
-                _buildSeccion(' Detalles'),
+                _buildSeccion('📝 Detalles'),
                 _buildCampoMultilinea('Descripción', descripcionCtrl),
                 const SizedBox(height: 16),
                 SizedBox(width: double.infinity, height: 50, child: ElevatedButton.icon(onPressed: () => _guardarTransaccion(ctx, conceptoCtrl, montoCtrl, categoriaCtrl, fechaCtrl, descripcionCtrl, metodoPagoCtrl, referenciaCtrl, acreedorCtrl, tipo, cuenta, negocio, docId), icon: const Icon(Icons.save, color: Colors.white), label: Text(transaccion == null ? 'Crear Transacción' : 'Guardar Cambios', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
