@@ -15,7 +15,7 @@ import 'screens/dashboard/dashboard_negocios.dart';
 import 'screens/clientes/clientes_screen.dart';
 import 'screens/extras/asesores_screen.dart';
 import 'screens/inmuebles/lista_inmuebles.dart';
-import 'package:app_inmobiliaria/screens/finanzas/finanzas_screen.dart';
+import 'package:app_inmobiliaria/screens/extras/finanzas_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
