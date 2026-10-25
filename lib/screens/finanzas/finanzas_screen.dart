@@ -61,12 +61,76 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   void initState() {
     super.initState();
     _tabController = TabController(length: 7, vsync: this);
+    _cargarPresupuestosPersonalizados();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  // ============================================
+  // PRESUPUESTOS PERSONALIZADOS (Firebase)
+  // ============================================
+  List<Map<String, dynamic>> _presupuestosPersonalizados = [];
+
+  Future<void> _cargarPresupuestosPersonalizados() async {
+    try {
+      final snapshot = await _firestore.collection('presupuestos_personalizados').get();
+      setState(() {
+        _presupuestosPersonalizados = snapshot.docs.map((doc) {
+          final data = doc.data();
+          return {
+            'id': doc.id,
+            'nombre': data['nombre'] ?? '',
+            'icon': data['icon'] ?? 'category',
+            'presupuesto': (data['presupuesto'] ?? 0).toDouble(),
+          };
+        }).toList();
+      });
+    } catch (e) {
+      print('Error cargando presupuestos personalizados: $e');
+    }
+  }
+
+  Future<void> _agregarPresupuestoPersonalizado(String nombre, double monto, String icono) async {
+    try {
+      await _firestore.collection('presupuestos_personalizados').add({
+        'nombre': nombre,
+        'icon': icono,
+        'presupuesto': monto,
+        'created_at': FieldValue.serverTimestamp(),
+      });
+      await _cargarPresupuestosPersonalizados();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Presupuesto agregado'), backgroundColor: Colors.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+    }
+  }
+
+  Future<void> _editarPresupuestoPersonalizado(String id, String nombre, double monto, String icono) async {
+    try {
+      await _firestore.collection('presupuestos_personalizados').doc(id).update({
+        'nombre': nombre,
+        'icon': icono,
+        'presupuesto': monto,
+      });
+      await _cargarPresupuestosPersonalizados();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Presupuesto actualizado'), backgroundColor: Colors.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+    }
+  }
+
+  Future<void> _eliminarPresupuestoPersonalizado(String id) async {
+    try {
+      await _firestore.collection('presupuestos_personalizados').doc(id).delete();
+      await _cargarPresupuestosPersonalizados();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🗑️ Presupuesto eliminado'), backgroundColor: Colors.red));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+    }
   }
 
   @override
@@ -140,6 +204,594 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
+  // ============================================
+  // PRESUPUESTOS EDITABLES CON AGREGAR/EDITAR/ELIMINAR
+  // ============================================
+  void _mostrarPresupuestosEditables() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF111111),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(20),
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.9),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.pie_chart, color: Color(0xFF0066FF), size: 28),
+                const SizedBox(width: 12),
+                const Expanded(child: Text('📊 Presupuestos Editables', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
+                IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text('Edita, agrega o elimina presupuestos', style: TextStyle(color: Colors.grey, fontSize: 12)),
+            const SizedBox(height: 16),
+            
+            // Botón para agregar nuevo presupuesto
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _mostrarFormularioNuevoPresupuesto(ctx),
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: const Text('Agregar Nuevo Presupuesto', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF), padding: const EdgeInsets.symmetric(vertical: 12)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _firestore.collection('transacciones').snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                  Map<String, double> gastado = {};
+                  for (var doc in snapshot.data!.docs) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    if (data['tipo'] == 'Gasto') {
+                      final cat = data['categoria'] ?? 'Otros';
+                      gastado[cat] = (gastado[cat] ?? 0) + (data['monto'] ?? 0).toDouble();
+                    }
+                  }
+                  
+                  // Combinar categorías predefinidas + personalizadas
+                  final todasCategorias = [..._categoriasGasto, ..._presupuestosPersonalizados];
+                  
+                  return ListView.builder(
+                    itemCount: todasCategorias.length,
+                    itemBuilder: (context, index) {
+                      final cat = todasCategorias[index];
+                      final esPersonalizado = cat.containsKey('id');
+                      final gastadoCat = gastado[cat['nombre']] ?? 0.0;
+                      final presupuesto = cat['presupuesto'] as double;
+                      final porcentaje = (gastadoCat / presupuesto * 100).clamp(0, 100);
+                      final excedido = gastadoCat > presupuesto;
+                      
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(cat['icon'] as IconData, color: const Color(0xFF0066FF)),
+                                const SizedBox(width: 8),
+                                Expanded(child: Text(cat['nombre'] as String, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                                Text('\$${gastadoCat.toStringAsFixed(0)} / \$${presupuesto.toStringAsFixed(0)}', style: TextStyle(color: excedido ? Colors.red : Colors.green, fontSize: 11)),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: Color(0xFF0066FF), size: 18),
+                                  onPressed: () => esPersonalizado 
+                                    ? _mostrarFormularioEditarPresupuesto(ctx, cat)
+                                    : _editarPresupuesto(ctx, cat['nombre'] as String, presupuesto),
+                                ),
+                                if (esPersonalizado)
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, color: Colors.red, size: 18),
+                                    onPressed: () => _confirmarEliminarPresupuesto(ctx, cat['id'], cat['nombre']),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: porcentaje / 100,
+                                backgroundColor: Colors.grey.shade800,
+                                valueColor: AlwaysStoppedAnimation<Color>(excedido ? Colors.red : const Color(0xFF0066FF)),
+                                minHeight: 8,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text('${porcentaje.toStringAsFixed(1)}% utilizado${excedido ? ' ⚠️ EXCEDIDO' : ''}', style: TextStyle(color: excedido ? Colors.red : Colors.grey, fontSize: 11)),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _mostrarFormularioNuevoPresupuesto(BuildContext ctx) {
+    final nombreCtrl = TextEditingController();
+    final montoCtrl = TextEditingController();
+    String iconoSeleccionado = 'category';
+    
+    showModalBottomSheet(
+      context: ctx,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF111111),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (sheetCtx, setSheetState) => Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.add_circle, color: Color(0xFF0066FF), size: 28),
+                  const SizedBox(width: 12),
+                  const Expanded(child: Text('Nuevo Presupuesto', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
+                  IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(sheetCtx)),
+                ],
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: nombreCtrl,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Nombre del presupuesto',
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: const Color(0xFF1A1A1A),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: montoCtrl,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Monto del presupuesto',
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: const Color(0xFF1A1A1A),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text('Selecciona un ícono:', style: TextStyle(color: Colors.grey, fontSize: 12)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildIconOption(Icons.category, 'Categoría', iconoSeleccionado, setSheetState, (v) => iconoSeleccionado = v),
+                  _buildIconOption(Icons.shopping_bag, 'Compras', iconoSeleccionado, setSheetState, (v) => iconoSeleccionado = v),
+                  _buildIconOption(Icons.restaurant, 'Restaurante', iconoSeleccionado, setSheetState, (v) => iconoSeleccionado = v),
+                  _buildIconOption(Icons.local_gas_station, 'Gasolina', iconoSeleccionado, setSheetState, (v) => iconoSeleccionado = v),
+                  _buildIconOption(Icons.medical_services, 'Salud', iconoSeleccionado, setSheetState, (v) => iconoSeleccionado = v),
+                  _buildIconOption(Icons.fitness_center, 'Gimnasio', iconoSeleccionado, setSheetState, (v) => iconoSeleccionado = v),
+                  _buildIconOption(Icons.travel_explore, 'Viajes', iconoSeleccionado, setSheetState, (v) => iconoSeleccionado = v),
+                  _buildIconOption(Icons.education, 'Educación', iconoSeleccionado, setSheetState, (v) => iconoSeleccionado = v),
+                  _buildIconOption(Icons.entertainment, 'Entretenimiento', iconoSeleccionado, setSheetState, (v) => iconoSeleccionado = v),
+                  _buildIconOption(Icons.home_repair_service, 'Hogar', iconoSeleccionado, setSheetState, (v) => iconoSeleccionado = v),
+                ],
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    if (nombreCtrl.text.isEmpty || montoCtrl.text.isEmpty) return;
+                    final monto = double.tryParse(montoCtrl.text);
+                    if (monto == null) return;
+                    _agregarPresupuestoPersonalizado(nombreCtrl.text.trim(), monto, iconoSeleccionado);
+                    Navigator.pop(sheetCtx);
+                  },
+                  icon: const Icon(Icons.save, color: Colors.white),
+                  label: const Text('Guardar Presupuesto', style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIconOption(IconData icon, String label, String seleccionado, StateSetter setSheetState, ValueChanged<String> onChanged) {
+    final isSelected = seleccionado == icon.codePoint.toString();
+    return GestureDetector(
+      onTap: () => setSheetState(() => onChanged(icon.codePoint.toString())),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF0066FF) : const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: isSelected ? const Color(0xFF0066FF) : Colors.grey),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: isSelected ? Colors.white : Colors.grey),
+            const SizedBox(height: 4),
+            Text(label, style: TextStyle(color: isSelected ? Colors.white : Colors.grey, fontSize: 10)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _mostrarFormularioEditarPresupuesto(BuildContext ctx, Map<String, dynamic> cat) {
+    final nombreCtrl = TextEditingController(text: cat['nombre'] ?? '');
+    final montoCtrl = TextEditingController(text: (cat['presupuesto'] ?? 0).toStringAsFixed(0));
+    String iconoSeleccionado = cat['icon'] ?? 'category';
+    
+    showModalBottomSheet(
+      context: ctx,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF111111),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (sheetCtx, setSheetState) => Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.edit, color: Color(0xFF0066FF), size: 28),
+                  const SizedBox(width: 12),
+                  const Expanded(child: Text('Editar Presupuesto', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
+                  IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(sheetCtx)),
+                ],
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: nombreCtrl,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Nombre del presupuesto',
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: const Color(0xFF1A1A1A),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: montoCtrl,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Monto del presupuesto',
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: const Color(0xFF1A1A1A),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    if (nombreCtrl.text.isEmpty || montoCtrl.text.isEmpty) return;
+                    final monto = double.tryParse(montoCtrl.text);
+                    if (monto == null) return;
+                    _editarPresupuestoPersonalizado(cat['id'], nombreCtrl.text.trim(), monto, iconoSeleccionado);
+                    Navigator.pop(sheetCtx);
+                  },
+                  icon: const Icon(Icons.save, color: Colors.white),
+                  label: const Text('Guardar Cambios', style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmarEliminarPresupuesto(BuildContext ctx, String id, String nombre) async {
+    final confirm = await showDialog<bool>(
+      context: ctx,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        title: const Text('Eliminar Presupuesto', style: TextStyle(color: Colors.white)),
+        content: Text('¿Eliminar el presupuesto "$nombre"?', style: const TextStyle(color: Colors.grey)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
+          TextButton(onPressed: () => Navigator.pop(dialogCtx, true), child: const Text('Eliminar', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await _eliminarPresupuestoPersonalizado(id);
+    }
+  }
+
+  Future<void> _editarPresupuesto(BuildContext ctx, String categoria, double actual) async {
+    final controller = TextEditingController(text: actual.toStringAsFixed(0));
+    await showDialog(
+      context: ctx,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        title: Text('Editar presupuesto: $categoria', style: const TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            labelText: 'Nuevo presupuesto',
+            labelStyle: TextStyle(color: Colors.grey),
+            filled: true,
+            fillColor: Color(0xFF111111),
+            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(6)), borderSide: BorderSide.none),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogCtx);
+            },
+            child: const Text('Guardar', style: TextStyle(color: Color(0xFF0066FF))),
+          ),
+        ],
+      ),
+    );
+    final nuevo = double.tryParse(controller.text);
+    if (nuevo != null) {
+      setState(() {
+        final idx = _categoriasGasto.indexWhere((c) => c['nombre'] == categoria);
+        if (idx != -1) _categoriasGasto[idx]['presupuesto'] = nuevo;
+      });
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ Presupuesto de $categoria actualizado a \$${nuevo.toStringAsFixed(0)}'), backgroundColor: Colors.green));
+    }
+  }
+
+  // ============================================
+  // GRÁFICA CIRCULAR SIN AUTO-POPUP (solo clic manual)
+  // ============================================
+  Widget _buildGraficaCircularMoneyPro() {
+    final colors = [Colors.green, Colors.teal, Colors.amber, Colors.red.shade700, Colors.red, Colors.cyan, Colors.blue.shade300, Colors.indigo, Colors.lightGreen, Colors.teal.shade700, Colors.amber.shade700, Colors.red.shade900];
+    
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore.collection('transacciones').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final docs = snapshot.data!.docs;
+        
+        double totalIngresos = 0, totalGastos = 0;
+        Map<String, double> ingresosPorCategoria = {}, gastosPorCategoria = {}, porCuenta = {};
+        
+        for (var doc in docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          final monto = (data['monto'] ?? 0).toDouble();
+          final tipo = data['tipo'] ?? '';
+          final categoria = data['categoria'] ?? 'Otros';
+          final cuenta = data['cuenta'] ?? 'Efectivo';
+          
+          if (tipo == 'Ingreso') {
+            totalIngresos += monto;
+            ingresosPorCategoria[categoria] = (ingresosPorCategoria[categoria] ?? 0) + monto;
+            porCuenta[cuenta] = (porCuenta[cuenta] ?? 0) + monto;
+          } else if (tipo == 'Gasto') {
+            totalGastos += monto;
+            gastosPorCategoria[categoria] = (gastosPorCategoria[categoria] ?? 0) + monto;
+            porCuenta[cuenta] = (porCuenta[cuenta] ?? 0) - monto;
+          }
+        }
+        
+        final beneficio = totalIngresos - totalGastos;
+        final totalActivos = porCuenta.values.fold(0.0, (sum, v) => sum + (v > 0 ? v : 0));
+        
+        List<PieChartSectionData> sections;
+        switch (_vistaActual) {
+          case 0:
+            sections = [
+              PieChartSectionData(value: totalIngresos, title: totalIngresos + totalGastos > 0 ? '${((totalIngresos / (totalIngresos + totalGastos)) * 100).toStringAsFixed(0)}%' : '0%', color: Colors.green, radius: 110, titleStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+              PieChartSectionData(value: totalGastos, title: totalIngresos + totalGastos > 0 ? '${((totalGastos / (totalIngresos + totalGastos)) * 100).toStringAsFixed(0)}%' : '0%', color: Colors.red, radius: 110, titleStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+            ];
+            break;
+          case 1:
+            sections = ingresosPorCategoria.entries.map((e) {
+              final idx = ingresosPorCategoria.keys.toList().indexOf(e.key);
+              return PieChartSectionData(value: e.value, title: totalIngresos > 0 ? '${((e.value / totalIngresos) * 100).toStringAsFixed(0)}%' : '0%', color: colors[idx % colors.length], radius: 110, titleStyle: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold));
+            }).toList();
+            break;
+          case 2:
+            sections = gastosPorCategoria.entries.map((e) {
+              final idx = gastosPorCategoria.keys.toList().indexOf(e.key);
+              return PieChartSectionData(value: e.value, title: totalGastos > 0 ? '${((e.value / totalGastos) * 100).toStringAsFixed(0)}%' : '0%', color: colors[idx % colors.length], radius: 110, titleStyle: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold));
+            }).toList();
+            break;
+          case 3:
+            sections = [PieChartSectionData(value: totalActivos, title: '100%', color: Colors.green, radius: 110, titleStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))];
+            break;
+          case 4:
+            sections = porCuenta.entries.map((e) {
+              final idx = porCuenta.keys.toList().indexOf(e.key);
+              return PieChartSectionData(value: e.value.abs(), title: totalActivos > 0 ? '${((e.value.abs() / totalActivos) * 100).toStringAsFixed(0)}%' : '0%', color: colors[idx % colors.length], radius: 110, titleStyle: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold));
+            }).toList();
+            break;
+          default:
+            sections = [];
+        }
+        
+        List<Map<String, dynamic>> items;
+        Map<String, double> datosDesglose;
+        String tituloDesglose;
+        
+        switch (_vistaActual) {
+          case 0:
+            items = [{'label': 'Ingresos', 'value': '\$${totalIngresos.toStringAsFixed(2)}', 'color': Colors.green}, {'label': 'Gastos', 'value': '\$${totalGastos.toStringAsFixed(2)}', 'color': Colors.red}];
+            datosDesglose = {'Ingresos': totalIngresos, 'Gastos': totalGastos};
+            tituloDesglose = 'Ingresos vs Gastos';
+            break;
+          case 1:
+            items = ingresosPorCategoria.entries.map((e) { final idx = ingresosPorCategoria.keys.toList().indexOf(e.key); return {'label': e.key.toUpperCase(), 'value': '\$${e.value.toStringAsFixed(2)}', 'color': colors[idx % colors.length]}; }).toList();
+            datosDesglose = ingresosPorCategoria;
+            tituloDesglose = 'Ingresos por Categoría';
+            break;
+          case 2:
+            items = gastosPorCategoria.entries.map((e) { final idx = gastosPorCategoria.keys.toList().indexOf(e.key); return {'label': e.key.toUpperCase(), 'value': '\$${e.value.toStringAsFixed(2)}', 'color': colors[idx % colors.length]}; }).toList();
+            datosDesglose = gastosPorCategoria;
+            tituloDesglose = 'Gastos por Categoría';
+            break;
+          case 3:
+            items = [{'label': 'Total Activos', 'value': '\$${totalActivos.toStringAsFixed(2)}', 'color': Colors.green}];
+            datosDesglose = {'Activos': totalActivos};
+            tituloDesglose = 'Activos';
+            break;
+          case 4:
+            items = porCuenta.entries.map((e) { final idx = porCuenta.keys.toList().indexOf(e.key); return {'label': e.key.toUpperCase(), 'value': '\$${e.value.toStringAsFixed(2)}', 'color': colors[idx % colors.length]}; }).toList();
+            datosDesglose = porCuenta.map((k, v) => MapEntry(k, v.abs()));
+            tituloDesglose = 'Cuentas';
+            break;
+          default:
+            items = [];
+            datosDesglose = {};
+            tituloDesglose = '';
+        }
+        
+        final titulos = ['Ingresos vs Gastos', 'Ingresos', 'Gastos', 'Activos', 'Cuentas'];
+        final labelsCentro = ['BENEFICIO', 'INGRESOS', 'GASTOS', 'ACTIVOS', 'CUENTAS'];
+        String totalCentro;
+        switch (_vistaActual) {
+          case 0: totalCentro = '\$${beneficio.toStringAsFixed(2)}'; break;
+          case 1: totalCentro = '\$${totalIngresos.toStringAsFixed(2)}'; break;
+          case 2: totalCentro = '\$${totalGastos.toStringAsFixed(2)}'; break;
+          case 3: totalCentro = '\$${totalActivos.toStringAsFixed(2)}'; break;
+          case 4: totalCentro = '\$${totalActivos.toStringAsFixed(2)}'; break;
+          default: totalCentro = '\$0';
+        }
+        
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(16)),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(icon: const Icon(Icons.chevron_left, color: Colors.white), onPressed: () => setState(() => _vistaActual = (_vistaActual - 1 + 5) % 5)),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
+                    child: Text(titulos[_vistaActual], style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                  IconButton(icon: const Icon(Icons.chevron_right, color: Colors.white), onPressed: () => setState(() => _vistaActual = (_vistaActual + 1) % 5)),
+                ],
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                height: 350,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    sections.isEmpty
+                        ? const Center(child: Text('Sin datos', style: TextStyle(color: Colors.grey)))
+                        : PieChart(
+                            PieChartData(
+                              sections: sections.map((section) {
+                                return PieChartSectionData(
+                                  value: section.value,
+                                  title: section.title,
+                                  color: section.color,
+                                  radius: section.radius,
+                                  titleStyle: section.titleStyle,
+                                  badgeWidget: null,
+                                );
+                              }).toList(),
+                              sectionsSpace: 2,
+                              centerSpaceRadius: 80,
+                              startDegreeOffset: 270,
+                              // SIN touchCallback - no se abre automáticamente
+                            ),
+                          ),
+                    GestureDetector(
+                      onTap: () => setState(() => _vistaActual = (_vistaActual + 1) % 5),
+                      child: Container(
+                        width: 160,
+                        height: 160,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF111111),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.grey.shade700, width: 2),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(totalCentro, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 4),
+                            Text(labelsCentro[_vistaActual], style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500)),
+                            const SizedBox(height: 8),
+                            const Text('Toca un color\npara ver detalles', style: TextStyle(color: Colors.grey, fontSize: 10, textAlign: TextAlign.center)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                constraints: const BoxConstraints(maxHeight: 250),
+                child: ListView.builder(
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    return GestureDetector(
+                      onTap: () => _mostrarDesgloseCategoria(item['label'], datosDesglose[item['label']] ?? 0, tituloDesglose),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            Container(width: 14, height: 14, decoration: BoxDecoration(color: item['color'] as Color, borderRadius: BorderRadius.circular(4))),
+                            const SizedBox(width: 12),
+                            Expanded(child: Text(item['label'] as String, style: const TextStyle(color: Colors.white70, fontSize: 12), overflow: TextOverflow.ellipsis)),
+                            Text(item['value'] as String, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.chevron_right, color: Colors.grey, size: 16),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ============================================
+  // RESTO DE MÉTODOS (mantener los existentes)
+  // ============================================
+  
   Future<void> _cargarDatosEjemplo() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -1325,223 +1977,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  Widget _buildGraficaCircularMoneyPro() {
-    final colors = [Colors.green, Colors.teal, Colors.amber, Colors.red.shade700, Colors.red, Colors.cyan, Colors.blue.shade300, Colors.indigo, Colors.lightGreen, Colors.teal.shade700, Colors.amber.shade700, Colors.red.shade900];
-    
-    return StreamBuilder<QuerySnapshot>(
-      stream: _firestore.collection('transacciones').snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-        final docs = snapshot.data!.docs;
-        
-        double totalIngresos = 0, totalGastos = 0;
-        Map<String, double> ingresosPorCategoria = {}, gastosPorCategoria = {}, porCuenta = {};
-        
-        for (var doc in docs) {
-          final data = doc.data() as Map<String, dynamic>;
-          final monto = (data['monto'] ?? 0).toDouble();
-          final tipo = data['tipo'] ?? '';
-          final categoria = data['categoria'] ?? 'Otros';
-          final cuenta = data['cuenta'] ?? 'Efectivo';
-          
-          if (tipo == 'Ingreso') {
-            totalIngresos += monto;
-            ingresosPorCategoria[categoria] = (ingresosPorCategoria[categoria] ?? 0) + monto;
-            porCuenta[cuenta] = (porCuenta[cuenta] ?? 0) + monto;
-          } else if (tipo == 'Gasto') {
-            totalGastos += monto;
-            gastosPorCategoria[categoria] = (gastosPorCategoria[categoria] ?? 0) + monto;
-            porCuenta[cuenta] = (porCuenta[cuenta] ?? 0) - monto;
-          }
-        }
-        
-        final beneficio = totalIngresos - totalGastos;
-        final totalActivos = porCuenta.values.fold(0.0, (sum, v) => sum + (v > 0 ? v : 0));
-        
-        List<PieChartSectionData> sections;
-        switch (_vistaActual) {
-          case 0:
-            sections = [
-              PieChartSectionData(value: totalIngresos, title: totalIngresos + totalGastos > 0 ? '${((totalIngresos / (totalIngresos + totalGastos)) * 100).toStringAsFixed(0)}%' : '0%', color: Colors.green, radius: 110, titleStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-              PieChartSectionData(value: totalGastos, title: totalIngresos + totalGastos > 0 ? '${((totalGastos / (totalIngresos + totalGastos)) * 100).toStringAsFixed(0)}%' : '0%', color: Colors.red, radius: 110, titleStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-            ];
-            break;
-          case 1:
-            sections = ingresosPorCategoria.entries.map((e) {
-              final idx = ingresosPorCategoria.keys.toList().indexOf(e.key);
-              return PieChartSectionData(value: e.value, title: totalIngresos > 0 ? '${((e.value / totalIngresos) * 100).toStringAsFixed(0)}%' : '0%', color: colors[idx % colors.length], radius: 110, titleStyle: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold));
-            }).toList();
-            break;
-          case 2:
-            sections = gastosPorCategoria.entries.map((e) {
-              final idx = gastosPorCategoria.keys.toList().indexOf(e.key);
-              return PieChartSectionData(value: e.value, title: totalGastos > 0 ? '${((e.value / totalGastos) * 100).toStringAsFixed(0)}%' : '0%', color: colors[idx % colors.length], radius: 110, titleStyle: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold));
-            }).toList();
-            break;
-          case 3:
-            sections = [PieChartSectionData(value: totalActivos, title: '100%', color: Colors.green, radius: 110, titleStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))];
-            break;
-          case 4:
-            sections = porCuenta.entries.map((e) {
-              final idx = porCuenta.keys.toList().indexOf(e.key);
-              return PieChartSectionData(value: e.value.abs(), title: totalActivos > 0 ? '${((e.value.abs() / totalActivos) * 100).toStringAsFixed(0)}%' : '0%', color: colors[idx % colors.length], radius: 110, titleStyle: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold));
-            }).toList();
-            break;
-          default:
-            sections = [];
-        }
-        
-        List<Map<String, dynamic>> items;
-        Map<String, double> datosDesglose;
-        String tituloDesglose;
-        
-        switch (_vistaActual) {
-          case 0:
-            items = [{'label': 'Ingresos', 'value': '\$${totalIngresos.toStringAsFixed(2)}', 'color': Colors.green}, {'label': 'Gastos', 'value': '\$${totalGastos.toStringAsFixed(2)}', 'color': Colors.red}];
-            datosDesglose = {'Ingresos': totalIngresos, 'Gastos': totalGastos};
-            tituloDesglose = 'Ingresos vs Gastos';
-            break;
-          case 1:
-            items = ingresosPorCategoria.entries.map((e) { final idx = ingresosPorCategoria.keys.toList().indexOf(e.key); return {'label': e.key.toUpperCase(), 'value': '\$${e.value.toStringAsFixed(2)}', 'color': colors[idx % colors.length]}; }).toList();
-            datosDesglose = ingresosPorCategoria;
-            tituloDesglose = 'Ingresos por Categoría';
-            break;
-          case 2:
-            items = gastosPorCategoria.entries.map((e) { final idx = gastosPorCategoria.keys.toList().indexOf(e.key); return {'label': e.key.toUpperCase(), 'value': '\$${e.value.toStringAsFixed(2)}', 'color': colors[idx % colors.length]}; }).toList();
-            datosDesglose = gastosPorCategoria;
-            tituloDesglose = 'Gastos por Categoría';
-            break;
-          case 3:
-            items = [{'label': 'Total Activos', 'value': '\$${totalActivos.toStringAsFixed(2)}', 'color': Colors.green}];
-            datosDesglose = {'Activos': totalActivos};
-            tituloDesglose = 'Activos';
-            break;
-          case 4:
-            items = porCuenta.entries.map((e) { final idx = porCuenta.keys.toList().indexOf(e.key); return {'label': e.key.toUpperCase(), 'value': '\$${e.value.toStringAsFixed(2)}', 'color': colors[idx % colors.length]}; }).toList();
-            datosDesglose = porCuenta.map((k, v) => MapEntry(k, v.abs()));
-            tituloDesglose = 'Cuentas';
-            break;
-          default:
-            items = [];
-            datosDesglose = {};
-            tituloDesglose = '';
-        }
-        
-        final titulos = ['Ingresos vs Gastos', 'Ingresos', 'Gastos', 'Activos', 'Cuentas'];
-        final labelsCentro = ['BENEFICIO', 'INGRESOS', 'GASTOS', 'ACTIVOS', 'CUENTAS'];
-        String totalCentro;
-        switch (_vistaActual) {
-          case 0: totalCentro = '\$${beneficio.toStringAsFixed(2)}'; break;
-          case 1: totalCentro = '\$${totalIngresos.toStringAsFixed(2)}'; break;
-          case 2: totalCentro = '\$${totalGastos.toStringAsFixed(2)}'; break;
-          case 3: totalCentro = '\$${totalActivos.toStringAsFixed(2)}'; break;
-          case 4: totalCentro = '\$${totalActivos.toStringAsFixed(2)}'; break;
-          default: totalCentro = '\$0';
-        }
-        
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(16)),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(icon: const Icon(Icons.chevron_left, color: Colors.white), onPressed: () => setState(() => _vistaActual = (_vistaActual - 1 + 5) % 5)),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
-                    child: Text(titulos[_vistaActual], style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
-                  IconButton(icon: const Icon(Icons.chevron_right, color: Colors.white), onPressed: () => setState(() => _vistaActual = (_vistaActual + 1) % 5)),
-                ],
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                height: 350,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    sections.isEmpty
-                        ? const Center(child: Text('Sin datos', style: TextStyle(color: Colors.grey)))
-                        : PieChart(
-                            PieChartData(
-                              sections: sections,
-                              sectionsSpace: 2,
-                              centerSpaceRadius: 80,
-                              startDegreeOffset: 270,
-                              pieTouchData: PieTouchData(
-                                touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                                  if (!event.isInterestedForInteractions || pieTouchResponse == null || pieTouchResponse.touchedSection == null) {
-                                    return;
-                                  }
-                                  final touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
-                                  if (touchedIndex >= 0 && touchedIndex < items.length) {
-                                    _mostrarDesgloseCategoria(items[touchedIndex]['label'], datosDesglose[items[touchedIndex]['label']] ?? 0, tituloDesglose);
-                                  }
-                                },
-                              ),
-                            ),
-                          ),
-                    GestureDetector(
-                      onTap: () => setState(() => _vistaActual = (_vistaActual + 1) % 5),
-                      child: Container(
-                        width: 160,
-                        height: 160,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF111111),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.grey.shade700, width: 2),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(totalCentro, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 4),
-                            Text(labelsCentro[_vistaActual], style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500)),
-                            const SizedBox(height: 8),
-                            const Icon(Icons.touch_app, color: Colors.grey, size: 18),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              Container(
-                constraints: const BoxConstraints(maxHeight: 250),
-                child: ListView.builder(
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return GestureDetector(
-                      onTap: () => _mostrarDesgloseCategoria(item['label'], datosDesglose[item['label']] ?? 0, tituloDesglose),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          children: [
-                            Container(width: 14, height: 14, decoration: BoxDecoration(color: item['color'] as Color, borderRadius: BorderRadius.circular(4))),
-                            const SizedBox(width: 12),
-                            Expanded(child: Text(item['label'] as String, style: const TextStyle(color: Colors.white70, fontSize: 12), overflow: TextOverflow.ellipsis)),
-                            Text(item['value'] as String, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
-                            const SizedBox(width: 8),
-                            const Icon(Icons.chevron_right, color: Colors.grey, size: 16),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   void _mostrarDesgloseCategoria(String categoria, double monto, String titulo) {
     showModalBottomSheet(
       context: context,
@@ -1763,137 +2198,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         );
       },
     );
-  }
-
-  void _mostrarPresupuestosEditables() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF111111),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(20),
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.85),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.pie_chart, color: Color(0xFF0066FF), size: 28),
-                const SizedBox(width: 12),
-                const Expanded(child: Text('📊 Presupuestos Editables', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
-                IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx)),
-              ],
-            ),
-            const SizedBox(height: 8),
-            const Text('Toca el ícono de editar para modificar el presupuesto de cada categoría', style: TextStyle(color: Colors.grey, fontSize: 12)),
-            const SizedBox(height: 16),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: _firestore.collection('transacciones').snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                  Map<String, double> gastado = {};
-                  for (var doc in snapshot.data!.docs) {
-                    final data = doc.data() as Map<String, dynamic>;
-                    if (data['tipo'] == 'Gasto') {
-                      final cat = data['categoria'] ?? 'Otros';
-                      gastado[cat] = (gastado[cat] ?? 0) + (data['monto'] ?? 0).toDouble();
-                    }
-                  }
-                  return ListView.builder(
-                    itemCount: _categoriasGasto.length,
-                    itemBuilder: (context, index) {
-                      final cat = _categoriasGasto[index];
-                      final gastadoCat = gastado[cat['nombre']] ?? 0.0;
-                      final presupuesto = cat['presupuesto'] as double;
-                      final porcentaje = (gastadoCat / presupuesto * 100).clamp(0, 100);
-                      final excedido = gastadoCat > presupuesto;
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(cat['icon'] as IconData, color: const Color(0xFF0066FF)),
-                                const SizedBox(width: 8),
-                                Expanded(child: Text(cat['nombre'] as String, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-                                Text('\$${gastadoCat.toStringAsFixed(0)} / \$${presupuesto.toStringAsFixed(0)}', style: TextStyle(color: excedido ? Colors.red : Colors.green, fontSize: 11)),
-                                const SizedBox(width: 8),
-                                IconButton(
-                                  icon: const Icon(Icons.edit, color: Color(0xFF0066FF), size: 18),
-                                  onPressed: () => _editarPresupuesto(ctx, cat['nombre'] as String, presupuesto),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value: porcentaje / 100,
-                                backgroundColor: Colors.grey.shade800,
-                                valueColor: AlwaysStoppedAnimation<Color>(excedido ? Colors.red : const Color(0xFF0066FF)),
-                                minHeight: 8,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text('${porcentaje.toStringAsFixed(1)}% utilizado${excedido ? ' ⚠️ EXCEDIDO' : ''}', style: TextStyle(color: excedido ? Colors.red : Colors.grey, fontSize: 11)),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _editarPresupuesto(BuildContext ctx, String categoria, double actual) async {
-    final controller = TextEditingController(text: actual.toStringAsFixed(0));
-    await showDialog(
-      context: ctx,
-      builder: (dialogCtx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        title: Text('Editar presupuesto: $categoria', style: const TextStyle(color: Colors.white)),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
-            labelText: 'Nuevo presupuesto',
-            labelStyle: TextStyle(color: Colors.grey),
-            filled: true,
-            fillColor: Color(0xFF111111),
-            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(6)), borderSide: BorderSide.none),
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogCtx);
-            },
-            child: const Text('Guardar', style: TextStyle(color: Color(0xFF0066FF))),
-          ),
-        ],
-      ),
-    );
-    final nuevo = double.tryParse(controller.text);
-    if (nuevo != null) {
-      setState(() {
-        final idx = _categoriasGasto.indexWhere((c) => c['nombre'] == categoria);
-        if (idx != -1) _categoriasGasto[idx]['presupuesto'] = nuevo;
-      });
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ Presupuesto de $categoria actualizado a \$${nuevo.toStringAsFixed(0)}'), backgroundColor: Colors.green));
-    }
   }
 
   void _mostrarMetasEditables() {
@@ -2393,7 +2697,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                   _buildInformeItemEditable('📋 Transacciones', 'Listado detallado editable', Icons.receipt_long, () => _verInformeTransacciones(ctx)),
                   _buildInformeItemEditable('💳 Activos/Pasivos', 'Balance de cuentas', Icons.account_balance, () => _verInformeActivos(ctx)),
                   _buildInformeItemEditable('📈 Saldo Proyectado', 'Proyección futura', Icons.trending_up, () => _verInformeProyeccion(ctx)),
-                  _buildInformeItemEditable('📅 Tendencia', 'Gráfico por periodos', Icons.date_range, () => _verInformeTendencia(ctx)),
+                  _buildInformeItemEditable(' Tendencia', 'Gráfico por periodos', Icons.date_range, () => _verInformeTendencia(ctx)),
                 ],
               ),
             ),
@@ -2666,7 +2970,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 _buildCampo('Referencia / Folio', referenciaCtrl, icon: Icons.receipt),
                 const SizedBox(height: 12),
                 
-                _buildSeccion('📝 Detalles'),
+                _buildSeccion(' Detalles'),
                 _buildCampoMultilinea('Descripción', descripcionCtrl),
                 CheckboxListTile(
                   title: const Text('Marcar como reconciliada', style: TextStyle(color: Colors.white)),
@@ -2782,7 +3086,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     String? docId,
   ) async {
     if (concepto.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ El concepto es obligatorio'), backgroundColor: Colors.orange));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('️ El concepto es obligatorio'), backgroundColor: Colors.orange));
       return;
     }
     try {
