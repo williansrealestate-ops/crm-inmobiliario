@@ -156,31 +156,31 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     if (confirm != true) return;
 
     final transaccionesEjemplo = [
-      {'concepto': 'Comisión venta terreno Atasta', 'monto': 25000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso', 'cuenta': 'Banco', 'negocio': 'Proyectos', 'fecha': '2026-10-02', 'acreedor': 'Cliente Juan Carlos', 'reconciliada': true},
-      {'concepto': 'Comisión deslinde 49 has Edomex', 'monto': 2000.0, 'categoria': 'Deslinde', 'tipo': 'Ingreso', 'cuenta': 'Efectivo', 'negocio': 'Proyectos', 'fecha': '2026-10-05', 'acreedor': 'Cliente Ericka', 'reconciliada': true},
-      {'concepto': 'Renta oficina octubre', 'monto': 15000.0, 'categoria': 'Renta', 'tipo': 'Ingreso', 'cuenta': 'Banco', 'negocio': 'Proyectos', 'fecha': '2026-10-01', 'acreedor': '', 'reconciliada': true},
-      {'concepto': 'Servicio consultoría inmobiliaria', 'monto': 8500.0, 'categoria': 'Servicios', 'tipo': 'Ingreso', 'cuenta': 'Banco', 'negocio': 'Proyectos', 'fecha': '2026-10-08', 'acreedor': 'Constructora Corrales', 'reconciliada': true},
-      {'concepto': 'Comisión venta casa Polanco', 'monto': 4000.0, 'categoria': 'Comisiones', 'tipo': 'Ingreso', 'cuenta': 'Tarjeta', 'negocio': 'Proyectos', 'fecha': '2026-10-12', 'acreedor': 'Cliente Williams', 'reconciliada': false},
-      {'concepto': 'Pago préstamo bancario', 'monto': 8500.0, 'categoria': 'Préstamos', 'tipo': 'Gasto', 'cuenta': 'Banco', 'negocio': 'Proyectos', 'fecha': '2026-10-05', 'acreedor': 'Banco BBVA', 'reconciliada': true},
-      {'concepto': 'Pago préstamo personal', 'monto': 5234.0, 'categoria': 'Préstamos', 'tipo': 'Gasto', 'cuenta': 'Banco', 'negocio': 'Proyectos', 'fecha': '2026-10-10', 'acreedor': 'Prestamista', 'reconciliada': true},
-      {'concepto': 'Pago tarjeta de crédito', 'monto': 8500.0, 'categoria': 'Préstamos', 'tipo': 'Gasto', 'cuenta': 'Tarjeta', 'negocio': 'Proyectos', 'fecha': '2026-10-15', 'acreedor': 'BBVA', 'reconciliada': false},
-      {'concepto': 'Nómina asesores octubre', 'monto': 12000.0, 'categoria': 'Personal', 'tipo': 'Gasto', 'cuenta': 'Banco', 'negocio': 'Proyectos', 'fecha': '2026-10-15', 'acreedor': 'Ericka Blanco', 'reconciliada': true},
-      {'concepto': 'Pago Williams', 'monto': 2597.79, 'categoria': 'Personal', 'tipo': 'Gasto', 'cuenta': 'Efectivo', 'negocio': 'Proyectos', 'fecha': '2026-10-20', 'acreedor': 'Williams', 'reconciliada': false},
-      {'concepto': 'Pago servicios Adair', 'monto': 6156.58, 'categoria': 'Adair', 'tipo': 'Gasto', 'cuenta': 'Banco', 'negocio': 'Proyectos', 'fecha': '2026-10-08', 'acreedor': 'Adair', 'reconciliada': true},
-      {'concepto': 'Curso CRM inmobiliario', 'monto': 1500.0, 'categoria': 'Capacitación', 'tipo': 'Gasto', 'cuenta': 'Tarjeta', 'negocio': 'Proyectos', 'fecha': '2026-10-03', 'acreedor': 'Udemy', 'reconciliada': true},
-      {'concepto': 'Certificación ventas', 'monto': 1356.91, 'categoria': 'Capacitación', 'tipo': 'Gasto', 'cuenta': 'Tarjeta', 'negocio': 'Proyectos', 'fecha': '2026-10-18', 'acreedor': 'Coursera', 'reconciliada': false},
-      {'concepto': 'Pago deuda proveedor', 'monto': 2300.0, 'categoria': 'Deudas', 'tipo': 'Gasto', 'cuenta': 'Banco', 'negocio': 'Proyectos', 'fecha': '2026-10-22', 'acreedor': 'Proveedor', 'reconciliada': false},
-      {'concepto': 'Escritorio nuevo oficina', 'monto': 1200.0, 'categoria': 'Mobiliario', 'tipo': 'Gasto', 'cuenta': 'Tarjeta', 'negocio': 'Proyectos', 'fecha': '2026-10-06', 'acreedor': 'IKEA', 'reconciliada': true},
-      {'concepto': 'Silla ergonómica', 'monto': 745.30, 'categoria': 'Mobiliario', 'tipo': 'Gasto', 'cuenta': 'Tarjeta', 'negocio': 'Proyectos', 'fecha': '2026-10-14', 'acreedor': 'Office Depot', 'reconciliada': true},
-      {'concepto': 'Renta oficina octubre', 'monto': 1400.0, 'categoria': 'Alquiler', 'tipo': 'Gasto', 'cuenta': 'Banco', 'negocio': 'Proyectos', 'fecha': '2026-10-01', 'acreedor': 'Arrendador', 'reconciliada': true},
-      {'concepto': 'Gasolina octubre', 'monto': 800.0, 'categoria': 'Transporte', 'tipo': 'Gasto', 'cuenta': 'Tarjeta', 'negocio': 'Proyectos', 'fecha': '2026-10-10', 'acreedor': 'Pemex', 'reconciliada': true},
-      {'concepto': 'Mantenimiento auto', 'monto': 350.0, 'categoria': 'Transporte', 'tipo': 'Gasto', 'cuenta': 'Efectivo', 'negocio': 'Proyectos', 'fecha': '2026-10-20', 'acreedor': 'Taller', 'reconciliada': false},
-      {'concepto': 'Papelería y toner', 'monto': 509.52, 'categoria': 'Insumos de Oficina', 'tipo': 'Gasto', 'cuenta': 'Efectivo', 'negocio': 'Proyectos', 'fecha': '2026-10-12', 'acreedor': 'Office Depot', 'reconciliada': true},
-      {'concepto': 'Recarga celular octubre', 'monto': 330.0, 'categoria': 'Recarga', 'tipo': 'Gasto', 'cuenta': 'Efectivo', 'negocio': 'Proyectos', 'fecha': '2026-10-05', 'acreedor': 'Telcel', 'reconciliada': true},
-      {'concepto': 'Uber visitas clientes', 'monto': 200.0, 'categoria': 'Uber', 'tipo': 'Gasto', 'cuenta': 'Tarjeta', 'negocio': 'Proyectos', 'fecha': '2026-10-15', 'acreedor': 'Uber', 'reconciliada': true},
-      {'concepto': 'Propinas mesero', 'monto': 42.0, 'categoria': 'Propina', 'tipo': 'Gasto', 'cuenta': 'Efectivo', 'negocio': 'Proyectos', 'fecha': '2026-10-25', 'acreedor': '', 'reconciliada': false},
-      {'concepto': 'Galletas Marías', 'monto': 15.0, 'categoria': 'Otros', 'tipo': 'Gasto', 'cuenta': 'Efectivo', 'negocio': 'Proyectos', 'fecha': '2026-10-24', 'acreedor': '', 'reconciliada': false},
-      {'concepto': 'Planos catastrales', 'monto': 1000.0, 'categoria': 'Otros', 'tipo': 'Ingreso', 'cuenta': 'Efectivo', 'negocio': 'Proyectos', 'fecha': '2026-10-24', 'acreedor': '', 'reconciliada': false},
+      {'concepto': 'Comisión venta terreno Atasta', 'monto': 25000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso', 'cuenta': 'Banco', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-02', 'acreedor': 'Cliente Juan Carlos', 'reconciliada': true},
+      {'concepto': 'Comisión deslinde 49 has Edomex', 'monto': 2000.0, 'categoria': 'Deslinde', 'tipo': 'Ingreso', 'cuenta': 'Efectivo', 'subcuenta': 'Agropecuario', 'negocio': 'Agropecuario', 'fecha': '2026-10-05', 'acreedor': 'Cliente Ericka', 'reconciliada': true},
+      {'concepto': 'Renta oficina octubre', 'monto': 15000.0, 'categoria': 'Renta', 'tipo': 'Ingreso', 'cuenta': 'Banco', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-01', 'acreedor': '', 'reconciliada': true},
+      {'concepto': 'Servicio consultoría inmobiliaria', 'monto': 8500.0, 'categoria': 'Servicios', 'tipo': 'Ingreso', 'cuenta': 'Banco', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-08', 'acreedor': 'Constructora Corrales', 'reconciliada': true},
+      {'concepto': 'Comisión venta casa Polanco', 'monto': 4000.0, 'categoria': 'Comisiones', 'tipo': 'Ingreso', 'cuenta': 'Tarjeta', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-12', 'acreedor': 'Cliente Williams', 'reconciliada': false},
+      {'concepto': 'Pago préstamo bancario', 'monto': 8500.0, 'categoria': 'Préstamos', 'tipo': 'Gasto', 'cuenta': 'Banco', 'subcuenta': 'Minerales', 'negocio': 'Minerales', 'fecha': '2026-10-05', 'acreedor': 'Banco BBVA', 'reconciliada': true},
+      {'concepto': 'Pago préstamo personal', 'monto': 5234.0, 'categoria': 'Préstamos', 'tipo': 'Gasto', 'cuenta': 'Banco', 'subcuenta': 'Combustible', 'negocio': 'Combustible', 'fecha': '2026-10-10', 'acreedor': 'Prestamista', 'reconciliada': true},
+      {'concepto': 'Pago tarjeta de crédito', 'monto': 8500.0, 'categoria': 'Préstamos', 'tipo': 'Gasto', 'cuenta': 'Tarjeta', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-15', 'acreedor': 'BBVA', 'reconciliada': false},
+      {'concepto': 'Nómina asesores octubre', 'monto': 12000.0, 'categoria': 'Personal', 'tipo': 'Gasto', 'cuenta': 'Banco', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-15', 'acreedor': 'Ericka Blanco', 'reconciliada': true},
+      {'concepto': 'Pago Williams', 'monto': 2597.79, 'categoria': 'Personal', 'tipo': 'Gasto', 'cuenta': 'Efectivo', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-20', 'acreedor': 'Williams', 'reconciliada': false},
+      {'concepto': 'Pago servicios Adair', 'monto': 6156.58, 'categoria': 'Adair', 'tipo': 'Gasto', 'cuenta': 'Banco', 'subcuenta': 'Agropecuario', 'negocio': 'Agropecuario', 'fecha': '2026-10-08', 'acreedor': 'Adair', 'reconciliada': true},
+      {'concepto': 'Curso CRM inmobiliario', 'monto': 1500.0, 'categoria': 'Capacitación', 'tipo': 'Gasto', 'cuenta': 'Tarjeta', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-03', 'acreedor': 'Udemy', 'reconciliada': true},
+      {'concepto': 'Certificación ventas', 'monto': 1356.91, 'categoria': 'Capacitación', 'tipo': 'Gasto', 'cuenta': 'Tarjeta', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-18', 'acreedor': 'Coursera', 'reconciliada': false},
+      {'concepto': 'Pago deuda proveedor', 'monto': 2300.0, 'categoria': 'Deudas', 'tipo': 'Gasto', 'cuenta': 'Banco', 'subcuenta': 'Minerales', 'negocio': 'Minerales', 'fecha': '2026-10-22', 'acreedor': 'Proveedor', 'reconciliada': false},
+      {'concepto': 'Escritorio nuevo oficina', 'monto': 1200.0, 'categoria': 'Mobiliario', 'tipo': 'Gasto', 'cuenta': 'Tarjeta', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-06', 'acreedor': 'IKEA', 'reconciliada': true},
+      {'concepto': 'Silla ergonómica', 'monto': 745.30, 'categoria': 'Mobiliario', 'tipo': 'Gasto', 'cuenta': 'Tarjeta', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-14', 'acreedor': 'Office Depot', 'reconciliada': true},
+      {'concepto': 'Renta oficina octubre', 'monto': 1400.0, 'categoria': 'Alquiler', 'tipo': 'Gasto', 'cuenta': 'Banco', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-01', 'acreedor': 'Arrendador', 'reconciliada': true},
+      {'concepto': 'Gasolina octubre', 'monto': 800.0, 'categoria': 'Transporte', 'tipo': 'Gasto', 'cuenta': 'Tarjeta', 'subcuenta': 'Combustible', 'negocio': 'Combustible', 'fecha': '2026-10-10', 'acreedor': 'Pemex', 'reconciliada': true},
+      {'concepto': 'Mantenimiento auto', 'monto': 350.0, 'categoria': 'Transporte', 'tipo': 'Gasto', 'cuenta': 'Efectivo', 'subcuenta': 'Combustible', 'negocio': 'Combustible', 'fecha': '2026-10-20', 'acreedor': 'Taller', 'reconciliada': false},
+      {'concepto': 'Papelería y toner', 'monto': 509.52, 'categoria': 'Insumos de Oficina', 'tipo': 'Gasto', 'cuenta': 'Efectivo', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-12', 'acreedor': 'Office Depot', 'reconciliada': true},
+      {'concepto': 'Recarga celular octubre', 'monto': 330.0, 'categoria': 'Recarga', 'tipo': 'Gasto', 'cuenta': 'Efectivo', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-05', 'acreedor': 'Telcel', 'reconciliada': true},
+      {'concepto': 'Uber visitas clientes', 'monto': 200.0, 'categoria': 'Uber', 'tipo': 'Gasto', 'cuenta': 'Tarjeta', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-15', 'acreedor': 'Uber', 'reconciliada': true},
+      {'concepto': 'Propinas mesero', 'monto': 42.0, 'categoria': 'Propina', 'tipo': 'Gasto', 'cuenta': 'Efectivo', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-25', 'acreedor': '', 'reconciliada': false},
+      {'concepto': 'Galletas Marías', 'monto': 15.0, 'categoria': 'Otros', 'tipo': 'Gasto', 'cuenta': 'Efectivo', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-24', 'acreedor': '', 'reconciliada': false},
+      {'concepto': 'Planos catastrales', 'monto': 1000.0, 'categoria': 'Otros', 'tipo': 'Ingreso', 'cuenta': 'Efectivo', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-24', 'acreedor': '', 'reconciliada': false},
     ];
 
     int cargados = 0;
@@ -915,6 +915,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         'referencia': data['referencia'] ?? '',
         'tipo': data['tipo'] ?? 'Ingreso',
         'cuenta': data['cuenta'] ?? 'Efectivo',
+        'subcuenta': data['subcuenta'] ?? 'Minerales',
         'negocio': data['negocio'] ?? 'Minerales',
         'acreedor': data['acreedor'] ?? '',
         'reconciliada': false,
@@ -2503,11 +2504,12 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 'categoria': parts[3].trim().replaceAll('"', ''),
                 'acreedor': parts.length > 4 ? parts[4].trim().replaceAll('"', '') : '',
                 'cuenta': parts.length > 5 ? parts[5].trim().replaceAll('"', '') : 'Efectivo',
-                'negocio': parts.length > 6 ? parts[6].trim().replaceAll('"', '') : 'Minerales',
+                'subcuenta': parts.length > 6 ? parts[6].trim().replaceAll('"', '') : 'Minerales',
+                'negocio': parts.length > 7 ? parts[7].trim().replaceAll('"', '') : 'Minerales',
                 'monto': double.tryParse(parts[parts.length - 4]?.trim() ?? '0') ?? 0,
-                'metodo_pago': parts.length > 7 ? parts[7].trim().replaceAll('"', '') : 'Efectivo',
-                'referencia': parts.length > 8 ? parts[8].trim().replaceAll('"', '') : '',
-                'descripcion': parts.length > 9 ? parts[9].trim().replaceAll('"', '') : '',
+                'metodo_pago': parts.length > 8 ? parts[8].trim().replaceAll('"', '') : 'Efectivo',
+                'referencia': parts.length > 9 ? parts[9].trim().replaceAll('"', '') : '',
+                'descripcion': parts.length > 10 ? parts[10].trim().replaceAll('"', '') : '',
                 'reconciliada': false,
                 'importada': true,
                 'created_at': FieldValue.serverTimestamp(),
@@ -2527,10 +2529,10 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     try {
       final snapshot = await _firestore.collection('transacciones').orderBy('created_at', descending: true).get();
       final buffer = StringBuffer();
-      buffer.writeln('Fecha,Tipo,Concepto,Categoría,Acreedor,Cuenta,Negocio,Monto,Método de Pago,Referencia,Descripción,Reconciliada');
+      buffer.writeln('Fecha,Tipo,Concepto,Categoría,Acreedor,Cuenta,Subcuenta,Negocio,Monto,Método de Pago,Referencia,Descripción,Reconciliada');
       for (var doc in snapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
-        buffer.writeln('${data['fecha'] ?? ''},${data['tipo'] ?? ''},"${data['concepto'] ?? ''}","${data['categoria'] ?? ''}","${data['acreedor'] ?? ''}","${data['cuenta'] ?? ''}","${data['negocio'] ?? 'Minerales'}",${data['monto'] ?? 0},"${data['metodo_pago'] ?? ''}","${data['referencia'] ?? ''}","${data['descripcion'] ?? ''}",${data['reconciliada'] ?? false}');
+        buffer.writeln('${data['fecha'] ?? ''},${data['tipo'] ?? ''},"${data['concepto'] ?? ''}","${data['categoria'] ?? ''}","${data['acreedor'] ?? ''}","${data['cuenta'] ?? ''}","${data['subcuenta'] ?? 'Minerales'}","${data['negocio'] ?? 'Minerales'}",${data['monto'] ?? 0},"${data['metodo_pago'] ?? ''}","${data['referencia'] ?? ''}","${data['descripcion'] ?? ''}",${data['reconciliada'] ?? false}');
       }
       final bytes = utf8.encode(buffer.toString());
       final blob = html.Blob([bytes]);
@@ -2555,8 +2557,10 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     final acreedorCtrl = TextEditingController(text: transaccion?['acreedor'] ?? '');
     final beneficiarioCtrl = TextEditingController(text: transaccion?['beneficiario'] ?? '');
     final numChequeCtrl = TextEditingController(text: transaccion?['num_cheque'] ?? '');
+    
     String tipo = transaccion?['tipo'] ?? 'Ingreso';
     String cuenta = transaccion?['cuenta'] ?? 'Efectivo';
+    String subcuenta = transaccion?['subcuenta'] ?? 'Minerales';
     String negocio = transaccion?['negocio'] ?? 'Minerales';
     bool reconciliada = transaccion?['reconciliada'] ?? false;
     
@@ -2583,6 +2587,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                   ],
                 ),
                 const SizedBox(height: 20),
+                
                 _buildSeccion('💰 Información'),
                 _buildCampo('Concepto *', conceptoCtrl, icon: Icons.description),
                 _buildCampo('Monto', montoCtrl, icon: Icons.attach_money, tipo: TextInputType.number),
@@ -2590,6 +2595,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 _buildCampo('Beneficiario', beneficiarioCtrl, icon: Icons.person_outline),
                 _buildCampo('N° de Cheque', numChequeCtrl, icon: Icons.receipt),
                 const SizedBox(height: 12),
+                
                 _buildSeccion('📋 Clasificación'),
                 Row(
                   children: [
@@ -2601,30 +2607,65 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 _buildCampo('Subcategoría', subcategoriaCtrl, icon: Icons.subdirectory_arrow_right),
                 _buildCampo('Fecha', fechaCtrl, icon: Icons.calendar_today),
                 const SizedBox(height: 12),
+                
                 _buildSeccion('💳 Cuenta'),
                 DropdownButtonFormField<String>(
                   value: cuenta,
-                  decoration: InputDecoration(labelText: 'Cuenta', labelStyle: const TextStyle(color: Colors.grey), prefixIcon: const Icon(Icons.account_balance_wallet, color: Color(0xFF0066FF)), filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)),
+                  decoration: InputDecoration(
+                    labelText: 'Cuenta',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    prefixIcon: const Icon(Icons.account_balance_wallet, color: Color(0xFF0066FF)),
+                    filled: true,
+                    fillColor: const Color(0xFF1A1A1A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                  ),
                   dropdownColor: const Color(0xFF1A1A1A),
                   style: const TextStyle(color: Colors.white),
                   items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                   onChanged: (v) => setSheetState(() => cuenta = v!),
                 ),
                 const SizedBox(height: 12),
+                
+                DropdownButtonFormField<String>(
+                  value: subcuenta,
+                  decoration: InputDecoration(
+                    labelText: 'Subcuenta',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    prefixIcon: const Icon(Icons.folder, color: Color(0xFF0066FF)),
+                    filled: true,
+                    fillColor: const Color(0xFF1A1A1A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                  ),
+                  dropdownColor: const Color(0xFF1A1A1A),
+                  style: const TextStyle(color: Colors.white),
+                  items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                  onChanged: (v) => setSheetState(() => subcuenta = v!),
+                ),
+                const SizedBox(height: 12),
+                
                 _buildSeccion('🏢 Negocio'),
                 DropdownButtonFormField<String>(
                   value: negocio,
-                  decoration: InputDecoration(labelText: 'Negocio', labelStyle: const TextStyle(color: Colors.grey), prefixIcon: const Icon(Icons.business, color: Color(0xFF0066FF)), filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)),
+                  decoration: InputDecoration(
+                    labelText: 'Negocio',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    prefixIcon: const Icon(Icons.business, color: Color(0xFF0066FF)),
+                    filled: true,
+                    fillColor: const Color(0xFF1A1A1A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                  ),
                   dropdownColor: const Color(0xFF1A1A1A),
                   style: const TextStyle(color: Colors.white),
                   items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((n) => DropdownMenuItem(value: n, child: Text(n))).toList(),
                   onChanged: (v) => setSheetState(() => negocio = v!),
                 ),
                 const SizedBox(height: 12),
+                
                 _buildSeccion('💳 Método de Pago'),
                 _buildCampo('Método de Pago', metodoPagoCtrl, icon: Icons.credit_card),
                 _buildCampo('Referencia / Folio', referenciaCtrl, icon: Icons.receipt),
                 const SizedBox(height: 12),
+                
                 _buildSeccion('📝 Detalles'),
                 _buildCampoMultilinea('Descripción', descripcionCtrl),
                 CheckboxListTile(
@@ -2636,11 +2677,12 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                   contentPadding: EdgeInsets.zero,
                 ),
                 const SizedBox(height: 16),
+                
                 SizedBox(
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton.icon(
-                    onPressed: () => _guardarTransaccion(ctx, conceptoCtrl, montoCtrl, categoriaCtrl, subcategoriaCtrl, fechaCtrl, descripcionCtrl, metodoPagoCtrl, referenciaCtrl, acreedorCtrl, beneficiarioCtrl, numChequeCtrl, tipo, cuenta, negocio, reconciliada, docId),
+                    onPressed: () => _guardarTransaccion(ctx, conceptoCtrl, montoCtrl, categoriaCtrl, subcategoriaCtrl, fechaCtrl, descripcionCtrl, metodoPagoCtrl, referenciaCtrl, acreedorCtrl, beneficiarioCtrl, numChequeCtrl, tipo, cuenta, subcuenta, negocio, reconciliada, docId),
                     icon: const Icon(Icons.save, color: Colors.white),
                     label: Text(transaccion == null ? 'Crear Transacción' : 'Guardar Cambios', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
@@ -2719,7 +2761,26 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  Future<void> _guardarTransaccion(BuildContext ctx, TextEditingController concepto, TextEditingController monto, TextEditingController categoria, TextEditingController subcategoria, TextEditingController fecha, TextEditingController descripcion, TextEditingController metodoPago, TextEditingController referencia, TextEditingController acreedor, TextEditingController beneficiario, TextEditingController numCheque, String tipo, String cuenta, String negocio, bool reconciliada, String? docId) async {
+  Future<void> _guardarTransaccion(
+    BuildContext ctx,
+    TextEditingController concepto,
+    TextEditingController monto,
+    TextEditingController categoria,
+    TextEditingController subcategoria,
+    TextEditingController fecha,
+    TextEditingController descripcion,
+    TextEditingController metodoPago,
+    TextEditingController referencia,
+    TextEditingController acreedor,
+    TextEditingController beneficiario,
+    TextEditingController numCheque,
+    String tipo,
+    String cuenta,
+    String subcuenta,
+    String negocio,
+    bool reconciliada,
+    String? docId,
+  ) async {
     if (concepto.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ El concepto es obligatorio'), backgroundColor: Colors.orange));
       return;
@@ -2739,6 +2800,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         'num_cheque': numCheque.text.trim(),
         'tipo': tipo,
         'cuenta': cuenta,
+        'subcuenta': subcuenta,
         'negocio': negocio,
         'reconciliada': reconciliada,
       };
