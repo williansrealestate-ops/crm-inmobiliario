@@ -20,20 +20,25 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   List<Map<String, dynamic>> _presupuestosPersonalizados = [];
 
   final List<Map<String, dynamic>> _cuentas = [
-    {'nombre': 'Efectivo', 'icon': Icons.money, 'color': Colors.green}, {'nombre': 'Banco', 'icon': Icons.account_balance, 'color': Colors.blue},
-    {'nombre': 'Tarjeta', 'icon': Icons.credit_card, 'color': Colors.orange}, {'nombre': 'Inversión', 'icon': Icons.trending_up, 'color': Colors.purple},
+    {'nombre': 'Efectivo', 'icon': Icons.money, 'color': Colors.green},
+    {'nombre': 'Banco', 'icon': Icons.account_balance, 'color': Colors.blue},
+    {'nombre': 'Tarjeta', 'icon': Icons.credit_card, 'color': Colors.orange},
+    {'nombre': 'Inversión', 'icon': Icons.trending_up, 'color': Colors.purple},
   ];
   final List<String> _negocios = ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'];
   final List<Map<String, dynamic>> _categoriasGasto = [
-    {'nombre': 'Préstamos', 'icon': Icons.account_balance_wallet}, {'nombre': 'Personal', 'icon': Icons.people}, {'nombre': 'Adair', 'icon': Icons.business},
-    {'nombre': 'Capacitación', 'icon': Icons.school}, {'nombre': 'Deudas', 'icon': Icons.warning}, {'nombre': 'Mobiliario', 'icon': Icons.chair},
-    {'nombre': 'Alquiler', 'icon': Icons.home}, {'nombre': 'Transporte', 'icon': Icons.directions_car}, {'nombre': 'Insumos de Oficina', 'icon': Icons.print},
-    {'nombre': 'Recarga', 'icon': Icons.phone_android}, {'nombre': 'Uber', 'icon': Icons.local_taxi}, {'nombre': 'Propina', 'icon': Icons.card_giftcard},
+    {'nombre': 'Préstamos', 'icon': Icons.account_balance_wallet}, {'nombre': 'Personal', 'icon': Icons.people},
+    {'nombre': 'Adair', 'icon': Icons.business}, {'nombre': 'Capacitación', 'icon': Icons.school},
+    {'nombre': 'Deudas', 'icon': Icons.warning}, {'nombre': 'Mobiliario', 'icon': Icons.chair},
+    {'nombre': 'Alquiler', 'icon': Icons.home}, {'nombre': 'Transporte', 'icon': Icons.directions_car},
+    {'nombre': 'Insumos de Oficina', 'icon': Icons.print}, {'nombre': 'Recarga', 'icon': Icons.phone_android},
+    {'nombre': 'Uber', 'icon': Icons.local_taxi}, {'nombre': 'Propina', 'icon': Icons.card_giftcard},
     {'nombre': 'Otros', 'icon': Icons.more_horiz},
   ];
   final List<Map<String, dynamic>> _categoriasIngreso = [
-    {'nombre': 'Proyecto', 'icon': Icons.business_center}, {'nombre': 'Deslinde', 'icon': Icons.map}, {'nombre': 'Comisiones', 'icon': Icons.handshake},
-    {'nombre': 'Renta', 'icon': Icons.home}, {'nombre': 'Servicios', 'icon': Icons.build}, {'nombre': 'Otros', 'icon': Icons.more_horiz},
+    {'nombre': 'Proyecto', 'icon': Icons.business_center}, {'nombre': 'Deslinde', 'icon': Icons.map},
+    {'nombre': 'Comisiones', 'icon': Icons.handshake}, {'nombre': 'Renta', 'icon': Icons.home},
+    {'nombre': 'Servicios', 'icon': Icons.build}, {'nombre': 'Otros', 'icon': Icons.more_horiz},
   ];
 
   @override
@@ -333,7 +338,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
           for (var t in transacciones) { final monto = (t['monto'] ?? 0).toDouble(); if (t['tipo'] == 'Ingreso') totalDia += monto; if (t['tipo'] == 'Gasto') totalDia -= monto; }
           return Container(margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [Container(width: 40, height: 40, decoration: BoxDecoration(color: const Color(0xFF0066FF).withOpacity(0.2), borderRadius: BorderRadius.circular(8)), child: Center(child: Text(dia, style: const TextStyle(color: Color(0xFF0066FF), fontWeight: FontWeight.bold)))), const SizedBox(width: 12), Expanded(child: Text('Día $dia • ${transacciones.length} transacciones', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))), Text('\$${totalDia.toStringAsFixed(2)}', style: TextStyle(color: totalDia >= 0 ? Colors.green : Colors.red, fontWeight: FontWeight.bold))]),
-            const SizedBox(height: 8), ...transacciones.map((t) => Padding(padding: const EdgeInsets.only(left: 52, top: 4), child: Row(children: [Icon(t['tipo'] == 'Ingreso' ? Icons.arrow_upward : Icons.arrow_downward, color: t['tipo'] == 'Ingreso' ? Colors.green : Colors.red, size: 16), const SizedBox(width: 8), Expanded(child: Text(t['concepto'] ?? '', style: const TextStyle(color: Colors.grey, fontSize: 12))), Text('\$${(t['monto'] ?? 0).toStringAsFixed(2)}', style: TextStyle(color: t['tipo'] == 'Ingreso' ? Colors.green : Colors.red, fontSize: 12))]))
+            const SizedBox(height: 8), ...transacciones.map((t) => Padding(padding: const EdgeInsets.only(left: 52, top: 4), child: Row(children: [Icon(t['tipo'] == 'Ingreso' ? Icons.arrow_upward : Icons.arrow_downward, color: t['tipo'] == 'Ingreso' ? Colors.green : Colors.red, size: 16), const SizedBox(width: 8), Expanded(child: Text(t['concepto'] ?? '', style: const TextStyle(color: Colors.grey, fontSize: 12))), Text('\$${(t['monto'] ?? 0).toStringAsFixed(2)}', style: TextStyle(color: t['tipo'] == 'Ingreso' ? Colors.green : Colors.red, fontSize: 12))])))
           ]));
         }).toList());
       }))
@@ -579,5 +584,32 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
       }, icon: const Icon(Icons.save, color: Colors.white), label: Text(transaccion == null ? 'Crear' : 'Guardar', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
       const SizedBox(height: 20)
     ])))));
+  }
+
+  void _mostrarTransferenciaEntreCuentas() {
+    String cuentaOrigen = 'Inversión'; String cuentaDestino = 'Banco'; String subcuentaOrigen = 'Proyectos'; String subcuentaDestino = 'Proyectos';
+    final montoCtrl = TextEditingController(); final conceptoCtrl = TextEditingController(text: 'Transferencia entre cuentas');
+    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: const Color(0xFF111111), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))), builder: (ctx) => StatefulBuilder(builder: (ctx, setSheetState) => Container(padding: const EdgeInsets.all(20), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [const Icon(Icons.swap_horiz, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text('💱 Transferir', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
+      const SizedBox(height: 16), const Text('Cuenta Origen', style: TextStyle(color: Color(0xFF0066FF), fontSize: 14, fontWeight: FontWeight.bold)), const SizedBox(height: 8),
+      DropdownButtonFormField<String>(value: cuentaOrigen, decoration: const InputDecoration(labelText: 'Cuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => setSheetState(() => cuentaOrigen = v!)),
+      const SizedBox(height: 8), DropdownButtonFormField<String>(value: subcuentaOrigen, decoration: const InputDecoration(labelText: 'Subcuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(), onChanged: (v) => setSheetState(() => subcuentaOrigen = v!)),
+      const SizedBox(height: 16), const Icon(Icons.arrow_downward, color: Colors.white, size: 32), const SizedBox(height: 16),
+      const Text('Cuenta Destino', style: TextStyle(color: Color(0xFF0066FF), fontSize: 14, fontWeight: FontWeight.bold)), const SizedBox(height: 8),
+      DropdownButtonFormField<String>(value: cuentaDestino, decoration: const InputDecoration(labelText: 'Cuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => setSheetState(() => cuentaDestino = v!)),
+      const SizedBox(height: 8), DropdownButtonFormField<String>(value: subcuentaDestino, decoration: const InputDecoration(labelText: 'Subcuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(), onChanged: (v) => setSheetState(() => subcuentaDestino = v!)),
+      const SizedBox(height: 16), TextField(controller: montoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder())),
+      const SizedBox(height: 12), TextField(controller: conceptoCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Concepto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder())),
+      const SizedBox(height: 16), SizedBox(width: double.infinity, child: ElevatedButton.icon(onPressed: () async {
+        final monto = double.tryParse(montoCtrl.text);
+        if (monto == null || monto <= 0) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ Monto inválido'), backgroundColor: Colors.orange)); return; }
+        if (cuentaOrigen == cuentaDestino) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ Cuentas deben ser diferentes'), backgroundColor: Colors.orange)); return; }
+        final fecha = DateTime.now().toIso8601String().split('T')[0];
+        final concepto = conceptoCtrl.text.trim().isEmpty ? 'Transferencia de $cuentaOrigen a $cuentaDestino' : conceptoCtrl.text.trim();
+        await _firestore.collection('transacciones').add({'concepto': '$concepto (salida)', 'monto': monto, 'categoria': 'Transferencia', 'tipo': 'Gasto', 'cuenta': cuentaOrigen, 'subcuenta': subcuentaOrigen, 'negocio': 'Proyectos', 'fecha': fecha, 'descripcion': 'Transferencia a $cuentaDestino', 'reconciliada': true, 'es_transferencia': true, 'cuenta_relacionada': cuentaDestino, 'created_at': FieldValue.serverTimestamp()});
+        await _firestore.collection('transacciones').add({'concepto': '$concepto (entrada)', 'monto': monto, 'categoria': 'Transferencia', 'tipo': 'Ingreso', 'cuenta': cuentaDestino, 'subcuenta': subcuentaDestino, 'negocio': 'Proyectos', 'fecha': fecha, 'descripcion': 'Transferencia desde $cuentaOrigen', 'reconciliada': true, 'es_transferencia': true, 'cuenta_relacionada': cuentaOrigen, 'created_at': FieldValue.serverTimestamp()});
+        Navigator.pop(ctx); if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ Transferencia de \$${monto.toStringAsFixed(2)}'), backgroundColor: Colors.green));
+      }, icon: const Icon(Icons.swap_horiz, color: Colors.white), label: const Text('Transferir', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF), padding: const EdgeInsets.symmetric(vertical: 16))))
+    ])));
   }
 }
