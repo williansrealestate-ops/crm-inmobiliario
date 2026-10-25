@@ -18,6 +18,8 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   String _categoriaFiltro = 'Todas';
   String _cuentaFiltro = 'Todas';
   String _negocioFiltro = 'Todos';
+  bool _soloPendientes = false;
+  bool _soloReconciliadas = false;
 
   final List<Map<String, dynamic>> _cuentas = [
     {'nombre': 'Efectivo', 'icon': Icons.money, 'color': Colors.green},
@@ -27,21 +29,21 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   ];
 
   final List<Map<String, dynamic>> _categoriasGasto = [
-    {'nombre': 'Operación', 'icon': Icons.settings, 'presupuesto': 50000.0},
-    {'nombre': 'Marketing', 'icon': Icons.campaign, 'presupuesto': 30000.0},
-    {'nombre': 'Oficina', 'icon': Icons.business, 'presupuesto': 20000.0},
-    {'nombre': 'Comisiones', 'icon': Icons.handshake, 'presupuesto': 100000.0},
-    {'nombre': 'Servicios', 'icon': Icons.bolt, 'presupuesto': 15000.0},
-    {'nombre': 'Otros', 'icon': Icons.more_horiz, 'presupuesto': 10000.0},
+    {'nombre': 'Operación', 'icon': Icons.settings, 'presupuesto': 50000.0, 'subcategorias': ['Mantenimiento', 'Suministros', 'Reparaciones']},
+    {'nombre': 'Marketing', 'icon': Icons.campaign, 'presupuesto': 30000.0, 'subcategorias': ['Publicidad', 'Redes Sociales', 'Eventos']},
+    {'nombre': 'Oficina', 'icon': Icons.business, 'presupuesto': 20000.0, 'subcategorias': ['Renta', 'Servicios', 'Papelería']},
+    {'nombre': 'Comisiones', 'icon': Icons.handshake, 'presupuesto': 100000.0, 'subcategorias': ['Asesores', 'Bonos']},
+    {'nombre': 'Servicios', 'icon': Icons.bolt, 'presupuesto': 15000.0, 'subcategorias': ['Luz', 'Agua', 'Internet', 'Teléfono']},
+    {'nombre': 'Otros', 'icon': Icons.more_horiz, 'presupuesto': 10000.0, 'subcategorias': []},
   ];
 
   final List<Map<String, dynamic>> _categoriasIngreso = [
-    {'nombre': 'Ventas', 'icon': Icons.shopping_cart},
-    {'nombre': 'Comisiones', 'icon': Icons.handshake},
-    {'nombre': 'Renta', 'icon': Icons.home},
-    {'nombre': 'Servicios', 'icon': Icons.build},
-    {'nombre': 'Consultoría', 'icon': Icons.lightbulb},
-    {'nombre': 'Otros', 'icon': Icons.more_horiz},
+    {'nombre': 'Ventas', 'icon': Icons.shopping_cart, 'subcategorias': ['Propiedades', 'Terrenos']},
+    {'nombre': 'Comisiones', 'icon': Icons.handshake, 'subcategorias': ['Referidos', 'Cierres']},
+    {'nombre': 'Renta', 'icon': Icons.home, 'subcategorias': ['Mensual', 'Anual']},
+    {'nombre': 'Servicios', 'icon': Icons.build, 'subcategorias': ['Consultoría', 'Asesoría']},
+    {'nombre': 'Consultoría', 'icon': Icons.lightbulb, 'subcategorias': []},
+    {'nombre': 'Otros', 'icon': Icons.more_horiz, 'subcategorias': []},
   ];
 
   final List<String> _negocios = ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'];
@@ -49,7 +51,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 7, vsync: this);
   }
 
   @override
@@ -67,10 +69,11 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         title: const Row(children: [
           Icon(Icons.account_balance_wallet, color: Colors.white),
           SizedBox(width: 8),
-          Text('Finanzas', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          Text('Finanzas Pro', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ]),
         actions: [
           IconButton(icon: const Icon(Icons.add, color: Colors.white, size: 28), onPressed: () => _mostrarFormularioTransaccion()),
+          IconButton(icon: const Icon(Icons.upload_file, color: Colors.white), onPressed: () => _importarCSV(), tooltip: 'Importar CSV'),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert, color: Colors.white),
             onSelected: (value) {
@@ -79,12 +82,18 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               if (value == 'metas') _mostrarMetas();
               if (value == 'recurrentes') _mostrarRecurrentes();
               if (value == 'calendario') _mostrarCalendario();
+              if (value == 'hoy') _mostrarVistaHoy();
+              if (value == 'reconciliar') _mostrarReconciliacion();
+              if (value == 'informes') _mostrarInformes();
             },
             itemBuilder: (context) => [
+              const PopupMenuItem(value: 'hoy', child: Row(children: [Icon(Icons.today, color: Color(0xFF0066FF)), SizedBox(width: 8), Text('Vista de Hoy')])),
+              const PopupMenuItem(value: 'calendario', child: Row(children: [Icon(Icons.calendar_month, color: Color(0xFF0066FF)), SizedBox(width: 8), Text('Calendario')])),
               const PopupMenuItem(value: 'presupuestos', child: Row(children: [Icon(Icons.pie_chart, color: Color(0xFF0066FF)), SizedBox(width: 8), Text('Presupuestos')])),
               const PopupMenuItem(value: 'metas', child: Row(children: [Icon(Icons.flag, color: Color(0xFF0066FF)), SizedBox(width: 8), Text('Metas de Ahorro')])),
               const PopupMenuItem(value: 'recurrentes', child: Row(children: [Icon(Icons.repeat, color: Color(0xFF0066FF)), SizedBox(width: 8), Text('Transacciones Recurrentes')])),
-              const PopupMenuItem(value: 'calendario', child: Row(children: [Icon(Icons.calendar_month, color: Color(0xFF0066FF)), SizedBox(width: 8), Text('Calendario')])),
+              const PopupMenuItem(value: 'reconciliar', child: Row(children: [Icon(Icons.check_circle, color: Color(0xFF0066FF)), SizedBox(width: 8), Text('Reconciliar')])),
+              const PopupMenuItem(value: 'informes', child: Row(children: [Icon(Icons.analytics, color: Color(0xFF0066FF)), SizedBox(width: 8), Text('Informes Detallados')])),
               const PopupMenuItem(value: 'exportar', child: Row(children: [Icon(Icons.download, color: Color(0xFF0066FF)), SizedBox(width: 8), Text('Exportar CSV')])),
             ],
           ),
@@ -96,10 +105,12 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
           tabs: const [
+            Tab(icon: Icon(Icons.today), text: 'Hoy'),
             Tab(icon: Icon(Icons.dashboard), text: 'Resumen'),
             Tab(icon: Icon(Icons.arrow_upward), text: 'Ingresos'),
             Tab(icon: Icon(Icons.arrow_downward), text: 'Gastos'),
             Tab(icon: Icon(Icons.credit_card), text: 'Cuentas'),
+            Tab(icon: Icon(Icons.calendar_month), text: 'Calendario'),
             Tab(icon: Icon(Icons.show_chart), text: 'Reportes'),
           ],
         ),
@@ -107,16 +118,157 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
       body: TabBarView(
         controller: _tabController,
         children: [
+          _buildVistaHoy(),
           _buildResumen(),
           _buildListaTransacciones('Ingreso'),
           _buildListaTransacciones('Gasto'),
           _buildCuentas(),
+          _buildCalendarioCompleto(),
           _buildReportes(),
         ],
       ),
     );
   }
 
+  // ============================================
+  // VISTA DE HOY (Nuevo estilo Money Pro)
+  // ============================================
+  Widget _buildVistaHoy() {
+    final hoy = DateTime.now();
+    final fechaHoy = '${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}';
+    
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header con fecha
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFF0066FF), Color(0xFF0044AA)]),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('📅 Vista del Día', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  const SizedBox(height: 8),
+                  Text('${hoy.day} de ${['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][hoy.month - 1]} ${hoy.year}', 
+                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(child: _buildMiniCard('Pendientes', Icons.schedule, Colors.orange)),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildMiniCard('Completadas', Icons.check_circle, Colors.green)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            // Facturas/Transacciones del día
+            const Text('📋 Transacciones de Hoy', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            
+            StreamBuilder<QuerySnapshot>(
+              stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                final docs = snapshot.data!.docs;
+                final transaccionesHoy = docs.where((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  return data['fecha'] == fechaHoy;
+                }).toList();
+                
+                if (transaccionesHoy.isEmpty) {
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(40),
+                    decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12)),
+                    child: const Column(
+                      children: [
+                        Icon(Icons.event_busy, color: Colors.grey, size: 64),
+                        SizedBox(height: 16),
+                        Text('No hay transacciones para hoy', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                        SizedBox(height: 8),
+                        Text('Agrega una nueva transacción', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                      ],
+                    ),
+                  );
+                }
+                
+                return Column(
+                  children: transaccionesHoy.map((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final esIngreso = data['tipo'] == 'Ingreso';
+                    final reconciliada = data['reconciliada'] ?? false;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF111111),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: reconciliada ? Colors.green : const Color(0xFF222222)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(width: 40, height: 40, decoration: BoxDecoration(color: esIngreso ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2), shape: BoxShape.circle), 
+                            child: Icon(esIngreso ? Icons.arrow_upward : Icons.arrow_downward, color: esIngreso ? Colors.green : Colors.red, size: 20)),
+                          const SizedBox(width: 12),
+                          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Row(children: [
+                              Text(data['concepto'] ?? 'Sin concepto', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                              if (reconciliada) const Icon(Icons.check_circle, color: Colors.green, size: 16),
+                            ]),
+                            Text('${data['categoria'] ?? 'General'} • ${data['cuenta'] ?? 'Efectivo'}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                          ])),
+                          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                            Text('${esIngreso ? "+" : "-"}\$${data['monto'] ?? '0'}', style: TextStyle(color: esIngreso ? Colors.green : Colors.red, fontSize: 16, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 4),
+                            if (!reconciliada) TextButton(
+                              onPressed: () => _aprobarTransaccion(doc.id),
+                              child: const Text('Aprobar', style: TextStyle(color: Color(0xFF0066FF), fontSize: 12)),
+                            ),
+                          ]),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMiniCard(String titulo, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: color.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+      child: Row(children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(width: 8),
+        Text(titulo, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
+      ]),
+    );
+  }
+
+  Future<void> _aprobarTransaccion(String id) async {
+    await _firestore.collection('transacciones').doc(id).update({'reconciliada': true});
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Transacción aprobada'), backgroundColor: Colors.green));
+  }
+
+  // ============================================
+  // RESUMEN
+  // ============================================
   Widget _buildResumen() {
     return Container(
       width: double.infinity,
@@ -317,6 +469,9 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
+  // ============================================
+  // LISTA DE TRANSACCIONES (con mejoras Money Pro)
+  // ============================================
   Widget _buildListaTransacciones(String tipo) {
     return Container(
       width: double.infinity,
@@ -343,6 +498,23 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 items: ['Todos', 'Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((n) => DropdownMenuItem(value: n, child: Text(n))).toList(),
                 onChanged: (v) => setState(() => _negocioFiltro = v!),
               ),
+              const SizedBox(height: 12),
+              Row(children: [
+                Expanded(child: CheckboxListTile(
+                  title: const Text('Solo pendientes', style: TextStyle(color: Colors.white, fontSize: 12)),
+                  value: _soloPendientes,
+                  activeColor: const Color(0xFF0066FF),
+                  onChanged: (v) => setState(() => _soloPendientes = v ?? false),
+                  contentPadding: EdgeInsets.zero,
+                )),
+                Expanded(child: CheckboxListTile(
+                  title: const Text('Solo reconciliadas', style: TextStyle(color: Colors.white, fontSize: 12)),
+                  value: _soloReconciliadas,
+                  activeColor: Colors.green,
+                  onChanged: (v) => setState(() => _soloReconciliadas = v ?? false),
+                  contentPadding: EdgeInsets.zero,
+                )),
+              ]),
             ]),
           ),
           Expanded(
@@ -361,12 +533,15 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                     final categoria = data['categoria'] ?? 'General';
                     final cuenta = data['cuenta'] ?? 'Efectivo';
                     final negocio = data['negocio'] ?? 'Minerales';
+                    final reconciliada = data['reconciliada'] ?? false;
                     final matchTipo = data['tipo'] == tipo;
                     final matchSearch = _search.isEmpty || concepto.contains(_search);
                     final matchCategoria = _categoriaFiltro == 'Todas' || categoria == _categoriaFiltro;
                     final matchCuenta = _cuentaFiltro == 'Todas' || cuenta == _cuentaFiltro;
                     final matchNegocio = _negocioFiltro == 'Todos' || negocio == _negocioFiltro;
-                    return matchTipo && matchSearch && matchCategoria && matchCuenta && matchNegocio;
+                    final matchPendiente = !_soloPendientes || !reconciliada;
+                    final matchReconciliada = !_soloReconciliadas || reconciliada;
+                    return matchTipo && matchSearch && matchCategoria && matchCuenta && matchNegocio && matchPendiente && matchReconciliada;
                   }).toList();
                   
                   if (filtrados.isEmpty) {
@@ -397,17 +572,33 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                           final doc = filtrados[index];
                           final data = doc.data() as Map<String, dynamic>;
                           final acreedor = data['acreedor'] ?? '';
+                          final reconciliada = data['reconciliada'] ?? false;
+                          final tieneFoto = data['foto_recibo'] != null;
+                          final dividida = data['divisiones'] != null && (data['divisiones'] as List).isNotEmpty;
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12), 
-                            decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF222222))), 
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF111111), 
+                              borderRadius: BorderRadius.circular(8), 
+                              border: Border.all(color: reconciliada ? Colors.green : const Color(0xFF222222)),
+                            ), 
                             child: ListTile(
                               contentPadding: const EdgeInsets.all(16), 
-                              leading: Container(width: 50, height: 50, decoration: BoxDecoration(color: tipo == 'Ingreso' ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2), shape: BoxShape.circle), child: Icon(tipo == 'Ingreso' ? Icons.arrow_upward : Icons.arrow_downward, color: tipo == 'Ingreso' ? Colors.green : Colors.red, size: 24)), 
-                              title: Text(data['concepto'] ?? 'Sin concepto', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)), 
+                              leading: Container(width: 50, height: 50, decoration: BoxDecoration(color: tipo == 'Ingreso' ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2), shape: BoxShape.circle), 
+                                child: Stack(children: [
+                                  Center(child: Icon(tipo == 'Ingreso' ? Icons.arrow_upward : Icons.arrow_downward, color: tipo == 'Ingreso' ? Colors.green : Colors.red, size: 24)),
+                                  if (reconciliada) Positioned(right: 0, bottom: 0, child: Container(padding: const EdgeInsets.all(2), decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle), child: const Icon(Icons.check, color: Colors.white, size: 10))),
+                                ])), 
+                              title: Row(children: [
+                                Expanded(child: Text(data['concepto'] ?? 'Sin concepto', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))),
+                                if (tieneFoto) const Icon(Icons.photo, color: Colors.blue, size: 16),
+                                if (dividida) const Icon(Icons.call_split, color: Colors.orange, size: 16),
+                              ]),
                               subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                 const SizedBox(height: 4), 
                                 Text('${data['categoria'] ?? 'General'} • ${data['cuenta'] ?? 'Efectivo'} • ${data['negocio'] ?? 'Minerales'}', style: const TextStyle(color: Colors.grey)),
                                 if (acreedor.isNotEmpty) Text('Acreedor: $acreedor', style: const TextStyle(color: Colors.orange, fontSize: 11)),
+                                if (data['num_cheque'] != null && data['num_cheque'].toString().isNotEmpty) Text('Cheque: ${data['num_cheque']}', style: const TextStyle(color: Colors.grey, fontSize: 11)),
                                 Text('${data['fecha'] ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 12))
                               ]), 
                               trailing: Column(
@@ -417,7 +608,9 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                                   Text('\$${data['monto'] ?? '0'}', style: TextStyle(color: tipo == 'Ingreso' ? Colors.green : Colors.red, fontSize: 16, fontWeight: FontWeight.bold)), 
                                   const SizedBox(height: 8), 
                                   Row(mainAxisSize: MainAxisSize.min, children: [
-                                    IconButton(icon: const Icon(Icons.copy, color: Colors.blue, size: 20), onPressed: () => _duplicarTransaccion(data)),
+                                    IconButton(icon: const Icon(Icons.copy, color: Colors.blue, size: 20), onPressed: () => _duplicarTransaccion(data), tooltip: 'Duplicar'),
+                                    IconButton(icon: const Icon(Icons.call_split, color: Colors.orange, size: 20), onPressed: () => _dividirTransaccion(doc.id, data), tooltip: 'Dividir'),
+                                    IconButton(icon: Icon(reconciliada ? Icons.check_circle : Icons.radio_button_unchecked, color: reconciliada ? Colors.green : Colors.grey, size: 20), onPressed: () => _toggleReconciliar(doc.id, reconciliada), tooltip: reconciliada ? 'Reconciliada' : 'Marcar reconciliada'),
                                     IconButton(icon: const Icon(Icons.edit, color: Colors.orange, size: 20), onPressed: () => _mostrarFormularioTransaccion(transaccion: data, docId: doc.id)), 
                                     IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20), onPressed: () => _eliminarTransaccion(doc.id, data['concepto']))
                                   ])
@@ -438,6 +631,72 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
+  Future<void> _toggleReconciliar(String id, bool actual) async {
+    await _firestore.collection('transacciones').doc(id).update({'reconciliada': !actual});
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(!actual ? '✅ Reconciliada' : '↩️ Desmarcada'), backgroundColor: !actual ? Colors.green : Colors.grey));
+  }
+
+  Future<void> _dividirTransaccion(String id, Map<String, dynamic> data) async {
+    final divisiones = (data['divisiones'] as List?)?.map((d) => Map<String, dynamic>.from(d as Map)).toList() ?? [];
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF111111),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Container(
+          padding: const EdgeInsets.all(20),
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [const Icon(Icons.call_split, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text('✂️ Dividir Transacción', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
+              const SizedBox(height: 16),
+              Text('Total: \$${(data['monto'] ?? 0).toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              ...divisiones.asMap().entries.map((entry) {
+                final idx = entry.key;
+                final div = entry.value;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
+                  child: Row(children: [
+                    Expanded(child: Text(div['categoria'] ?? '', style: const TextStyle(color: Colors.white))),
+                    Text('\$${(div['monto'] ?? 0).toStringAsFixed(2)}', style: const TextStyle(color: Colors.green)),
+                    IconButton(icon: const Icon(Icons.close, color: Colors.red, size: 18), onPressed: () {
+                      divisiones.removeAt(idx);
+                      setSheetState(() {});
+                    }),
+                  ]),
+                );
+              }),
+              const SizedBox(height: 12),
+              Row(children: [
+                Expanded(child: TextField(controller: TextEditingController(), style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Categoría', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none)))),
+                const SizedBox(width: 8),
+                Expanded(child: TextField(controller: TextEditingController(), keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none)))),
+                const SizedBox(width: 8),
+                IconButton(icon: const Icon(Icons.add_circle, color: Color(0xFF0066FF)), onPressed: () {
+                  // Simplificado para demo
+                  setSheetState(() {});
+                }),
+              ]),
+              const SizedBox(height: 16),
+              SizedBox(width: double.infinity, child: ElevatedButton.icon(onPressed: () async {
+                await _firestore.collection('transacciones').doc(id).update({'divisiones': divisiones});
+                Navigator.pop(ctx);
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Transacción dividida'), backgroundColor: Colors.green));
+              }, icon: const Icon(Icons.save, color: Colors.white), label: const Text('Guardar Divisiones', style: TextStyle(color: Colors.white)), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)))),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _duplicarTransaccion(Map<String, dynamic> data) async {
     try {
       final nuevaTransaccion = {
@@ -452,6 +711,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         'cuenta': data['cuenta'] ?? 'Efectivo',
         'negocio': data['negocio'] ?? 'Minerales',
         'acreedor': data['acreedor'] ?? '',
+        'reconciliada': false,
         'created_at': FieldValue.serverTimestamp(),
       };
       await _firestore.collection('transacciones').add(nuevaTransaccion);
@@ -461,6 +721,9 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     }
   }
 
+  // ============================================
+  // CUENTAS (mejorado con historial)
+  // ============================================
   Widget _buildCuentas() {
     return Container(
       width: double.infinity,
@@ -481,12 +744,14 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                   itemBuilder: (context, index) {
                     final cuenta = _cuentas[index];
                     double ingresos = 0, gastos = 0;
+                    int numTransacciones = 0;
                     for (var doc in docs) {
                       final data = doc.data() as Map<String, dynamic>;
                       if (data['cuenta'] == cuenta['nombre']) {
                         final monto = (data['monto'] ?? 0).toDouble();
                         if (data['tipo'] == 'Ingreso') ingresos += monto;
                         if (data['tipo'] == 'Gasto') gastos += monto;
+                        numTransacciones++;
                       }
                     }
                     final balance = ingresos - gastos;
@@ -504,6 +769,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                               children: [
                                 Text(cuenta['nombre'] as String, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                                 Text('\$${balance.toStringAsFixed(2)}', style: TextStyle(color: balance >= 0 ? Colors.green : Colors.red, fontSize: 14)),
+                                Text('$numTransacciones transacciones', style: const TextStyle(color: Colors.grey, fontSize: 11)),
                               ],
                             ),
                           ),
@@ -521,6 +787,117 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
+  // ============================================
+  // CALENDARIO COMPLETO (Nuevo estilo Money Pro)
+  // ============================================
+  Widget _buildCalendarioCompleto() {
+    DateTime _mesSeleccionado = DateTime.now();
+
+    return StatefulBuilder(
+      builder: (context, setSheetState) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(icon: const Icon(Icons.chevron_left, color: Colors.white), onPressed: () => setSheetState(() => _mesSeleccionado = DateTime(_mesSeleccionado.year, _mesSeleccionado.month - 1))),
+                Text('${_mesSeleccionado.year} - ${['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][_mesSeleccionado.month - 1]}', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                IconButton(icon: const Icon(Icons.chevron_right, color: Colors.white), onPressed: () => setSheetState(() => _mesSeleccionado = DateTime(_mesSeleccionado.year, _mesSeleccionado.month + 1))),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                  final docs = snapshot.data!.docs;
+                  final transaccionesDelMes = docs.where((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final fechaStr = data['fecha'] as String? ?? '';
+                    if (fechaStr.length >= 7) {
+                      final fechaParts = fechaStr.split('-');
+                      if (fechaParts.length >= 2) {
+                        final anio = int.tryParse(fechaParts[0]);
+                        final mes = int.tryParse(fechaParts[1]);
+                        return anio == _mesSeleccionado.year && mes == _mesSeleccionado.month;
+                      }
+                    }
+                    return false;
+                  }).toList();
+                  
+                  if (transaccionesDelMes.isEmpty) {
+                    return const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(Icons.calendar_today, color: Colors.grey, size: 64),
+                      SizedBox(height: 16),
+                      Text('No hay transacciones este mes', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                    ]));
+                  }
+                  
+                  Map<String, List<Map<String, dynamic>>> porDia = {};
+                  for (var doc in transaccionesDelMes) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final fechaStr = data['fecha'] as String? ?? '';
+                    if (fechaStr.length >= 10) {
+                      final dia = fechaStr.substring(8, 10);
+                      if (!porDia.containsKey(dia)) porDia[dia] = [];
+                      porDia[dia]!.add(data);
+                    }
+                  }
+                  
+                  return ListView(
+                    children: porDia.entries.map((entry) {
+                      final dia = entry.key;
+                      final transacciones = entry.value;
+                      double totalDia = 0;
+                      for (var t in transacciones) {
+                        final monto = (t['monto'] ?? 0).toDouble();
+                        if (t['tipo'] == 'Ingreso') totalDia += monto;
+                        if (t['tipo'] == 'Gasto') totalDia -= monto;
+                      }
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(children: [
+                              Container(width: 40, height: 40, decoration: BoxDecoration(color: const Color(0xFF0066FF).withOpacity(0.2), borderRadius: BorderRadius.circular(8)), child: Center(child: Text(dia, style: const TextStyle(color: Color(0xFF0066FF), fontWeight: FontWeight.bold)))),
+                              const SizedBox(width: 12),
+                              Expanded(child: Text('Día $dia • ${transacciones.length} transacciones', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                              Text('\$${totalDia.toStringAsFixed(2)}', style: TextStyle(color: totalDia >= 0 ? Colors.green : Colors.red, fontWeight: FontWeight.bold)),
+                            ]),
+                            const SizedBox(height: 8),
+                            ...transacciones.map((t) => Padding(
+                              padding: const EdgeInsets.only(left: 52, top: 4),
+                              child: Row(children: [
+                                Icon(t['tipo'] == 'Ingreso' ? Icons.arrow_upward : Icons.arrow_downward, color: t['tipo'] == 'Ingreso' ? Colors.green : Colors.red, size: 16),
+                                const SizedBox(width: 8),
+                                Expanded(child: Text(t['concepto'] ?? '', style: const TextStyle(color: Colors.grey, fontSize: 12))),
+                                Text('\$${(t['monto'] ?? 0).toStringAsFixed(2)}', style: TextStyle(color: t['tipo'] == 'Ingreso' ? Colors.green : Colors.red, fontSize: 12)),
+                              ]),
+                            )),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ============================================
+  // REPORTES (mejorado con más tipos)
+  // ============================================
   Widget _buildReportes() {
     return Container(
       width: double.infinity,
@@ -538,7 +915,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               child: _buildGraficoIngresosPorCategoria(),
             ),
             const SizedBox(height: 24),
-            const Text('📊 Gastos por Categoría', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text(' Gastos por Categoría', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Container(
               height: 250,
@@ -547,7 +924,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               child: _buildGraficoGastosPorCategoria(),
             ),
             const SizedBox(height: 24),
-            const Text(' Comparativo Mensual', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text('📈 Comparativo Mensual', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Container(
               height: 250,
@@ -555,9 +932,44 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))),
               child: _buildGraficoBarras(),
             ),
+            const SizedBox(height: 24),
+            const Text(' Flujo de Caja', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            _buildFlujoDeCaja(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildFlujoDeCaja() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore.collection('transacciones').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final docs = snapshot.data!.docs;
+        double ingresos = 0, gastos = 0;
+        for (var doc in docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          final monto = (data['monto'] ?? 0).toDouble();
+          if (data['tipo'] == 'Ingreso') ingresos += monto;
+          if (data['tipo'] == 'Gasto') gastos += monto;
+        }
+        final flujo = ingresos - gastos;
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))),
+          child: Column(
+            children: [
+              Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+                Column(children: [const Text('Ingresos', style: TextStyle(color: Colors.grey, fontSize: 12)), Text('\$${ingresos.toStringAsFixed(2)}', style: const TextStyle(color: Colors.green, fontSize: 20, fontWeight: FontWeight.bold))]),
+                Column(children: [const Text('Gastos', style: TextStyle(color: Colors.grey, fontSize: 12)), Text('\$${gastos.toStringAsFixed(2)}', style: const TextStyle(color: Colors.red, fontSize: 20, fontWeight: FontWeight.bold))]),
+                Column(children: [const Text('Flujo', style: TextStyle(color: Colors.grey, fontSize: 12)), Text('\$${flujo.toStringAsFixed(2)}', style: TextStyle(color: flujo >= 0 ? Colors.green : Colors.red, fontSize: 20, fontWeight: FontWeight.bold))]),
+              ]),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -666,6 +1078,9 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
+  // ============================================
+  // PRESUPUESTOS (mejorado con subcategorías)
+  // ============================================
   void _mostrarPresupuestos() {
     showModalBottomSheet(
       context: context,
@@ -679,7 +1094,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [const Icon(Icons.pie_chart, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text('Presupuestos por Categoría', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
+            Row(children: [const Icon(Icons.pie_chart, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text(' Presupuestos por Categoría', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
             const SizedBox(height: 20),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
@@ -703,6 +1118,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                       final presupuesto = cat['presupuesto'] as double;
                       final porcentaje = (gastadoCat / presupuesto * 100).clamp(0, 100);
                       final excedido = gastadoCat > presupuesto;
+                      final subcategorias = cat['subcategorias'] as List? ?? [];
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(12),
@@ -715,6 +1131,11 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                             ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: porcentaje / 100, backgroundColor: Colors.grey.shade800, valueColor: AlwaysStoppedAnimation<Color>(excedido ? Colors.red : const Color(0xFF0066FF)), minHeight: 8)),
                             const SizedBox(height: 4),
                             Text('${porcentaje.toStringAsFixed(1)}% utilizado', style: TextStyle(color: excedido ? Colors.red : Colors.grey, fontSize: 11)),
+                            if (subcategorias.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              const Text('Subcategorías:', style: TextStyle(color: Colors.grey, fontSize: 10)),
+                              Wrap(children: (subcategorias as List).map((s) => Container(margin: const EdgeInsets.only(right: 4, top: 4), padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: const Color(0xFF0066FF).withOpacity(0.2), borderRadius: BorderRadius.circular(4)), child: Text(s.toString(), style: const TextStyle(color: Color(0xFF0066FF), fontSize: 10)))),
+                            ],
                           ],
                         ),
                       );
@@ -729,6 +1150,9 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
+  // ============================================
+  // METAS DE AHORRO
+  // ============================================
   void _mostrarMetas() {
     final nombreCtrl = TextEditingController();
     final montoCtrl = TextEditingController();
@@ -835,6 +1259,9 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
+  // ============================================
+  // TRANSACCIONES RECURRENTES
+  // ============================================
   void _mostrarRecurrentes() {
     final conceptoCtrl = TextEditingController();
     final montoCtrl = TextEditingController();
@@ -951,125 +1378,197 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  void _mostrarCalendario() {
-    DateTime _mesSeleccionado = DateTime.now();
+  // ============================================
+  // VISTA DE HOY (Modal)
+  // ============================================
+  void _mostrarVistaHoy() {
+    _tabController.animateTo(0);
+  }
 
+  // ============================================
+  // RECONCILIACIÓN
+  // ============================================
+  void _mostrarReconciliacion() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: const Color(0xFF111111),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) => Container(
-          padding: const EdgeInsets.all(20),
-          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.85),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [const Icon(Icons.calendar_month, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text('📅 Calendario de Transacciones', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(icon: const Icon(Icons.chevron_left, color: Colors.white), onPressed: () => setSheetState(() => _mesSeleccionado = DateTime(_mesSeleccionado.year, _mesSeleccionado.month - 1))),
-                  Text('${_mesSeleccionado.year} - ${['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][_mesSeleccionado.month - 1]}', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                  IconButton(icon: const Icon(Icons.chevron_right, color: Colors.white), onPressed: () => setSheetState(() => _mesSeleccionado = DateTime(_mesSeleccionado.year, _mesSeleccionado.month + 1))),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: StreamBuilder<QuerySnapshot>(
-                  stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).snapshots(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                    final docs = snapshot.data!.docs;
-                    final transaccionesDelMes = docs.where((doc) {
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(20),
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [const Icon(Icons.check_circle, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text('✅ Reconciliar Transacciones', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
+            const SizedBox(height: 20),
+            const Text('Marca las transacciones que ya verificaste con tu estado de cuenta bancario.', style: TextStyle(color: Colors.grey)),
+            const SizedBox(height: 16),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                  final docs = snapshot.data!.docs;
+                  final pendientes = docs.where((d) => !(d.data() as Map)['reconciliada']).toList();
+                  if (pendientes.isEmpty) return const Center(child: Text('✅ Todas las transacciones están reconciliadas', style: TextStyle(color: Colors.green)));
+                  return ListView.builder(
+                    itemCount: pendientes.length,
+                    itemBuilder: (context, index) {
+                      final doc = pendientes[index];
                       final data = doc.data() as Map<String, dynamic>;
-                      final fechaStr = data['fecha'] as String? ?? '';
-                      if (fechaStr.length >= 7) {
-                        final fechaParts = fechaStr.split('-');
-                        if (fechaParts.length >= 2) {
-                          final anio = int.tryParse(fechaParts[0]);
-                          final mes = int.tryParse(fechaParts[1]);
-                          return anio == _mesSeleccionado.year && mes == _mesSeleccionado.month;
-                        }
-                      }
-                      return false;
-                    }).toList();
-                    
-                    if (transaccionesDelMes.isEmpty) {
-                      return const Center(child: Text('No hay transacciones este mes', style: TextStyle(color: Colors.grey)));
-                    }
-                    
-                    Map<String, List<Map<String, dynamic>>> porDia = {};
-                    for (var doc in transaccionesDelMes) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      final fechaStr = data['fecha'] as String? ?? '';
-                      if (fechaStr.length >= 10) {
-                        final dia = fechaStr.substring(8, 10);
-                        if (!porDia.containsKey(dia)) porDia[dia] = [];
-                        porDia[dia]!.add(data);
-                      }
-                    }
-                    
-                    return ListView(
-                      children: porDia.entries.map((entry) {
-                        final dia = entry.key;
-                        final transacciones = entry.value;
-                        double totalDia = 0;
-                        for (var t in transacciones) {
-                          final monto = (t['monto'] ?? 0).toDouble();
-                          if (t['tipo'] == 'Ingreso') totalDia += monto;
-                          if (t['tipo'] == 'Gasto') totalDia -= monto;
-                        }
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(children: [
-                                Container(width: 40, height: 40, decoration: BoxDecoration(color: const Color(0xFF0066FF).withOpacity(0.2), borderRadius: BorderRadius.circular(8)), child: Center(child: Text(dia, style: const TextStyle(color: Color(0xFF0066FF), fontWeight: FontWeight.bold)))),
-                                const SizedBox(width: 12),
-                                Expanded(child: Text('Día $dia', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-                                Text('\$${totalDia.toStringAsFixed(2)}', style: TextStyle(color: totalDia >= 0 ? Colors.green : Colors.red, fontWeight: FontWeight.bold)),
-                              ]),
-                              const SizedBox(height: 8),
-                              ...transacciones.map((t) => Padding(
-                                padding: const EdgeInsets.only(left: 52, top: 4),
-                                child: Row(children: [
-                                  Icon(t['tipo'] == 'Ingreso' ? Icons.arrow_upward : Icons.arrow_downward, color: t['tipo'] == 'Ingreso' ? Colors.green : Colors.red, size: 16),
-                                  const SizedBox(width: 8),
-                                  Expanded(child: Text(t['concepto'] ?? '', style: const TextStyle(color: Colors.grey, fontSize: 12))),
-                                  Text('\$${(t['monto'] ?? 0).toStringAsFixed(2)}', style: TextStyle(color: t['tipo'] == 'Ingreso' ? Colors.green : Colors.red, fontSize: 12)),
-                                ]),
-                              )),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    );
-                  },
-                ),
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
+                        child: Row(
+                          children: [
+                            Checkbox(value: false, activeColor: Colors.green, onChanged: (v) async {
+                              await _firestore.collection('transacciones').doc(doc.id).update({'reconciliada': true});
+                            }),
+                            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Text(data['concepto'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                              Text('${data['categoria'] ?? ''} • ${data['fecha'] ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                            ])),
+                            Text('\$${(data['monto'] ?? 0).toStringAsFixed(2)}', style: TextStyle(color: data['tipo'] == 'Ingreso' ? Colors.green : Colors.red, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
+  // ============================================
+  // INFORMES DETALLADOS
+  // ============================================
+  void _mostrarInformes() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF111111),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(20),
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [const Icon(Icons.analytics, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text(' Informes Detallados', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
+            const SizedBox(height: 20),
+            Expanded(
+              child: ListView(
+                children: [
+                  _buildInformeItem(' Ingresos/Gastos', 'Resumen de ingresos y gastos por periodo', Icons.show_chart),
+                  _buildInformeItem('💵 Flujo de Caja', 'Entradas y salidas de efectivo', Icons.currency_exchange),
+                  _buildInformeItem('📋 Transacciones', 'Listado detallado de todas las transacciones', Icons.receipt_long),
+                  _buildInformeItem('💳 Activos/Pasivos', 'Balance de cuentas y obligaciones', Icons.account_balance),
+                  _buildInformeItem('📈 Saldo Proyectado', 'Proyección de saldo futuro', Icons.trending_up),
+                  _buildInformeItem(' Tendencia', 'Gráfico de tendencia por días/semanas/meses', Icons.date_range),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInformeItem(String titulo, String descripcion, IconData icon) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF0066FF), size: 28),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(titulo, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            Text(descripcion, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+          ])),
+          const Icon(Icons.chevron_right, color: Colors.grey),
+        ],
+      ),
+    );
+  }
+
+  // ============================================
+  // CALENDARIO (Modal)
+  // ============================================
+  void _mostrarCalendario() {
+    _tabController.animateTo(5);
+  }
+
+  // ============================================
+  // IMPORTAR CSV (Nuevo)
+  // ============================================
+  Future<void> _importarCSV() async {
+    final input = html.FileUploadInputElement()..accept = '.csv';
+    input.click();
+    input.onChange.listen((e) async {
+      final files = input.files;
+      if (files == null || files.isEmpty) return;
+      final file = files.first;
+      final reader = html.FileReader();
+      reader.readAsText(file);
+      reader.onLoadEnd.listen((e) async {
+        final content = reader.result as String;
+        final lines = content.split('\n');
+        int importados = 0;
+        for (int i = 1; i < lines.length; i++) {
+          final line = lines[i].trim();
+          if (line.isEmpty) continue;
+          final parts = line.split(',');
+          if (parts.length >= 8) {
+            try {
+              await _firestore.collection('transacciones').add({
+                'fecha': parts[0].trim(),
+                'tipo': parts[1].trim(),
+                'concepto': parts[2].trim().replaceAll('"', ''),
+                'categoria': parts[3].trim().replaceAll('"', ''),
+                'acreedor': parts.length > 4 ? parts[4].trim().replaceAll('"', '') : '',
+                'cuenta': parts.length > 5 ? parts[5].trim().replaceAll('"', '') : 'Efectivo',
+                'negocio': parts.length > 6 ? parts[6].trim().replaceAll('"', '') : 'Minerales',
+                'monto': double.tryParse(parts[parts.length - 4]?.trim() ?? '0') ?? 0,
+                'metodo_pago': parts.length > 7 ? parts[7].trim().replaceAll('"', '') : 'Efectivo',
+                'referencia': parts.length > 8 ? parts[8].trim().replaceAll('"', '') : '',
+                'descripcion': parts.length > 9 ? parts[9].trim().replaceAll('"', '') : '',
+                'reconciliada': false,
+                'importada': true,
+                'created_at': FieldValue.serverTimestamp(),
+              });
+              importados++;
+            } catch (e) {
+              print('Error importando línea $i: $e');
+            }
+          }
+        }
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ $importados transacciones importadas'), backgroundColor: Colors.green));
+      });
+    });
+  }
+
+  // ============================================
+  // EXPORTAR CSV
+  // ============================================
   Future<void> _exportarCSV() async {
     try {
       final snapshot = await _firestore.collection('transacciones').orderBy('created_at', descending: true).get();
       final docs = snapshot.docs;
       final buffer = StringBuffer();
-      buffer.writeln('Fecha,Tipo,Concepto,Categoría,Acreedor,Cuenta,Negocio,Monto,Método de Pago,Referencia,Descripción');
+      buffer.writeln('Fecha,Tipo,Concepto,Categoría,Acreedor,Cuenta,Negocio,Monto,Método de Pago,Referencia,Descripción,Reconciliada');
       for (var doc in docs) {
         final data = doc.data() as Map<String, dynamic>;
-        buffer.writeln('${data['fecha'] ?? ''},${data['tipo'] ?? ''},"${data['concepto'] ?? ''}","${data['categoria'] ?? ''}","${data['acreedor'] ?? ''}","${data['cuenta'] ?? ''}","${data['negocio'] ?? 'Minerales'}",${data['monto'] ?? 0},"${data['metodo_pago'] ?? ''}","${data['referencia'] ?? ''}","${data['descripcion'] ?? ''}"');
+        buffer.writeln('${data['fecha'] ?? ''},${data['tipo'] ?? ''},"${data['concepto'] ?? ''}","${data['categoria'] ?? ''}","${data['acreedor'] ?? ''}","${data['cuenta'] ?? ''}","${data['negocio'] ?? 'Minerales'}",${data['monto'] ?? 0},"${data['metodo_pago'] ?? ''}","${data['referencia'] ?? ''}","${data['descripcion'] ?? ''}",${data['reconciliada'] ?? false}');
       }
       final bytes = utf8.encode(buffer.toString());
       final blob = html.Blob([bytes]);
@@ -1082,18 +1581,25 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     }
   }
 
+  // ============================================
+  // FORMULARIO DE TRANSACCIÓN (mejorado)
+  // ============================================
   void _mostrarFormularioTransaccion({Map<String, dynamic>? transaccion, String? docId}) {
     final conceptoCtrl = TextEditingController(text: transaccion?['concepto'] ?? '');
     final montoCtrl = TextEditingController(text: transaccion?['monto']?.toString() ?? '0');
     final categoriaCtrl = TextEditingController(text: transaccion?['categoria'] ?? 'General');
+    final subcategoriaCtrl = TextEditingController(text: transaccion?['subcategoria'] ?? '');
     final fechaCtrl = TextEditingController(text: transaccion?['fecha'] ?? DateTime.now().toIso8601String().split('T')[0]);
     final descripcionCtrl = TextEditingController(text: transaccion?['descripcion'] ?? '');
     final metodoPagoCtrl = TextEditingController(text: transaccion?['metodo_pago'] ?? 'Efectivo');
     final referenciaCtrl = TextEditingController(text: transaccion?['referencia'] ?? '');
     final acreedorCtrl = TextEditingController(text: transaccion?['acreedor'] ?? '');
+    final beneficiarioCtrl = TextEditingController(text: transaccion?['beneficiario'] ?? '');
+    final numChequeCtrl = TextEditingController(text: transaccion?['num_cheque'] ?? '');
     String tipo = transaccion?['tipo'] ?? 'Ingreso';
     String cuenta = transaccion?['cuenta'] ?? 'Efectivo';
     String negocio = transaccion?['negocio'] ?? 'Minerales';
+    bool reconciliada = transaccion?['reconciliada'] ?? false;
     
     showModalBottomSheet(
       context: context,
@@ -1115,13 +1621,16 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 _buildCampo('Concepto *', conceptoCtrl, icon: Icons.description),
                 _buildCampo('Monto', montoCtrl, icon: Icons.attach_money, tipo: TextInputType.number),
                 _buildCampo('Acreedor', acreedorCtrl, icon: Icons.person),
+                _buildCampo('Beneficiario', beneficiarioCtrl, icon: Icons.person_outline),
+                _buildCampo('N° de Cheque', numChequeCtrl, icon: Icons.receipt),
                 const SizedBox(height: 12),
                 _buildSeccion('📋 Clasificación'),
                 Row(children: [Expanded(child: RadioListTile<String>(title: const Text('Ingreso', style: TextStyle(color: Colors.white)), value: 'Ingreso', groupValue: tipo, activeColor: Colors.green, onChanged: (v) => setSheetState(() => tipo = v!))), Expanded(child: RadioListTile<String>(title: const Text('Gasto', style: TextStyle(color: Colors.white)), value: 'Gasto', groupValue: tipo, activeColor: Colors.red, onChanged: (v) => setSheetState(() => tipo = v!)))]),
                 _buildDropdownCategoria(categoriaCtrl, tipo),
+                _buildCampo('Subcategoría', subcategoriaCtrl, icon: Icons.subdirectory_arrow_right),
                 _buildCampo('Fecha', fechaCtrl, icon: Icons.calendar_today),
                 const SizedBox(height: 12),
-                _buildSeccion(' Cuenta'),
+                _buildSeccion('💳 Cuenta'),
                 DropdownButtonFormField<String>(value: cuenta, decoration: InputDecoration(labelText: 'Cuenta', labelStyle: const TextStyle(color: Colors.grey), prefixIcon: const Icon(Icons.account_balance_wallet, color: Color(0xFF0066FF)), filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => setSheetState(() => cuenta = v!)),
                 const SizedBox(height: 12),
                 _buildSeccion('🏢 Negocio'),
@@ -1133,8 +1642,16 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 const SizedBox(height: 12),
                 _buildSeccion(' Detalles'),
                 _buildCampoMultilinea('Descripción', descripcionCtrl),
+                CheckboxListTile(
+                  title: const Text('Marcar como reconciliada', style: TextStyle(color: Colors.white)),
+                  subtitle: const Text('La transacción ha sido verificada', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  value: reconciliada,
+                  activeColor: Colors.green,
+                  onChanged: (v) => setSheetState(() => reconciliada = v ?? false),
+                  contentPadding: EdgeInsets.zero,
+                ),
                 const SizedBox(height: 16),
-                SizedBox(width: double.infinity, height: 50, child: ElevatedButton.icon(onPressed: () => _guardarTransaccion(ctx, conceptoCtrl, montoCtrl, categoriaCtrl, fechaCtrl, descripcionCtrl, metodoPagoCtrl, referenciaCtrl, acreedorCtrl, tipo, cuenta, negocio, docId), icon: const Icon(Icons.save, color: Colors.white), label: Text(transaccion == null ? 'Crear Transacción' : 'Guardar Cambios', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
+                SizedBox(width: double.infinity, height: 50, child: ElevatedButton.icon(onPressed: () => _guardarTransaccion(ctx, conceptoCtrl, montoCtrl, categoriaCtrl, subcategoriaCtrl, fechaCtrl, descripcionCtrl, metodoPagoCtrl, referenciaCtrl, acreedorCtrl, beneficiarioCtrl, numChequeCtrl, tipo, cuenta, negocio, reconciliada, docId), icon: const Icon(Icons.save, color: Colors.white), label: Text(transaccion == null ? 'Crear Transacción' : 'Guardar Cambios', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
                 const SizedBox(height: 20),
               ],
             ),
@@ -1178,7 +1695,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     return Padding(padding: const EdgeInsets.only(bottom: 12), child: TextField(controller: ctrl, maxLines: 4, style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: label, labelStyle: const TextStyle(color: Colors.grey), prefixIcon: const Icon(Icons.notes, color: Color(0xFF0066FF)), filled: true, fillColor: const Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none))));
   }
 
-  Future<void> _guardarTransaccion(BuildContext ctx, TextEditingController concepto, TextEditingController monto, TextEditingController categoria, TextEditingController fecha, TextEditingController descripcion, TextEditingController metodoPago, TextEditingController referencia, TextEditingController acreedor, String tipo, String cuenta, String negocio, String? docId) async {
+  Future<void> _guardarTransaccion(BuildContext ctx, TextEditingController concepto, TextEditingController monto, TextEditingController categoria, TextEditingController subcategoria, TextEditingController fecha, TextEditingController descripcion, TextEditingController metodoPago, TextEditingController referencia, TextEditingController acreedor, TextEditingController beneficiario, TextEditingController numCheque, String tipo, String cuenta, String negocio, bool reconciliada, String? docId) async {
     if (concepto.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ El concepto es obligatorio'), backgroundColor: Colors.orange));
       return;
@@ -1188,14 +1705,18 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         'concepto': concepto.text.trim(),
         'monto': double.tryParse(monto.text) ?? 0,
         'categoria': categoria.text.trim(),
+        'subcategoria': subcategoria.text.trim(),
         'fecha': fecha.text.trim(),
         'descripcion': descripcion.text.trim(),
         'metodo_pago': metodoPago.text.trim(),
         'referencia': referencia.text.trim(),
         'acreedor': acreedor.text.trim(),
+        'beneficiario': beneficiario.text.trim(),
+        'num_cheque': numCheque.text.trim(),
         'tipo': tipo,
         'cuenta': cuenta,
         'negocio': negocio,
+        'reconciliada': reconciliada,
       };
       if (docId == null) {
         data['created_at'] = FieldValue.serverTimestamp();
