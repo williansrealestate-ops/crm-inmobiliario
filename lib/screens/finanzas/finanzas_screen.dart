@@ -97,16 +97,12 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         controller: _tabController,
         children: [
           _buildVistaHoy(), _buildResumen(), _buildDashboard(), _buildListaTransacciones('Ingreso'), _buildListaTransacciones('Gasto'),
-          _buildCuentas(), _buildCalendario(), _buildReportes(), _buildPresupuestos(), 
-          _buildMetas(), // <--- CAMBIA ESTA LÍNEA
-          _buildPlaceholder('Deudas'),
+          _buildCuentas(), _buildCalendario(), _buildReportes(), _buildPresupuestos(), _buildMetas(), _buildPlaceholder('Deudas'),
         ],
-
       ),
+    );
+  }
 
-  // ==========================================
-  // ✅ PESTAÑA "METAS" CON PLAN DE AHORRO
-  // ==========================================
   Widget _buildMetas() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -140,8 +136,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                         Icon(Icons.flag_outlined, color: Colors.grey.shade700, size: 64),
                         const SizedBox(height: 16),
                         const Text('No hay metas definidas', style: TextStyle(color: Colors.grey, fontSize: 16)),
-                        const SizedBox(height: 8),
-                        const Text('Crea una meta para empezar a ahorrar', style: TextStyle(color: Colors.grey, fontSize: 14)),
                       ],
                     ),
                   );
@@ -334,12 +328,12 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               if (objetivo == null) return;
               Navigator.pop(dialogCtx);
               
-              final data = {'nombre': nombreCtrl.text.trim(), 'objetivo': objetivo, 'actual': actual, 'meses': meses};
+              final updateData = {'nombre': nombreCtrl.text.trim(), 'objetivo': objetivo, 'actual': actual, 'meses': meses};
               if (docId != null) {
-                _firestore.collection('metas').doc(docId).update(data);
+                _firestore.collection('metas').doc(docId).update(updateData);
               } else {
-                data['created_at'] = FieldValue.serverTimestamp();
-                _firestore.collection('metas').add(data);
+                updateData['created_at'] = FieldValue.serverTimestamp();
+                _firestore.collection('metas').add(updateData);
               }
               if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Meta guardada'), backgroundColor: Colors.green));
             },
@@ -407,9 +401,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ==========================================
-  // ✅ RESTO DE PESTAÑAS (Resumen, Dashboard, etc.)
-  // ==========================================
   Widget _buildPresupuestos() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -748,301 +739,5 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     final ejemplos = [{'concepto': 'Venta del día', 'monto': 5000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso', 'negocio': 'Minerales', 'cuenta': 'Banco', 'reconciliada': false, 'tags': ['#negocio']}, {'concepto': 'Pago proveedor', 'monto': 1500.0, 'categoria': 'Deudas', 'tipo': 'Gasto', 'negocio': 'Combustible', 'cuenta': 'Efectivo', 'reconciliada': true, 'tags': ['#urgente']}, {'concepto': 'Servicio consultoría', 'monto': 8000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso', 'negocio': 'Proyectos', 'cuenta': 'Banco', 'reconciliada': false, 'tags': ['#cliente']}];
     for (var t in ejemplos) { await _firestore.collection('transacciones').add({...t, 'fecha': fechaHoy, 'descripcion': 'Ejemplo del día', 'subcuenta': t['negocio'], 'metodo_pago': 'Efectivo', 'referencia': '', 'acreedor': '', 'created_at': FieldValue.serverTimestamp()}); }
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ 3 transacciones de ejemplo creadas para hoy'), backgroundColor: Colors.green));
-  }
-    Widget _buildMetas() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('🏆 Mis Metas', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-              ElevatedButton.icon(
-                onPressed: () => _dialogoMeta(),
-                icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text('Nueva Meta', style: TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _firestore.collection('metas').orderBy('created_at', descending: true).snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                final docs = snapshot.data!.docs;
-                if (docs.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.flag_outlined, color: Colors.grey.shade700, size: 64),
-                        const SizedBox(height: 16),
-                        const Text('No hay metas definidas', style: TextStyle(color: Colors.grey, fontSize: 16)),
-                      ],
-                    ),
-                  );
-                }
-                return ListView.builder(
-                  itemCount: docs.length,
-                  itemBuilder: (context, index) {
-                    final doc = docs[index];
-                    final data = doc.data() as Map<String, dynamic>;
-                    final nombre = data['nombre'] ?? 'Sin nombre';
-                    final objetivo = (data['objetivo'] ?? 0).toDouble();
-                    final actual = (data['actual'] ?? 0).toDouble();
-                    final meses = (data['meses'] ?? 12).toInt();
-                    
-                    final porcentaje = objetivo > 0 ? (actual / objetivo * 100).clamp(0, 100) : 0;
-                    final completada = actual >= objetivo;
-                    final restante = (objetivo - actual).clamp(0, double.infinity);
-                    
-                    final ahorroMensual = meses > 0 ? restante / meses : 0;
-                    final ahorroSemanal = ahorroMensual / 4;
-                    final ahorroDiario = ahorroMensual / 30;
-                    final fechaEstimada = DateTime.now().add(Duration(days: (restante > 0 ? meses : 0) * 30));
-
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A1A1A),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: completada ? Colors.green : const Color(0xFF222222)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(completada ? Icons.emoji_events : Icons.flag, color: completada ? Colors.amber : const Color(0xFF0066FF), size: 28),
-                              const SizedBox(width: 12),
-                              Expanded(child: Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
-                              IconButton(icon: const Icon(Icons.edit, color: Colors.orange, size: 20), onPressed: () => _dialogoMeta(meta: data, docId: doc.id)),
-                              IconButton(icon: const Icon(Icons.delete, color: Colors.red, size: 20), onPressed: () => _eliminarMeta(doc.id)),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('\$${actual.toStringAsFixed(0)} / \$${objetivo.toStringAsFixed(0)}', style: TextStyle(color: completada ? Colors.green : Colors.white, fontWeight: FontWeight.bold)),
-                              Text('${porcentaje.toStringAsFixed(1)}%', style: const TextStyle(color: Colors.grey)),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: porcentaje / 100,
-                              backgroundColor: Colors.grey.shade800,
-                              valueColor: AlwaysStoppedAnimation<Color>(completada ? Colors.green : const Color(0xFF0066FF)),
-                              minHeight: 10,
-                            ),
-                          ),
-                          if (!completada && restante > 0) ...[
-                            const SizedBox(height: 16),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0066FF).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFF0066FF).withOpacity(0.3)),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Row(
-                                    children: [
-                                      Icon(Icons.auto_awesome, color: Color(0xFF0066FF), size: 16),
-                                      SizedBox(width: 8),
-                                      Text('🎯 Plan de Ahorro Recomendado', style: TextStyle(color: Color(0xFF0066FF), fontSize: 12, fontWeight: FontWeight.bold)),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                    children: [
-                                      _planItem('Mensual', ahorroMensual),
-                                      _planItem('Semanal', ahorroSemanal),
-                                      _planItem('Diario', ahorroDiario),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.calendar_today, color: Colors.grey, size: 14),
-                                      const SizedBox(width: 8),
-                                      Text('Fecha estimada: ${_formatDate(fechaEstimada)}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: () => _actualizarMetaActual(doc.id, actual, objetivo),
-                                icon: const Icon(Icons.add_circle_outline, color: Colors.green),
-                                label: const Text('Registrar Ahorro', style: TextStyle(color: Colors.green)),
-                                style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.green)),
-                              ),
-                            ),
-                          ] else if (completada) ...[
-                            const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.green.withOpacity(0.3)),
-                              ),
-                              child: const Row(
-                                children: [
-                                  Icon(Icons.check_circle, color: Colors.green, size: 20),
-                                  SizedBox(width: 8),
-                                  Text('¡Meta alcanzada! 🎉', style: TextStyle(color: Colors.green, fontSize: 14, fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  Widget _planItem(String periodo, double monto) {
-    return Column(
-      children: [
-        Text(periodo, style: const TextStyle(color: Colors.grey, fontSize: 11)),
-        const SizedBox(height: 4),
-        Text('\$${monto.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-      ],
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    return '${date.day} ${meses[date.month - 1]} ${date.year}';
-  }
-
-  void _dialogoMeta({Map<String, dynamic>? meta, String? docId}) {
-    final nombreCtrl = TextEditingController(text: meta?['nombre'] ?? '');
-    final objetivoCtrl = TextEditingController(text: meta?['objetivo']?.toString() ?? '0');
-    final actualCtrl = TextEditingController(text: meta?['actual']?.toString() ?? '0');
-    final mesesCtrl = TextEditingController(text: meta?['meses']?.toString() ?? '12');
-
-    showDialog(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        title: Text(meta != null ? 'Editar Meta' : 'Nueva Meta', style: const TextStyle(color: Colors.white)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: nombreCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Nombre de la meta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-              const SizedBox(height: 12),
-              TextField(controller: objetivoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto objetivo (\$)', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-              const SizedBox(height: 12),
-              TextField(controller: actualCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto actual ahorrado (\$)', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-              const SizedBox(height: 12),
-              TextField(controller: mesesCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Plazo (meses)', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            onPressed: () {
-              if (nombreCtrl.text.isEmpty || objetivoCtrl.text.isEmpty) return;
-              final objetivo = double.tryParse(objetivoCtrl.text);
-              final actual = double.tryParse(actualCtrl.text) ?? 0;
-              final meses = int.tryParse(mesesCtrl.text) ?? 12;
-              if (objetivo == null) return;
-              Navigator.pop(dialogCtx);
-              
-              final updateData = {'nombre': nombreCtrl.text.trim(), 'objetivo': objetivo, 'actual': actual, 'meses': meses};
-              if (docId != null) {
-                _firestore.collection('metas').doc(docId).update(updateData);
-              } else {
-                updateData['created_at'] = FieldValue.serverTimestamp();
-                _firestore.collection('metas').add(updateData);
-              }
-              if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Meta guardada'), backgroundColor: Colors.green));
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
-            child: const Text('Guardar', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _actualizarMetaActual(String docId, double actualActual, double objetivo) {
-    final montoCtrl = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        title: const Text('Registrar Ahorro', style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Meta actual: \$${actualActual.toStringAsFixed(0)} / \$${objetivo.toStringAsFixed(0)}', style: const TextStyle(color: Colors.grey)),
-            const SizedBox(height: 16),
-            TextField(controller: montoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto a agregar (\$)', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            onPressed: () {
-              final monto = double.tryParse(montoCtrl.text);
-              if (monto == null || monto <= 0) return;
-              Navigator.pop(dialogCtx);
-              _firestore.collection('metas').doc(docId).update({'actual': FieldValue.increment(monto)});
-              if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Ahorro registrado'), backgroundColor: Colors.green));
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text('Agregar', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _eliminarMeta(String docId) {
-    showDialog(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        title: const Text('Eliminar Meta', style: TextStyle(color: Colors.white)),
-        content: const Text('¿Estás seguro de eliminar esta meta?', style: TextStyle(color: Colors.grey)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(dialogCtx);
-              _firestore.collection('metas').doc(docId).delete();
-              if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🗑️ Meta eliminada'), backgroundColor: Colors.red));
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
   }
 }
