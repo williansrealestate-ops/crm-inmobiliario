@@ -13,17 +13,12 @@ class FinanzasScreen extends StatefulWidget {
 class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProviderStateMixin {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late TabController _tabController;
-  String _search = '';
-  String _categoriaFiltro = 'Todas';
-  String _cuentaFiltro = 'Todas';
-  String _negocioFiltro = 'Todos';
-  bool _soloPendientes = false;
-  bool _soloReconciliadas = false;
+  String _search = '', _categoriaFiltro = 'Todas', _cuentaFiltro = 'Todas', _negocioFiltro = 'Todos';
+  bool _soloPendientes = false, _soloReconciliadas = false;
   int _vistaActual = 0;
   String? _cuentaSeleccionada;
   List<Map<String, dynamic>> _presupuestosPersonalizados = [];
   
-  // Datos editables para Reportes
   List<Map<String, dynamic>> _datosIngresosEjemplo = [
     {'categoria': 'SERVICIOS', 'monto': 19000.00, 'color': Colors.green},
     {'categoria': 'COMISIONES', 'monto': 100000.00, 'color': Colors.teal},
@@ -96,14 +91,9 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         _presupuestosPersonalizados = snap.docs.map((doc) {
           final d = doc.data();
           return {
-            'id': doc.id,
-            'nombre': d['nombre'] ?? '',
-            'icon': d['icon'] ?? 'category',
-            'presupuesto': (d['presupuesto'] ?? 0).toDouble(),
-            'gastado': (d['gastado'] ?? 0).toDouble(),
-            'cuenta': d['cuenta'] ?? 'Efectivo',
-            'subcuenta': d['subcuenta'] ?? 'Proyectos',
-            'aplicado': d['aplicado'] ?? false,
+            'id': doc.id, 'nombre': d['nombre'] ?? '', 'icon': d['icon'] ?? 'category',
+            'presupuesto': (d['presupuesto'] ?? 0).toDouble(), 'gastado': (d['gastado'] ?? 0).toDouble(),
+            'cuenta': d['cuenta'] ?? 'Efectivo', 'subcuenta': d['subcuenta'] ?? 'Proyectos', 'aplicado': d['aplicado'] ?? false,
           };
         }).toList();
       });
@@ -131,20 +121,17 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         backgroundColor: const Color(0xFF1A1A1A),
         title: const Text('Editar Presupuesto', style: TextStyle(color: Colors.white)),
         content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: nombreCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Nombre', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-              const SizedBox(height: 12),
-              TextField(controller: montoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-              const SizedBox(height: 12),
-              TextField(controller: gastadoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Gastado', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(value: cuenta, decoration: const InputDecoration(labelText: 'Cuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => cuenta = v!),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(value: subcuenta, decoration: const InputDecoration(labelText: 'Subcuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(), onChanged: (v) => subcuenta = v!),
-            ],
-          ),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            TextField(controller: nombreCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Nombre', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+            const SizedBox(height: 12),
+            TextField(controller: montoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+            const SizedBox(height: 12),
+            TextField(controller: gastadoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Gastado actual', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(value: cuenta, decoration: const InputDecoration(labelText: 'Cuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => cuenta = v!),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(value: subcuenta, decoration: const InputDecoration(labelText: 'Subcuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(), onChanged: (v) => subcuenta = v!),
+          ]),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
@@ -155,12 +142,10 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               final gastado = double.tryParse(gastadoCtrl.text) ?? 0;
               if (monto == null) return;
               Navigator.pop(dialogCtx);
-              _firestore.collection('presupuestos_personalizados').doc(presupuesto['id']).update({'nombre': nombreCtrl.text.trim(), 'presupuesto': monto, 'gastado': gastado, 'cuenta': cuenta, 'subcuenta': subcuenta});
-              _cargarPresupuestosPersonalizados();
-              if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Actualizado'), backgroundColor: Colors.green));
+              _agregarPresupuestoPersonalizado(nombreCtrl.text.trim(), monto, gastado, 'category', cuenta, subcuenta);
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
-            child: const Text('Guardar', style: TextStyle(color: Colors.white)),
+            child: const Text('Crear', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -251,9 +236,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // DASHBOARD KPIs COMPACTO
-  // ============================================
   Widget _buildDashboardKPIs() {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -279,7 +261,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                   final monto = (data['monto'] ?? 0).toDouble();
                   final tipo = data['tipo'] ?? '';
                   final negocio = data['negocio'] ?? 'Otros';
-
                   if (tipo == 'Ingreso') ingresos += monto;
                   if (tipo == 'Gasto') gastos += monto;
                   numTransacciones++;
@@ -293,12 +274,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 return Column(
                   children: [
                     GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      childAspectRatio: 2.2,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
+                      crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), childAspectRatio: 2.2, mainAxisSpacing: 8, crossAxisSpacing: 8,
                       children: [
                         _buildKPICardCompact('Ingresos', '\$${ingresos.toStringAsFixed(0)}', Icons.trending_up, Colors.green),
                         _buildKPICardCompact('Gastos', '\$${gastos.toStringAsFixed(0)}', Icons.trending_down, Colors.red),
@@ -364,9 +340,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // VISTA HOY
-  // ============================================
   Widget _buildVistaHoy() {
     final hoy = DateTime.now();
     final fechaHoy = '${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}';
@@ -403,12 +376,41 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 if (docs.isEmpty) {
                   return Container(width: double.infinity, padding: const EdgeInsets.all(40), decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12)), child: const Column(children: [Icon(Icons.event_busy, color: Colors.grey, size: 64), SizedBox(height: 16), Text('No hay transacciones para hoy', style: TextStyle(color: Colors.grey, fontSize: 16))]));
                 }
-                return Column(children: docs.map((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  final esIngreso = data['tipo'] == 'Ingreso';
-                  final reconciliada = data['reconciliada'] ?? false;
-                  return Container(margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(8), border: Border.all(color: reconciliada ? Colors.green : const Color(0xFF222222))), child: Row(children: [Container(width: 40, height: 40, decoration: BoxDecoration(color: esIngreso ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2), shape: BoxShape.circle), child: Icon(esIngreso ? Icons.arrow_upward : Icons.arrow_downward, color: esIngreso ? Colors.green : Colors.red, size: 20)), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [Text(data['concepto'] ?? 'Sin concepto', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), if (reconciliada) const Icon(Icons.check_circle, color: Colors.green, size: 16)]), Text('${data['categoria'] ?? 'General'} • ${data['cuenta'] ?? 'Efectivo'}', style: const TextStyle(color: Colors.grey, fontSize: 12))])), Column(crossAxisAlignment: CrossAxisAlignment.end, children: [Text('${esIngreso ? "+" : "-"}\$${data['monto'] ?? '0'}', style: TextStyle(color: esIngreso ? Colors.green : Colors.red, fontSize: 16, fontWeight: FontWeight.bold)), const SizedBox(height: 4), if (!reconciliada) TextButton(onPressed: () { _firestore.collection('transacciones').doc(doc.id).update({'reconciliada': true}); if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Aprobada'), backgroundColor: Colors.green)); }, child: const Text('Aprobar', style: TextStyle(color: Color(0xFF0066FF), fontSize: 12)))])]));
-                }).toList());
+                return Column(
+                  children: docs.map((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final esIngreso = data['tipo'] == 'Ingreso';
+                    final reconciliada = data['reconciliada'] ?? false;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(8), border: Border.all(color: reconciliada ? Colors.green : const Color(0xFF222222))),
+                      child: Row(
+                        children: [
+                          Container(width: 40, height: 40, decoration: BoxDecoration(color: esIngreso ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2), shape: BoxShape.circle), child: Icon(esIngreso ? Icons.arrow_upward : Icons.arrow_downward, color: esIngreso ? Colors.green : Colors.red, size: 20)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(children: [Text(data['concepto'] ?? 'Sin concepto', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), if (reconciliada) const Icon(Icons.check_circle, color: Colors.green, size: 16)]),
+                                Text('${data['categoria'] ?? 'General'} • ${data['cuenta'] ?? 'Efectivo'}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text('${esIngreso ? "+" : "-"}\$${data['monto'] ?? '0'}', style: TextStyle(color: esIngreso ? Colors.green : Colors.red, fontSize: 16, fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 4),
+                              if (!reconciliada) TextButton(onPressed: () { _firestore.collection('transacciones').doc(doc.id).update({'reconciliada': true}); if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Aprobada'), backgroundColor: Colors.green)); }, child: const Text('Aprobar', style: TextStyle(color: Color(0xFF0066FF), fontSize: 12))),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                );
               },
             ),
           ],
@@ -421,32 +423,168 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     return Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: color.withOpacity(0.2), borderRadius: BorderRadius.circular(8)), child: Row(children: [Icon(icon, color: color, size: 20), const SizedBox(width: 8), Text(titulo, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold))]));
   }
 
-  // ============================================
-  // RESUMEN
-  // ============================================
   Widget _buildResumen() {
-    return Container(width: double.infinity, padding: const EdgeInsets.all(16), child: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_buildTarjetaBalance(), const SizedBox(height: 16), Row(children: [Expanded(child: _buildTarjetaResumen('Ingresos', Colors.green, Icons.arrow_upward)), const SizedBox(width: 12), Expanded(child: _buildTarjetaResumen('Gastos', Colors.red, Icons.arrow_downward))]), const SizedBox(height: 24), const Text('📈 Tendencia Mensual', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)), const SizedBox(height: 16), Container(height: 250, padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))), child: _buildGraficoLineas()), const SizedBox(height: 24), const Text('🕐 Últimas Transacciones', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)), const SizedBox(height: 16), _buildUltimasTransacciones()])));
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildTarjetaBalance(),
+            const SizedBox(height: 16),
+            Row(children: [Expanded(child: _buildTarjetaResumen('Ingresos', Colors.green, Icons.arrow_upward)), const SizedBox(width: 12), Expanded(child: _buildTarjetaResumen('Gastos', Colors.red, Icons.arrow_downward))]),
+            const SizedBox(height: 24),
+            const Text('📈 Tendencia Mensual', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            Container(height: 250, padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))), child: _buildGraficoLineas()),
+            const SizedBox(height: 24),
+            const Text('🕐 Últimas Transacciones', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            _buildUltimasTransacciones(),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildTarjetaBalance() {
-    return Container(width: double.infinity, padding: const EdgeInsets.all(24), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF0066FF), Color(0xFF0044AA)]), borderRadius: BorderRadius.circular(16)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Row(children: [Icon(Icons.account_balance_wallet, color: Colors.white70, size: 20), SizedBox(width: 8), Text('Balance Total', style: TextStyle(color: Colors.white70, fontSize: 14))]), const SizedBox(height: 12), StreamBuilder<QuerySnapshot>(stream: _firestore.collection('transacciones').snapshots(), builder: (context, snapshot) { if (!snapshot.hasData) return const Text('\$0.00', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)); double ingresos = 0, gastos = 0; for (var doc in snapshot.data!.docs) { final data = doc.data() as Map<String, dynamic>; final monto = (data['monto'] ?? 0).toDouble(); if (data['tipo'] == 'Ingreso') ingresos += monto; if (data['tipo'] == 'Gasto') gastos += monto; } return Text('\$${(ingresos - gastos).toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)); }), const SizedBox(height: 8), StreamBuilder<QuerySnapshot>(stream: _firestore.collection('transacciones').snapshots(), builder: (context, snapshot) { if (!snapshot.hasData) return const Text('0 transacciones', style: TextStyle(color: Colors.white70, fontSize: 12)); return Text('${snapshot.data!.docs.length} transacciones', style: const TextStyle(color: Colors.white70, fontSize: 12)); })]));
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF0066FF), Color(0xFF0044AA)]), borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(children: [Icon(Icons.account_balance_wallet, color: Colors.white70, size: 20), SizedBox(width: 8), Text('Balance Total', style: TextStyle(color: Colors.white70, fontSize: 14))]),
+          const SizedBox(height: 12),
+          StreamBuilder<QuerySnapshot>(
+            stream: _firestore.collection('transacciones').snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const Text('\$0.00', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold));
+              double ingresos = 0, gastos = 0;
+              for (var doc in snapshot.data!.docs) {
+                final data = doc.data() as Map<String, dynamic>;
+                final monto = (data['monto'] ?? 0).toDouble();
+                if (data['tipo'] == 'Ingreso') ingresos += monto;
+                if (data['tipo'] == 'Gasto') gastos += monto;
+              }
+              return Text('\$${(ingresos - gastos).toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold));
+            },
+          ),
+          const SizedBox(height: 8),
+          StreamBuilder<QuerySnapshot>(
+            stream: _firestore.collection('transacciones').snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const Text('0 transacciones', style: TextStyle(color: Colors.white70, fontSize: 12));
+              return Text('${snapshot.data!.docs.length} transacciones', style: const TextStyle(color: Colors.white70, fontSize: 12));
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildTarjetaResumen(String titulo, Color color, IconData icon) {
-    return Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [Icon(icon, color: color, size: 20), const SizedBox(width: 8), Text(titulo, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold))]), const SizedBox(height: 8), StreamBuilder<QuerySnapshot>(stream: _firestore.collection('transacciones').snapshots(), builder: (context, snapshot) { if (!snapshot.hasData) return const Text('\$0', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)); double total = 0; for (var doc in snapshot.data!.docs) { final data = doc.data() as Map<String, dynamic>; if (data['tipo'] == titulo) total += (data['monto'] ?? 0).toDouble(); } return Text('\$${total.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)); })]));
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [Icon(icon, color: color, size: 20), const SizedBox(width: 8), Text(titulo, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold))]),
+          const SizedBox(height: 8),
+          StreamBuilder<QuerySnapshot>(
+            stream: _firestore.collection('transacciones').snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const Text('\$0', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold));
+              double total = 0;
+              for (var doc in snapshot.data!.docs) {
+                final data = doc.data() as Map<String, dynamic>;
+                if (data['tipo'] == titulo) total += (data['monto'] ?? 0).toDouble();
+              }
+              return Text('\$${total.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold));
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildGraficoLineas() {
-    return StreamBuilder<QuerySnapshot>(stream: _firestore.collection('transacciones').snapshots(), builder: (context, snapshot) { if (!snapshot.hasData) return const Center(child: CircularProgressIndicator()); Map<String, double> ingresosPorMes = {}, gastosPorMes = {}; for (var doc in snapshot.data!.docs) { final data = doc.data() as Map<String, dynamic>; final fecha = data['fecha'] as String? ?? ''; final monto = (data['monto'] ?? 0).toDouble(); if (fecha.length >= 7) { final mes = fecha.substring(0, 7); if (data['tipo'] == 'Ingreso') ingresosPorMes[mes] = (ingresosPorMes[mes] ?? 0) + monto; else gastosPorMes[mes] = (gastosPorMes[mes] ?? 0) + monto; } } final meses = ingresosPorMes.keys.toList()..sort(); if (meses.isEmpty) return const Center(child: Text('Sin datos', style: TextStyle(color: Colors.grey))); return LineChart(LineChartData(gridData: const FlGridData(show: false), titlesData: FlTitlesData(bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (value, meta) { final idx = value.toInt(); if (idx >= 0 && idx < meses.length) return Text(meses[idx].substring(5), style: const TextStyle(color: Colors.grey, fontSize: 10)); return const Text(''); })), leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)), topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)), rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false))), borderData: FlBorderData(show: false), lineBarsData: [LineChartBarData(spots: List.generate(meses.length, (i) => FlSpot(i.toDouble(), ingresosPorMes[meses[i]] ?? 0)), isCurved: true, color: Colors.green, barWidth: 3, dotData: const FlDotData(show: false)), LineChartBarData(spots: List.generate(meses.length, (i) => FlSpot(i.toDouble(), gastosPorMes[meses[i]] ?? 0)), isCurved: true, color: Colors.red, barWidth: 3, dotData: const FlDotData(show: false))], minX: 0, maxX: (meses.length - 1).toDouble())); });
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore.collection('transacciones').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        Map<String, double> ingresosPorMes = {}, gastosPorMes = {};
+        for (var doc in snapshot.data!.docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          final fecha = data['fecha'] as String? ?? '';
+          final monto = (data['monto'] ?? 0).toDouble();
+          if (fecha.length >= 7) {
+            final mes = fecha.substring(0, 7);
+            if (data['tipo'] == 'Ingreso') ingresosPorMes[mes] = (ingresosPorMes[mes] ?? 0) + monto;
+            else gastosPorMes[mes] = (gastosPorMes[mes] ?? 0) + monto;
+          }
+        }
+        final meses = ingresosPorMes.keys.toList()..sort();
+        if (meses.isEmpty) return const Center(child: Text('Sin datos', style: TextStyle(color: Colors.grey)));
+        return LineChart(
+          LineChartData(
+            gridData: const FlGridData(show: false),
+            titlesData: FlTitlesData(
+              bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (value, meta) {
+                final idx = value.toInt();
+                if (idx >= 0 && idx < meses.length) return Text(meses[idx].substring(5), style: const TextStyle(color: Colors.grey, fontSize: 10));
+                return const Text('');
+              })),
+              leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            ),
+            borderData: FlBorderData(show: false),
+            lineBarsData: [
+              LineChartBarData(spots: List.generate(meses.length, (i) => FlSpot(i.toDouble(), ingresosPorMes[meses[i]] ?? 0)), isCurved: true, color: Colors.green, barWidth: 3, dotData: const FlDotData(show: false)),
+              LineChartBarData(spots: List.generate(meses.length, (i) => FlSpot(i.toDouble(), gastosPorMes[meses[i]] ?? 0)), isCurved: true, color: Colors.red, barWidth: 3, dotData: const FlDotData(show: false)),
+            ],
+            minX: 0,
+            maxX: (meses.length - 1).toDouble(),
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildUltimasTransacciones() {
-    return StreamBuilder<QuerySnapshot>(stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).limit(5).snapshots(), builder: (context, snapshot) { if (!snapshot.hasData) return const Center(child: CircularProgressIndicator()); final docs = snapshot.data!.docs; if (docs.isEmpty) return const Text('No hay transacciones', style: TextStyle(color: Colors.grey)); return Column(children: docs.map((doc) { final data = doc.data() as Map<String, dynamic>; final esIngreso = data['tipo'] == 'Ingreso'; return Container(margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF222222))), child: Row(children: [Container(width: 40, height: 40, decoration: BoxDecoration(color: esIngreso ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2), shape: BoxShape.circle), child: Icon(esIngreso ? Icons.arrow_upward : Icons.arrow_downward, color: esIngreso ? Colors.green : Colors.red, size: 20)), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(data['concepto'] ?? 'Sin concepto', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), Text('${data['categoria'] ?? 'General'} • ${data['fecha'] ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 12))])), Text('${esIngreso ? "+" : "-"}\$${data['monto'] ?? '0'}', style: TextStyle(color: esIngreso ? Colors.green : Colors.red, fontSize: 16, fontWeight: FontWeight.bold))])); }).toList()); });
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).limit(5).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final docs = snapshot.data!.docs;
+        if (docs.isEmpty) return const Text('No hay transacciones', style: TextStyle(color: Colors.grey));
+        return Column(
+          children: docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final esIngreso = data['tipo'] == 'Ingreso';
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF222222))),
+              child: Row(
+                children: [
+                  Container(width: 40, height: 40, decoration: BoxDecoration(color: esIngreso ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2), shape: BoxShape.circle), child: Icon(esIngreso ? Icons.arrow_upward : Icons.arrow_downward, color: esIngreso ? Colors.green : Colors.red, size: 20)),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(data['concepto'] ?? 'Sin concepto', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), Text('${data['categoria'] ?? 'General'} • ${data['fecha'] ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 12))])),
+                  Text('${esIngreso ? "+" : "-"}\$${data['monto'] ?? '0'}', style: TextStyle(color: esIngreso ? Colors.green : Colors.red, fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
   }
 
-  // ============================================
-  // LISTA DE TRANSACCIONES (Con Tags)
-  // ============================================
   Widget _buildListaTransacciones(String tipo) {
     return Container(
       width: double.infinity,
@@ -499,18 +637,34 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                   
                   final total = filtrados.fold<double>(0, (sum, doc) => sum + ((doc.data() as Map<String, dynamic>)['monto'] ?? 0).toDouble());
                   
-                  return Column(children: [
-                    Container(width: double.infinity, padding: const EdgeInsets.all(12), margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: tipo == 'Ingreso' ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: tipo == 'Ingreso' ? Colors.green : Colors.red)), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Total:', style: TextStyle(color: tipo == 'Ingreso' ? Colors.green : Colors.red, fontSize: 16, fontWeight: FontWeight.bold)), Text('\$${total.toStringAsFixed(2)}', style: TextStyle(color: tipo == 'Ingreso' ? Colors.green : Colors.red, fontSize: 20, fontWeight: FontWeight.bold))])),
-                    Expanded(child: ListView.builder(itemCount: filtrados.length, itemBuilder: (context, index) {
-                      final doc = filtrados[index];
-                      final data = doc.data() as Map<String, dynamic>;
-                      final acreedor = data['acreedor'] ?? '';
-                      final reconciliada = data['reconciliada'] ?? false;
-                      final tags = List<String>.from(data['tags'] ?? []);
-                      
-                      return Container(margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(8), border: Border.all(color: reconciliada ? Colors.green : const Color(0xFF222222))), child: ListTile(contentPadding: const EdgeInsets.all(16), leading: Container(width: 50, height: 50, decoration: BoxDecoration(color: tipo == 'Ingreso' ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2), shape: BoxShape.circle), child: Stack(children: [Center(child: Icon(tipo == 'Ingreso' ? Icons.arrow_upward : Icons.arrow_downward, color: tipo == 'Ingreso' ? Colors.green : Colors.red, size: 24)), if (reconciliada) Positioned(right: 0, bottom: 0, child: Container(padding: const EdgeInsets.all(2), decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle), child: const Icon(Icons.check, color: Colors.white, size: 10))])), title: Text(data['concepto'] ?? 'Sin concepto', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)), subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const SizedBox(height: 4), Text('${data['categoria'] ?? 'General'} • ${data['cuenta'] ?? 'Efectivo'} • ${data['negocio'] ?? 'Minerales'}', style: const TextStyle(color: Colors.grey)), if (acreedor.isNotEmpty) Text('Acreedor: $acreedor', style: const TextStyle(color: Colors.orange, fontSize: 11)), if (tags.isNotEmpty) Wrap(spacing: 4, children: tags.map((t) => Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: const Color(0xFF0066FF).withOpacity(0.2), borderRadius: BorderRadius.circular(4)), child: Text(t, style: const TextStyle(color: Color(0xFF0066FF), fontSize: 10)))).toList()), Text('${data['fecha'] ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 12))]), trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [Text('\$${data['monto'] ?? '0'}', style: TextStyle(color: tipo == 'Ingreso' ? Colors.green : Colors.red, fontSize: 16, fontWeight: FontWeight.bold)), const SizedBox(height: 8), Row(mainAxisSize: MainAxisSize.min, children: [IconButton(icon: const Icon(Icons.copy, color: Colors.blue, size: 20), onPressed: () => _duplicarTransaccion(data), tooltip: 'Duplicar'), IconButton(icon: const Icon(Icons.edit, color: Colors.orange, size: 20), onPressed: () => _mostrarFormularioTransaccion(transaccion: data, docId: doc.id)), IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20), onPressed: () { showDialog(context: context, builder: (dialogCtx) => AlertDialog(backgroundColor: const Color(0xFF1A1A1A), title: const Text('Eliminar', style: TextStyle(color: Colors.white)), content: Text('¿Eliminar "${data['concepto']}"?', style: const TextStyle(color: Colors.grey)), actions: [TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))), TextButton(onPressed: () { Navigator.pop(dialogCtx); _firestore.collection('transacciones').doc(doc.id).delete(); if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🗑️ Eliminado'), backgroundColor: Colors.red)); }, child: const Text('Eliminar', style: TextStyle(color: Colors.red)))])); })])]));
-                    })),
-                  ]);
+                  return Column(
+                    children: [
+                      Container(width: double.infinity, padding: const EdgeInsets.all(12), margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: tipo == 'Ingreso' ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: tipo == 'Ingreso' ? Colors.green : Colors.red)), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Total:', style: TextStyle(color: tipo == 'Ingreso' ? Colors.green : Colors.red, fontSize: 16, fontWeight: FontWeight.bold)), Text('\$${total.toStringAsFixed(2)}', style: TextStyle(color: tipo == 'Ingreso' ? Colors.green : Colors.red, fontSize: 20, fontWeight: FontWeight.bold))])),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: filtrados.length,
+                          itemBuilder: (context, index) {
+                            final doc = filtrados[index];
+                            final data = doc.data() as Map<String, dynamic>;
+                            final acreedor = data['acreedor'] ?? '';
+                            final reconciliada = data['reconciliada'] ?? false;
+                            final tags = List<String>.from(data['tags'] ?? []);
+                            
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(8), border: Border.all(color: reconciliada ? Colors.green : const Color(0xFF222222))),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.all(16),
+                                leading: Container(width: 50, height: 50, decoration: BoxDecoration(color: tipo == 'Ingreso' ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2), shape: BoxShape.circle), child: Stack(children: [Center(child: Icon(tipo == 'Ingreso' ? Icons.arrow_upward : Icons.arrow_downward, color: tipo == 'Ingreso' ? Colors.green : Colors.red, size: 24)), if (reconciliada) Positioned(right: 0, bottom: 0, child: Container(padding: const EdgeInsets.all(2), decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle), child: const Icon(Icons.check, color: Colors.white, size: 10))])),
+                                title: Text(data['concepto'] ?? 'Sin concepto', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                                subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const SizedBox(height: 4), Text('${data['categoria'] ?? 'General'} • ${data['cuenta'] ?? 'Efectivo'} • ${data['negocio'] ?? 'Minerales'}', style: const TextStyle(color: Colors.grey)), if (acreedor.isNotEmpty) Text('Acreedor: $acreedor', style: const TextStyle(color: Colors.orange, fontSize: 11)), if (tags.isNotEmpty) Wrap(spacing: 4, children: tags.map((t) => Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: const Color(0xFF0066FF).withOpacity(0.2), borderRadius: BorderRadius.circular(4)), child: Text(t, style: const TextStyle(color: Color(0xFF0066FF), fontSize: 10)))).toList()), Text('${data['fecha'] ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 12))]),
+                                trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [Text('\$${data['monto'] ?? '0'}', style: TextStyle(color: tipo == 'Ingreso' ? Colors.green : Colors.red, fontSize: 16, fontWeight: FontWeight.bold)), const SizedBox(height: 8), Row(mainAxisSize: MainAxisSize.min, children: [IconButton(icon: const Icon(Icons.copy, color: Colors.blue, size: 20), onPressed: () => _duplicarTransaccion(data), tooltip: 'Duplicar'), IconButton(icon: const Icon(Icons.edit, color: Colors.orange, size: 20), onPressed: () => _mostrarFormularioTransaccion(transaccion: data, docId: doc.id)), IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20), onPressed: () { showDialog(context: context, builder: (dialogCtx) => AlertDialog(backgroundColor: const Color(0xFF1A1A1A), title: const Text('Eliminar', style: TextStyle(color: Colors.white)), content: Text('¿Eliminar "${data['concepto']}"?', style: const TextStyle(color: Colors.grey)), actions: [TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))), TextButton(onPressed: () { Navigator.pop(dialogCtx); _firestore.collection('transacciones').doc(doc.id).delete(); if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🗑️ Eliminado'), backgroundColor: Colors.red)); }, child: const Text('Eliminar', style: TextStyle(color: Colors.red)))])); })])])),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  );
                 },
               ),
             ),
@@ -525,9 +679,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Duplicada'), backgroundColor: Colors.green));
   }
 
-  // ============================================
-  // CUENTAS
-  // ============================================
   Widget _buildCuentas() {
     return Container(width: double.infinity, padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('💳 Mis Cuentas', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)), if (_cuentaSeleccionada != null) IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => setState(() => _cuentaSeleccionada = null), tooltip: 'Volver')]), const SizedBox(height: 16), Expanded(child: _cuentaSeleccionada == null ? _buildListaCuentasPrincipales() : _buildSubcuentasPorNegocio(_cuentaSeleccionada!))]));
   }
@@ -540,75 +691,40 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     return StreamBuilder<QuerySnapshot>(stream: _firestore.collection('transacciones').snapshots(), builder: (context, snapshot) { if (!snapshot.hasData) return const Center(child: CircularProgressIndicator()); final docs = snapshot.data!.docs; return ListView.builder(itemCount: _negocios.length, itemBuilder: (context, index) { final negocio = _negocios[index]; double balance = 0; int numTransacciones = 0; for (var doc in docs) { final data = doc.data() as Map<String, dynamic>; if (data['cuenta'] == cuentaNombre && data['negocio'] == negocio) { final monto = (data['monto'] ?? 0).toDouble(); if (data['tipo'] == 'Ingreso') balance += monto; if (data['tipo'] == 'Gasto') balance -= monto; numTransacciones++; } } return Container(margin: const EdgeInsets.only(bottom: 12), padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))), child: Row(children: [Container(width: 45, height: 45, decoration: BoxDecoration(color: Colors.blue.withOpacity(0.2), borderRadius: BorderRadius.circular(8)), child: Icon(Icons.business, color: Colors.blue, size: 24)), const SizedBox(width: 16), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(negocio, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)), Text('\$${balance.toStringAsFixed(2)}', style: TextStyle(color: balance >= 0 ? Colors.green : Colors.red, fontSize: 14)), Text('$numTransacciones transacciones', style: const TextStyle(color: Colors.grey, fontSize: 11))])), const Icon(Icons.chevron_right, color: Colors.grey)])); }); });
   }
 
-  // ============================================
-  // CALENDARIO
-  // ============================================
   Widget _buildCalendarioCompleto() {
     DateTime _mesSeleccionado = DateTime.now();
     return StatefulBuilder(builder: (context, setSheetState) => Container(width: double.infinity, padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [IconButton(icon: const Icon(Icons.chevron_left, color: Colors.white), onPressed: () => setSheetState(() => _mesSeleccionado = DateTime(_mesSeleccionado.year, _mesSeleccionado.month - 1))), Text('${_mesSeleccionado.year} - ${['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][_mesSeleccionado.month - 1]}', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)), IconButton(icon: const Icon(Icons.chevron_right, color: Colors.white), onPressed: () => setSheetState(() => _mesSeleccionado = DateTime(_mesSeleccionado.year, _mesSeleccionado.month + 1)))]), const SizedBox(height: 16), Expanded(child: StreamBuilder<QuerySnapshot>(stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).snapshots(), builder: (context, snapshot) { if (!snapshot.hasData) return const Center(child: CircularProgressIndicator()); final docs = snapshot.data!.docs; final transaccionesDelMes = docs.where((doc) { final data = doc.data() as Map<String, dynamic>; final fechaStr = data['fecha'] as String? ?? ''; if (fechaStr.length >= 7) { final fechaParts = fechaStr.split('-'); if (fechaParts.length >= 2) { final anio = int.tryParse(fechaParts[0]); final mes = int.tryParse(fechaParts[1]); return anio == _mesSeleccionado.year && mes == _mesSeleccionado.month; } } return false; }).toList(); if (transaccionesDelMes.isEmpty) return const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.calendar_today, color: Colors.grey, size: 64), SizedBox(height: 16), Text('No hay transacciones este mes', style: TextStyle(color: Colors.grey, fontSize: 16))])); Map<String, List<Map<String, dynamic>>> porDia = {}; for (var doc in transaccionesDelMes) { final data = doc.data() as Map<String, dynamic>; final fechaStr = data['fecha'] as String? ?? ''; if (fechaStr.length >= 10) { final dia = fechaStr.substring(8, 10); if (!porDia.containsKey(dia)) porDia[dia] = []; porDia[dia]!.add(data); } } return ListView(children: porDia.entries.map((entry) { final dia = entry.key; final transacciones = entry.value; double totalDia = 0; for (var t in transacciones) { final monto = (t['monto'] ?? 0).toDouble(); if (t['tipo'] == 'Ingreso') totalDia += monto; if (t['tipo'] == 'Gasto') totalDia -= monto; } return Container(margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [Container(width: 40, height: 40, decoration: BoxDecoration(color: const Color(0xFF0066FF).withOpacity(0.2), borderRadius: BorderRadius.circular(8)), child: Center(child: Text(dia, style: const TextStyle(color: Color(0xFF0066FF), fontWeight: FontWeight.bold)))), const SizedBox(width: 12), Expanded(child: Text('Día $dia • ${transacciones.length} transacciones', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))), Text('\$${totalDia.toStringAsFixed(2)}', style: TextStyle(color: totalDia >= 0 ? Colors.green : Colors.red, fontWeight: FontWeight.bold))]), const SizedBox(height: 8), ...transacciones.map((t) => Padding(padding: const EdgeInsets.only(left: 52, top: 4), child: Row(children: [Icon(t['tipo'] == 'Ingreso' ? Icons.arrow_upward : Icons.arrow_downward, color: t['tipo'] == 'Ingreso' ? Colors.green : Colors.red, size: 16), const SizedBox(width: 8), Expanded(child: Text(t['concepto'] ?? '', style: const TextStyle(color: Colors.grey, fontSize: 12))), Text('\$${(t['monto'] ?? 0).toStringAsFixed(2)}', style: TextStyle(color: t['tipo'] == 'Ingreso' ? Colors.green : Colors.red, fontSize: 12))])))])); }).toList()); })))]));
   }
 
-  // ============================================
-  // REPORTES CON DATOS EDITABLES
-  // ============================================
   Widget _buildReportes() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('📊 Reportes Editables', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                Row(
-                  children: [
-                    IconButton(icon: const Icon(Icons.add, color: Colors.white), onPressed: () => _mostrarDialogoAgregarDatoEjemplo(), tooltip: 'Agregar dato'),
-                    IconButton(icon: const Icon(Icons.refresh, color: Colors.white), onPressed: () => _resetearDatosEjemplo(), tooltip: 'Restaurar datos'),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildGraficaCircularEditable(),
-            const SizedBox(height: 24),
-            const Text('💵 Flujo de Caja', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            _buildFlujoDeCajaEditable(),
-            const SizedBox(height: 24),
-            _buildBenchmarkingSection(),
-          ],
-        ),
-      ),
-    );
+    return Container(width: double.infinity, padding: const EdgeInsets.all(16), child: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('📊 Reportes Editables', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)), Row(children: [IconButton(icon: const Icon(Icons.add, color: Colors.white), onPressed: () => _mostrarDialogoAgregarDatoEjemplo(), tooltip: 'Agregar dato'), IconButton(icon: const Icon(Icons.refresh, color: Colors.white), onPressed: () => _resetearDatosEjemplo(), tooltip: 'Restaurar datos')])]),
+      const SizedBox(height: 16),
+      _buildGraficaCircularEditable(),
+      const SizedBox(height: 24),
+      const Text('💵 Flujo de Caja', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 16),
+      _buildFlujoDeCajaEditable(),
+      const SizedBox(height: 24),
+      _buildBenchmarkingSection(),
+    ])));
   }
 
   Widget _buildGraficaCircularEditable() {
-    final colors = [Colors.green, Colors.teal, Colors.amber, Colors.red.shade700, Colors.red, Colors.cyan, Colors.blue.shade300, Colors.indigo, Colors.lightGreen, Colors.teal.shade700, Colors.amber.shade700, Colors.red.shade900];
-    
     List<Map<String, dynamic>> datosActuales;
     String tituloGrafica;
     double total;
-    
     if (_vistaActual == 0) {
-      // Ingresos vs Gastos
       final totalIngresos = _datosIngresosEjemplo.fold<double>(0, (sum, item) => sum + (item['monto'] as double));
       final totalGastos = _datosGastosEjemplo.fold<double>(0, (sum, item) => sum + (item['monto'] as double));
-      datosActuales = [
-        {'categoria': 'INGRESOS', 'monto': totalIngresos, 'color': Colors.green},
-        {'categoria': 'GASTOS', 'monto': totalGastos, 'color': Colors.red},
-      ];
+      datosActuales = [{'categoria': 'INGRESOS', 'monto': totalIngresos, 'color': Colors.green}, {'categoria': 'GASTOS', 'monto': totalGastos, 'color': Colors.red}];
       tituloGrafica = 'INGRESOS VS GASTOS';
       total = totalIngresos + totalGastos;
     } else if (_vistaActual == 1) {
-      // Solo Ingresos
       datosActuales = List.from(_datosIngresosEjemplo);
       tituloGrafica = 'INGRESOS';
       total = _datosIngresosEjemplo.fold<double>(0, (sum, item) => sum + (item['monto'] as double));
     } else {
-      // Solo Gastos
       datosActuales = List.from(_datosGastosEjemplo);
       tituloGrafica = 'GASTOS';
       total = _datosGastosEjemplo.fold<double>(0, (sum, item) => sum + (item['monto'] as double));
@@ -618,13 +734,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
       final index = entry.key;
       final item = entry.value;
       final porcentaje = total > 0 ? ((item['monto'] as double) / total * 100) : 0;
-      return PieChartSectionData(
-        value: item['monto'],
-        title: '${porcentaje.toStringAsFixed(0)}%',
-        color: item['color'],
-        radius: 140,
-        titleStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-      );
+      return PieChartSectionData(value: item['monto'], title: '${porcentaje.toStringAsFixed(0)}%', color: item['color'], radius: 140, titleStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold));
     }).toList();
 
     return Container(
@@ -633,37 +743,28 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
       decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(16)),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(icon: const Icon(Icons.chevron_left, color: Colors.white), onPressed: () => setState(() => _vistaActual = (_vistaActual - 1 + 3) % 3)),
-              Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)), child: Text(['Ingresos vs Gastos', 'Ingresos', 'Gastos'][_vistaActual], style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
-              IconButton(icon: const Icon(Icons.chevron_right, color: Colors.white), onPressed: () => setState(() => _vistaActual = (_vistaActual + 1) % 3)),
-            ],
-          ),
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            IconButton(icon: const Icon(Icons.chevron_left, color: Colors.white), onPressed: () => setState(() => _vistaActual = (_vistaActual - 1 + 3) % 3)),
+            Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)), child: Text(['Ingresos vs Gastos', 'Ingresos', 'Gastos'][_vistaActual], style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
+            IconButton(icon: const Icon(Icons.chevron_right, color: Colors.white), onPressed: () => setState(() => _vistaActual = (_vistaActual + 1) % 3)),
+          ]),
           const SizedBox(height: 24),
           SizedBox(
             height: 450,
             child: Stack(
               alignment: Alignment.center,
               children: [
-                sections.isEmpty
-                    ? const Center(child: Text('Sin datos', style: TextStyle(color: Colors.grey)))
-                    : PieChart(PieChartData(sections: sections, sectionsSpace: 2, centerSpaceRadius: 100, startDegreeOffset: 270)),
+                sections.isEmpty ? const Center(child: Text('Sin datos', style: TextStyle(color: Colors.grey))) : PieChart(PieChartData(sections: sections, sectionsSpace: 2, centerSpaceRadius: 100, startDegreeOffset: 270)),
                 Container(
-                  width: 180,
-                  height: 180,
+                  width: 180, height: 180,
                   decoration: BoxDecoration(color: const Color(0xFF111111), shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade700, width: 2)),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('\$${total.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 4),
-                      Text(tituloGrafica, style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
-                      const SizedBox(height: 8),
-                      const Text('Toca un color\npara ver detalles', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontSize: 10)),
-                    ],
-                  ),
+                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Text('\$${total.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text(tituloGrafica, style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 8),
+                    const Text('Toca un color\npara ver detalles', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontSize: 10)),
+                  ]),
                 ),
               ],
             ),
@@ -704,32 +805,18 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     final categoriaCtrl = TextEditingController();
     final montoCtrl = TextEditingController();
     String tipo = _vistaActual == 1 ? 'ingreso' : 'gasto';
-    
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A1A),
         title: const Text('Agregar Dato', style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DropdownButtonFormField<String>(
-              value: tipo,
-              decoration: const InputDecoration(labelText: 'Tipo', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder()),
-              dropdownColor: const Color(0xFF1A1A1A),
-              style: const TextStyle(color: Colors.white),
-              items: const [
-                DropdownMenuItem(value: 'ingreso', child: Text('Ingreso')),
-                DropdownMenuItem(value: 'gasto', child: Text('Gasto')),
-              ],
-              onChanged: (v) => tipo = v!,
-            ),
-            const SizedBox(height: 12),
-            TextField(controller: categoriaCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Categoría', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-            const SizedBox(height: 12),
-            TextField(controller: montoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-          ],
-        ),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          DropdownButtonFormField<String>(value: tipo, decoration: const InputDecoration(labelText: 'Tipo', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: const [DropdownMenuItem(value: 'ingreso', child: Text('Ingreso')), DropdownMenuItem(value: 'gasto', child: Text('Gasto'))], onChanged: (v) => tipo = v!),
+          const SizedBox(height: 12),
+          TextField(controller: categoriaCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Categoría', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+          const SizedBox(height: 12),
+          TextField(controller: montoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+        ]),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
@@ -737,20 +824,11 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               if (categoriaCtrl.text.isEmpty || montoCtrl.text.isEmpty) return;
               final monto = double.tryParse(montoCtrl.text);
               if (monto == null) return;
-              
               setState(() {
                 if (tipo == 'ingreso') {
-                  _datosIngresosEjemplo.add({
-                    'categoria': categoriaCtrl.text.toUpperCase(),
-                    'monto': monto,
-                    'color': Colors.primaries[_datosIngresosEjemplo.length % Colors.primaries.length],
-                  });
+                  _datosIngresosEjemplo.add({'categoria': categoriaCtrl.text.toUpperCase(), 'monto': monto, 'color': Colors.primaries[_datosIngresosEjemplo.length % Colors.primaries.length]});
                 } else {
-                  _datosGastosEjemplo.add({
-                    'categoria': categoriaCtrl.text.toUpperCase(),
-                    'monto': monto,
-                    'color': Colors.primaries[_datosGastosEjemplo.length % Colors.primaries.length],
-                  });
+                  _datosGastosEjemplo.add({'categoria': categoriaCtrl.text.toUpperCase(), 'monto': monto, 'color': Colors.primaries[_datosGastosEjemplo.length % Colors.primaries.length]});
                 }
               });
               Navigator.pop(ctx);
@@ -768,20 +846,16 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     final categoriaCtrl = TextEditingController(text: item['categoria']);
     final montoCtrl = TextEditingController(text: item['monto'].toString());
     final esIngreso = _vistaActual == 1 || (_vistaActual == 0 && index == 0);
-    
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A1A),
         title: const Text('Editar Dato', style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: categoriaCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Categoría', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-            const SizedBox(height: 12),
-            TextField(controller: montoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-          ],
-        ),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(controller: categoriaCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Categoría', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+          const SizedBox(height: 12),
+          TextField(controller: montoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+        ]),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
@@ -789,20 +863,11 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               if (categoriaCtrl.text.isEmpty || montoCtrl.text.isEmpty) return;
               final monto = double.tryParse(montoCtrl.text);
               if (monto == null) return;
-              
               setState(() {
                 if (esIngreso) {
-                  _datosIngresosEjemplo[index] = {
-                    'categoria': categoriaCtrl.text.toUpperCase(),
-                    'monto': monto,
-                    'color': item['color'],
-                  };
+                  _datosIngresosEjemplo[index] = {'categoria': categoriaCtrl.text.toUpperCase(), 'monto': monto, 'color': item['color']};
                 } else {
-                  _datosGastosEjemplo[index] = {
-                    'categoria': categoriaCtrl.text.toUpperCase(),
-                    'monto': monto,
-                    'color': item['color'],
-                  };
+                  _datosGastosEjemplo[index] = {'categoria': categoriaCtrl.text.toUpperCase(), 'monto': monto, 'color': item['color']};
                 }
               });
               Navigator.pop(ctx);
@@ -818,7 +883,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
 
   void _eliminarDatoEjemplo(int index, Map<String, dynamic> item) {
     final esIngreso = _vistaActual == 1 || (_vistaActual == 0 && index == 0);
-    
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -830,11 +894,8 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
           TextButton(
             onPressed: () {
               setState(() {
-                if (esIngreso) {
-                  _datosIngresosEjemplo.removeAt(index);
-                } else {
-                  _datosGastosEjemplo.removeAt(index);
-                }
+                if (esIngreso) _datosIngresosEjemplo.removeAt(index);
+                else _datosGastosEjemplo.removeAt(index);
               });
               Navigator.pop(ctx);
               if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🗑️ Eliminado'), backgroundColor: Colors.red));
@@ -871,18 +932,14 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     final totalIngresos = _datosIngresosEjemplo.fold<double>(0, (sum, item) => sum + (item['monto'] as double));
     final totalGastos = _datosGastosEjemplo.fold<double>(0, (sum, item) => sum + (item['monto'] as double));
     final flujo = totalIngresos - totalGastos;
-    
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          Column(children: [const Text('Ingresos', style: TextStyle(color: Colors.grey, fontSize: 12)), Text('\$${totalIngresos.toStringAsFixed(2)}', style: const TextStyle(color: Colors.green, fontSize: 20, fontWeight: FontWeight.bold))]),
-          Column(children: [const Text('Gastos', style: TextStyle(color: Colors.grey, fontSize: 12)), Text('\$${totalGastos.toStringAsFixed(2)}', style: const TextStyle(color: Colors.red, fontSize: 20, fontWeight: FontWeight.bold))]),
-          Column(children: [const Text('Flujo', style: TextStyle(color: Colors.grey, fontSize: 12)), Text('\$${flujo.toStringAsFixed(2)}', style: TextStyle(color: flujo >= 0 ? Colors.green : Colors.red, fontSize: 20, fontWeight: FontWeight.bold))]),
-        ],
-      ),
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+        Column(children: [const Text('Ingresos', style: TextStyle(color: Colors.grey, fontSize: 12)), Text('\$${totalIngresos.toStringAsFixed(2)}', style: const TextStyle(color: Colors.green, fontSize: 20, fontWeight: FontWeight.bold))]),
+        Column(children: [const Text('Gastos', style: TextStyle(color: Colors.grey, fontSize: 12)), Text('\$${totalGastos.toStringAsFixed(2)}', style: const TextStyle(color: Colors.red, fontSize: 20, fontWeight: FontWeight.bold))]),
+        Column(children: [const Text('Flujo', style: TextStyle(color: Colors.grey, fontSize: 12)), Text('\$${flujo.toStringAsFixed(2)}', style: TextStyle(color: flujo >= 0 ? Colors.green : Colors.red, fontSize: 20, fontWeight: FontWeight.bold))]),
+      ]),
     );
   }
 
@@ -892,104 +949,59 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
         final docs = snapshot.data!.docs;
-
         Map<String, Map<String, double>> datosPorNegocio = {};
-        for (var negocio in _negocios) {
-          datosPorNegocio[negocio] = {'ingresos': 0, 'gastos': 0, 'transacciones': 0};
-        }
-
+        for (var negocio in _negocios) datosPorNegocio[negocio] = {'ingresos': 0, 'gastos': 0, 'transacciones': 0};
         for (var doc in docs) {
           final data = doc.data() as Map<String, dynamic>;
           final negocio = data['negocio'] ?? 'Otros';
           final monto = (data['monto'] ?? 0).toDouble();
           final tipo = data['tipo'] ?? '';
-
-          if (!datosPorNegocio.containsKey(negocio)) {
-            datosPorNegocio[negocio] = {'ingresos': 0, 'gastos': 0, 'transacciones': 0};
-          }
-
-          if (tipo == 'Ingreso') {
-            datosPorNegocio[negocio]!['ingresos'] = (datosPorNegocio[negocio]!['ingresos'] ?? 0) + monto;
-          }
-          if (tipo == 'Gasto') {
-            datosPorNegocio[negocio]!['gastos'] = (datosPorNegocio[negocio]!['gastos'] ?? 0) + monto;
-          }
+          if (!datosPorNegocio.containsKey(negocio)) datosPorNegocio[negocio] = {'ingresos': 0, 'gastos': 0, 'transacciones': 0};
+          if (tipo == 'Ingreso') datosPorNegocio[negocio]!['ingresos'] = (datosPorNegocio[negocio]!['ingresos'] ?? 0) + monto;
+          if (tipo == 'Gasto') datosPorNegocio[negocio]!['gastos'] = (datosPorNegocio[negocio]!['gastos'] ?? 0) + monto;
           datosPorNegocio[negocio]!['transacciones'] = (datosPorNegocio[negocio]!['transacciones'] ?? 0) + 1;
         }
-
         double maxIngreso = 0;
-        for (var data in datosPorNegocio.values) {
-          if ((data['ingresos'] ?? 0) > maxIngreso) {
-            maxIngreso = data['ingresos'] ?? 0;
-          }
-        }
+        for (var data in datosPorNegocio.values) if ((data['ingresos'] ?? 0) > maxIngreso) maxIngreso = data['ingresos'] ?? 0;
 
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('📊 Benchmarking por Negocio', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              ...datosPorNegocio.entries.map((entry) {
-                final negocio = entry.key;
-                final ingresos = entry.value['ingresos'] ?? 0;
-                final gastos = entry.value['gastos'] ?? 0;
-                final transacciones = entry.value['transacciones'] ?? 0;
-                final utilidad = ingresos - gastos;
-                final porcentajeIngreso = maxIngreso > 0 ? (ingresos / maxIngreso * 100) : 0;
-
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.business, color: const Color(0xFF0066FF), size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(negocio, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
-                          Text('$transacciones transacciones', style: const TextStyle(color: Colors.grey, fontSize: 11)),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Ingresos', style: TextStyle(color: Colors.grey, fontSize: 10)), Text('\$${ingresos.toStringAsFixed(0)}', style: const TextStyle(color: Colors.green, fontSize: 14, fontWeight: FontWeight.bold))]),
-                          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [const Text('Gastos', style: TextStyle(color: Colors.grey, fontSize: 10)), Text('\$${gastos.toStringAsFixed(0)}', style: const TextStyle(color: Colors.red, fontSize: 14, fontWeight: FontWeight.bold))]),
-                          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [const Text('Utilidad', style: TextStyle(color: Colors.grey, fontSize: 10)), Text('\$${utilidad.toStringAsFixed(0)}', style: TextStyle(color: utilidad >= 0 ? Colors.green : Colors.red, fontSize: 14, fontWeight: FontWeight.bold))]),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: porcentajeIngreso / 100,
-                          backgroundColor: Colors.grey.shade800,
-                          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0066FF)),
-                          minHeight: 6,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text('${porcentajeIngreso.toStringAsFixed(1)}% del mayor ingreso', style: const TextStyle(color: Colors.grey, fontSize: 10)),
-                    ],
-                  ),
-                );
-              }),
-            ],
-          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('📊 Benchmarking por Negocio', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            ...datosPorNegocio.entries.map((entry) {
+              final negocio = entry.key;
+              final ingresos = entry.value['ingresos'] ?? 0;
+              final gastos = entry.value['gastos'] ?? 0;
+              final transacciones = entry.value['transacciones'] ?? 0;
+              final utilidad = ingresos - gastos;
+              final porcentajeIngreso = maxIngreso > 0 ? (ingresos / maxIngreso * 100) : 0;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [Icon(Icons.business, color: const Color(0xFF0066FF), size: 20), const SizedBox(width: 8), Expanded(child: Text(negocio, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))), Text('$transacciones transacciones', style: const TextStyle(color: Colors.grey, fontSize: 11))]),
+                  const SizedBox(height: 12),
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Ingresos', style: TextStyle(color: Colors.grey, fontSize: 10)), Text('\$${ingresos.toStringAsFixed(0)}', style: const TextStyle(color: Colors.green, fontSize: 14, fontWeight: FontWeight.bold))]),
+                    Column(crossAxisAlignment: CrossAxisAlignment.end, children: [const Text('Gastos', style: TextStyle(color: Colors.grey, fontSize: 10)), Text('\$${gastos.toStringAsFixed(0)}', style: const TextStyle(color: Colors.red, fontSize: 14, fontWeight: FontWeight.bold))]),
+                    Column(crossAxisAlignment: CrossAxisAlignment.end, children: [const Text('Utilidad', style: TextStyle(color: Colors.grey, fontSize: 10)), Text('\$${utilidad.toStringAsFixed(0)}', style: TextStyle(color: utilidad >= 0 ? Colors.green : Colors.red, fontSize: 14, fontWeight: FontWeight.bold))]),
+                  ]),
+                  const SizedBox(height: 8),
+                  ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: porcentajeIngreso / 100, backgroundColor: Colors.grey.shade800, valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0066FF)), minHeight: 6)),
+                  const SizedBox(height: 4),
+                  Text('${porcentajeIngreso.toStringAsFixed(1)}% del mayor ingreso', style: const TextStyle(color: Colors.grey, fontSize: 10)),
+                ]),
+              );
+            }),
+          ]),
         );
       },
     );
   }
 
-  // ============================================
-  // PRESUPUESTOS TAB
-  // ============================================
   Widget _buildPresupuestosTab() {
     return Container(
       width: double.infinity,
@@ -997,31 +1009,11 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('📊 Mis Presupuestos', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-              ElevatedButton.icon(
-                onPressed: () => _mostrarFormularioNuevoPresupuesto(context),
-                icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text('Agregar', style: TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
-              ),
-            ],
-          ),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('📊 Mis Presupuestos', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)), ElevatedButton.icon(onPressed: () => _mostrarFormularioNuevoPresupuesto(context), icon: const Icon(Icons.add, color: Colors.white), label: const Text('Agregar', style: TextStyle(color: Colors.white)), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)))]),
           const SizedBox(height: 16),
           Expanded(
             child: _presupuestosPersonalizados.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.pie_chart_outline, color: Colors.grey.shade700, size: 64),
-                        const SizedBox(height: 16),
-                        const Text('No hay presupuestos', style: TextStyle(color: Colors.grey, fontSize: 16)),
-                      ],
-                    ),
-                  )
+                ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.pie_chart_outline, color: Colors.grey.shade700, size: 64), const SizedBox(height: 16), const Text('No hay presupuestos', style: TextStyle(color: Colors.grey, fontSize: 16))]))
                 : StreamBuilder<QuerySnapshot>(
                     stream: _firestore.collection('transacciones').snapshots(),
                     builder: (context, snapshot) {
@@ -1043,78 +1035,28 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                           final porcentaje = presupuesto > 0 ? (gastadoCat / presupuesto * 100).clamp(0, 100) : 0;
                           final excedido = gastadoCat > presupuesto;
                           final aplicado = cat['aplicado'] ?? false;
-                          
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1A1A1A),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: aplicado ? Colors.green : const Color(0xFF222222)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(Icons.category, color: const Color(0xFF0066FF), size: 24),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(cat['nombre'] as String, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                                          Text('${cat['cuenta']} • ${cat['subcuenta']}', style: const TextStyle(color: Colors.grey, fontSize: 11)),
-                                        ],
-                                      ),
-                                    ),
-                                    if (aplicado) const Icon(Icons.check_circle, color: Colors.green, size: 18),
-                                    const SizedBox(width: 8),
-                                    IconButton(
-                                      icon: const Icon(Icons.edit, color: Color(0xFF0066FF), size: 20),
-                                      onPressed: () => _editarPresupuestoDialog(cat),
-                                      tooltip: 'Editar',
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                                      onPressed: () => _eliminarPresupuestoPersonalizado(cat['id']),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text('\$${gastadoCat.toStringAsFixed(0)} / \$${presupuesto.toStringAsFixed(0)}', style: TextStyle(color: excedido ? Colors.red : Colors.green, fontSize: 14, fontWeight: FontWeight.bold)),
-                                    Text('${porcentaje.toStringAsFixed(1)}%', style: TextStyle(color: excedido ? Colors.red : Colors.grey, fontSize: 12)),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(4),
-                                  child: LinearProgressIndicator(
-                                    value: porcentaje / 100,
-                                    backgroundColor: Colors.grey.shade800,
-                                    valueColor: AlwaysStoppedAnimation<Color>(excedido ? Colors.red : const Color(0xFF0066FF)),
-                                    minHeight: 8,
-                                  ),
-                                ),
-                                if (excedido) const Padding(padding: EdgeInsets.only(top: 8), child: Text('⚠️ EXCEDIDO', style: TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold))),
-                                const SizedBox(height: 12),
-                                Row(
-                                  children: [
-                                    const Text('Aplicar:', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                                    const Spacer(),
-                                    Switch(
-                                      value: aplicado,
-                                      activeColor: Colors.green,
-                                      onChanged: (v) => _toggleAplicarPresupuesto(cat['id'], v, cat['nombre'], presupuesto, cat['cuenta'], cat['subcuenta']),
-                                    ),
-                                    Text(aplicado ? 'Activo' : 'Inactivo', style: TextStyle(color: aplicado ? Colors.green : Colors.grey, fontSize: 12)),
-                                  ],
-                                ),
-                              ],
-                            ),
+                            decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(12), border: Border.all(color: aplicado ? Colors.green : const Color(0xFF222222))),
+                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Row(children: [
+                                Icon(Icons.category, color: const Color(0xFF0066FF), size: 24),
+                                const SizedBox(width: 12),
+                                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(cat['nombre'] as String, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)), Text('${cat['cuenta']} • ${cat['subcuenta']}', style: const TextStyle(color: Colors.grey, fontSize: 11))])),
+                                if (aplicado) const Icon(Icons.check_circle, color: Colors.green, size: 18),
+                                const SizedBox(width: 8),
+                                IconButton(icon: const Icon(Icons.edit, color: Color(0xFF0066FF), size: 20), onPressed: () => _editarPresupuestoDialog(cat), tooltip: 'Editar'),
+                                IconButton(icon: const Icon(Icons.delete, color: Colors.red, size: 20), onPressed: () => _eliminarPresupuestoPersonalizado(cat['id'])),
+                              ]),
+                              const SizedBox(height: 12),
+                              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('\$${gastadoCat.toStringAsFixed(0)} / \$${presupuesto.toStringAsFixed(0)}', style: TextStyle(color: excedido ? Colors.red : Colors.green, fontSize: 14, fontWeight: FontWeight.bold)), Text('${porcentaje.toStringAsFixed(1)}%', style: TextStyle(color: excedido ? Colors.red : Colors.grey, fontSize: 12))]),
+                              const SizedBox(height: 8),
+                              ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: porcentaje / 100, backgroundColor: Colors.grey.shade800, valueColor: AlwaysStoppedAnimation<Color>(excedido ? Colors.red : const Color(0xFF0066FF)), minHeight: 8)),
+                              if (excedido) const Padding(padding: EdgeInsets.only(top: 8), child: Text('⚠️ EXCEDIDO', style: TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold))),
+                              const SizedBox(height: 12),
+                              Row(children: [const Text('Aplicar:', style: TextStyle(color: Colors.grey, fontSize: 12)), const Spacer(), Switch(value: aplicado, activeColor: Colors.green, onChanged: (v) => _toggleAplicarPresupuesto(cat['id'], v, cat['nombre'], presupuesto, cat['cuenta'], cat['subcuenta'])), Text(aplicado ? 'Activo' : 'Inactivo', style: TextStyle(color: aplicado ? Colors.green : Colors.grey, fontSize: 12))]),
+                            ]),
                           );
                         },
                       );
@@ -1137,22 +1079,17 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
       builder: (dialogCtx) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A1A),
         title: const Text('Nuevo Presupuesto', style: TextStyle(color: Colors.white)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: nombreCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Nombre', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-              const SizedBox(height: 12),
-              TextField(controller: montoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-              const SizedBox(height: 12),
-              TextField(controller: gastadoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Gastado actual', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(value: cuenta, decoration: const InputDecoration(labelText: 'Cuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => cuenta = v!),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(value: subcuenta, decoration: const InputDecoration(labelText: 'Subcuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(), onChanged: (v) => subcuenta = v!),
-            ],
-          ),
-        ),
+        content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(controller: nombreCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Nombre', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+          const SizedBox(height: 12),
+          TextField(controller: montoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+          const SizedBox(height: 12),
+          TextField(controller: gastadoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Gastado actual', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(value: cuenta, decoration: const InputDecoration(labelText: 'Cuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => cuenta = v!),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(value: subcuenta, decoration: const InputDecoration(labelText: 'Subcuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(), onChanged: (v) => subcuenta = v!),
+        ])),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
@@ -1172,9 +1109,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  // ============================================
-  // METAS TAB
-  // ============================================
   Widget _buildMetasTab() {
     return Container(
       width: double.infinity,
@@ -1182,18 +1116,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('🏆 Mis Metas', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-              ElevatedButton.icon(
-                onPressed: () => _mostrarFormularioNuevaMeta(context),
-                icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text('Agregar', style: TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
-              ),
-            ],
-          ),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('🏆 Mis Metas', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)), ElevatedButton.icon(onPressed: () => _mostrarFormularioNuevaMeta(context), icon: const Icon(Icons.add, color: Colors.white), label: const Text('Agregar', style: TextStyle(color: Colors.white)), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)))]),
           const SizedBox(height: 16),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
@@ -1201,20 +1124,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
                 final docs = snapshot.data!.docs;
-                if (docs.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.flag_outlined, color: Colors.grey.shade700, size: 64),
-                        const SizedBox(height: 16),
-                        const Text('No hay metas', style: TextStyle(color: Colors.grey, fontSize: 16)),
-                        const SizedBox(height: 8),
-                        const Text('Presiona "Agregar" para crear la primera', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                      ],
-                    ),
-                  );
-                }
+                if (docs.isEmpty) return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.flag_outlined, color: Colors.grey.shade700, size: 64), const SizedBox(height: 16), const Text('No hay metas', style: TextStyle(color: Colors.grey, fontSize: 16))]));
                 return ListView.builder(
                   itemCount: docs.length,
                   itemBuilder: (context, index) {
@@ -1229,81 +1139,35 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                     final ahorroMensual = meses > 0 ? restante / meses : 0;
                     final ahorroSemanal = ahorroMensual / 4;
                     final ahorroDiario = ahorroMensual / 30;
-
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A1A1A),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: completada ? Colors.green : const Color(0xFF222222)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(completada ? Icons.check_circle : Icons.flag, color: completada ? Colors.green : const Color(0xFF0066FF), size: 24),
-                              const SizedBox(width: 12),
-                              Expanded(child: Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
-                              IconButton(
-                                icon: const Icon(Icons.edit, color: Color(0xFF0066FF), size: 20),
-                                onPressed: () => _editarMetaDialog(docs[index]),
-                                tooltip: 'Editar',
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                                onPressed: () => _firestore.collection('metas').doc(docs[index].id).delete(),
-                              ),
-                            ],
-                          ),
+                      decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(12), border: Border.all(color: completada ? Colors.green : const Color(0xFF222222))),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Row(children: [
+                          Icon(completada ? Icons.check_circle : Icons.flag, color: completada ? Colors.green : const Color(0xFF0066FF), size: 24),
+                          const SizedBox(width: 12),
+                          Expanded(child: Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
+                          IconButton(icon: const Icon(Icons.edit, color: Color(0xFF0066FF), size: 20), onPressed: () => _editarMetaDialog(docs[index]), tooltip: 'Editar'),
+                          IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20), onPressed: () { _firestore.collection('metas').doc(docs[index].id).delete(); if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🗑️ Meta eliminada'), backgroundColor: Colors.red)); }),
+                        ]),
+                        const SizedBox(height: 12),
+                        Text('\$${actual.toStringAsFixed(0)} / \$${objetivo.toStringAsFixed(0)}', style: TextStyle(color: completada ? Colors.green : Colors.grey, fontSize: 14)),
+                        const SizedBox(height: 8),
+                        ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: porcentaje / 100, backgroundColor: Colors.grey.shade800, valueColor: AlwaysStoppedAnimation<Color>(completada ? Colors.green : const Color(0xFF0066FF)), minHeight: 8)),
+                        const SizedBox(height: 4),
+                        Text('${porcentaje.toStringAsFixed(1)}% completado${completada ? ' ✅' : ''}', style: TextStyle(color: completada ? Colors.green : Colors.grey, fontSize: 12)),
+                        if (!completada && restante > 0) ...[
                           const SizedBox(height: 12),
-                          Text('\$${actual.toStringAsFixed(0)} / \$${objetivo.toStringAsFixed(0)}', style: TextStyle(color: completada ? Colors.green : Colors.grey, fontSize: 14)),
-                          const SizedBox(height: 8),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: porcentaje / 100,
-                              backgroundColor: Colors.grey.shade800,
-                              valueColor: AlwaysStoppedAnimation<Color>(completada ? Colors.green : const Color(0xFF0066FF)),
-                              minHeight: 8,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text('${porcentaje.toStringAsFixed(1)}% completado${completada ? ' ✅' : ''}', style: TextStyle(color: completada ? Colors.green : Colors.grey, fontSize: 12)),
-                          if (!completada && restante > 0) ...[
-                            const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0066FF).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFF0066FF).withOpacity(0.3)),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('🎯 Plan de Ahorro Recomendado', style: TextStyle(color: Color(0xFF0066FF), fontSize: 12, fontWeight: FontWeight.bold)),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      _buildPlanItem('Mensual', ahorroMensual),
-                                      _buildPlanItem('Semanal', ahorroSemanal),
-                                      _buildPlanItem('Diario', ahorroDiario),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    '📅 Fecha estimada: ${DateTime.now().add(Duration(days: meses * 30)).toIso8601String().split('T')[0]}',
-                                    style: const TextStyle(color: Colors.grey, fontSize: 11),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                          Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF0066FF).withOpacity(0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF0066FF).withOpacity(0.3))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            const Text('🎯 Plan de Ahorro Recomendado', style: TextStyle(color: Color(0xFF0066FF), fontSize: 12, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 8),
+                            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [_buildPlanItem('Mensual', ahorroMensual), _buildPlanItem('Semanal', ahorroSemanal), _buildPlanItem('Diario', ahorroDiario)]),
+                            const SizedBox(height: 8),
+                            Text('📅 Fecha estimada: ${DateTime.now().add(Duration(days: meses * 30)).toIso8601String().split('T')[0]}', style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                          ])),
                         ],
-                      ),
+                      ]),
                     );
                   },
                 );
@@ -1316,13 +1180,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   }
 
   Widget _buildPlanItem(String periodo, double monto) {
-    return Column(
-      children: [
-        Text(periodo, style: const TextStyle(color: Colors.grey, fontSize: 10)),
-        const SizedBox(height: 4),
-        Text('\$${monto.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-      ],
-    );
+    return Column(children: [Text(periodo, style: const TextStyle(color: Colors.grey, fontSize: 10)), const SizedBox(height: 4), Text('\$${monto.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))]);
   }
 
   void _mostrarFormularioNuevaMeta(BuildContext ctx) {
@@ -1330,26 +1188,20 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     final objetivoCtrl = TextEditingController();
     final actualCtrl = TextEditingController(text: '0');
     final mesesCtrl = TextEditingController(text: '12');
-
     showDialog(
       context: ctx,
       builder: (dialogCtx) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A1A),
         title: const Text('Nueva Meta', style: TextStyle(color: Colors.white)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: nombreCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Nombre', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-              const SizedBox(height: 12),
-              TextField(controller: objetivoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Objetivo', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-              const SizedBox(height: 12),
-              TextField(controller: actualCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Actual', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-              const SizedBox(height: 12),
-              TextField(controller: mesesCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Meses', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-            ],
-          ),
-        ),
+        content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(controller: nombreCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Nombre', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+          const SizedBox(height: 12),
+          TextField(controller: objetivoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Objetivo', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+          const SizedBox(height: 12),
+          TextField(controller: actualCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Actual', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+          const SizedBox(height: 12),
+          TextField(controller: mesesCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Meses', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+        ])),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
@@ -1360,13 +1212,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               final meses = int.tryParse(mesesCtrl.text) ?? 12;
               if (objetivo == null) return;
               Navigator.pop(dialogCtx);
-              _firestore.collection('metas').add({
-                'nombre': nombreCtrl.text.trim(),
-                'objetivo': objetivo,
-                'actual': actual,
-                'meses': meses,
-                'created_at': FieldValue.serverTimestamp(),
-              });
+              _firestore.collection('metas').add({'nombre': nombreCtrl.text.trim(), 'objetivo': objetivo, 'actual': actual, 'meses': meses, 'created_at': FieldValue.serverTimestamp()});
               if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Meta creada'), backgroundColor: Colors.green));
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
@@ -1383,29 +1229,23 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     final objetivoCtrl = TextEditingController(text: data['objetivo']?.toString() ?? '0');
     final actualCtrl = TextEditingController(text: data['actual']?.toString() ?? '0');
     final mesesCtrl = TextEditingController(text: (data['meses'] ?? 12).toString());
-
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A1A),
         title: const Text('Editar Meta', style: TextStyle(color: Colors.white)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: nombreCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Nombre', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-              const SizedBox(height: 12),
-              TextField(controller: objetivoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Objetivo', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-              const SizedBox(height: 12),
-              TextField(controller: actualCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Actual', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-              const SizedBox(height: 12),
-              TextField(controller: mesesCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Meses', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
-            ],
-          ),
-        ),
+        content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(controller: nombreCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Nombre', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+          const SizedBox(height: 12),
+          TextField(controller: objetivoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Objetivo', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+          const SizedBox(height: 12),
+          TextField(controller: actualCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Actual', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+          const SizedBox(height: 12),
+          TextField(controller: mesesCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Meses', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+        ])),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
+          TextButton(
             onPressed: () {
               if (nombreCtrl.text.isEmpty || objetivoCtrl.text.isEmpty) return;
               final objetivo = double.tryParse(objetivoCtrl.text);
@@ -1413,34 +1253,47 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               final meses = int.tryParse(mesesCtrl.text) ?? 12;
               if (objetivo == null) return;
               Navigator.pop(dialogCtx);
-              _firestore.collection('metas').doc(metaDoc.id).update({
-                'nombre': nombreCtrl.text.trim(),
-                'objetivo': objetivo,
-                'actual': actual,
-                'meses': meses,
-              });
+              _firestore.collection('metas').doc(metaDoc.id).update({'nombre': nombreCtrl.text.trim(), 'objetivo': objetivo, 'actual': actual, 'meses': meses});
               if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Meta actualizada'), backgroundColor: Colors.green));
             },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
-            child: const Text('Guardar', style: TextStyle(color: Colors.white)),
+            child: const Text('Guardar', style: TextStyle(color: Color(0xFF0066FF))),
           ),
         ],
       ),
     );
   }
 
-  // ============================================
-  // FUNCIONES AUXILIARES Y FORMULARIOS
-  // ============================================
   void _mostrarVistaHoy() { _tabController.animateTo(0); }
   void _mostrarCalendario() { _tabController.animateTo(6); }
 
   void _mostrarReconciliacionEditable() {
-    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: const Color(0xFF111111), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))), builder: (ctx) => Container(padding: const EdgeInsets.all(20), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [const Icon(Icons.check_circle, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text('✅ Reconciliar', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]), const SizedBox(height: 16), Expanded(child: StreamBuilder<QuerySnapshot>(stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).snapshots(), builder: (context, snapshot) { if (!snapshot.hasData) return const Center(child: CircularProgressIndicator()); final docs = snapshot.data!.docs; return ListView.builder(itemCount: docs.length, itemBuilder: (context, index) { final doc = docs[index]; final data = doc.data() as Map<String, dynamic>; final reconciliada = data['reconciliada'] ?? false; return Container(margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8), border: Border.all(color: reconciliada ? Colors.green : const Color(0xFF222222))), child: Row(children: [Checkbox(value: reconciliada, activeColor: Colors.green, onChanged: (v) async { await _firestore.collection('transacciones').doc(doc.id).update({'reconciliada': v ?? false}); if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(v == true ? '✅ Reconciliada' : '↩️ Desmarcada'), backgroundColor: v == true ? Colors.green : Colors.grey)); }), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(data['concepto'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), Text('${data['categoria'] ?? ''} • ${data['fecha'] ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 12))])), Text('\$${(data['monto'] ?? 0).toStringAsFixed(2)}', style: TextStyle(color: data['tipo'] == 'Ingreso' ? Colors.green : Colors.red, fontWeight: FontWeight.bold))])); }); }))]));
+    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: const Color(0xFF111111), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))), builder: (ctx) => Container(padding: const EdgeInsets.all(20), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [const Icon(Icons.check_circle, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text('✅ Reconciliar', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
+      const SizedBox(height: 16),
+      Expanded(child: StreamBuilder<QuerySnapshot>(stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).snapshots(), builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final docs = snapshot.data!.docs;
+        return ListView.builder(itemCount: docs.length, itemBuilder: (context, index) {
+          final doc = docs[index];
+          final data = doc.data() as Map<String, dynamic>;
+          final reconciliada = data['reconciliada'] ?? false;
+          return Container(margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8), border: Border.all(color: reconciliada ? Colors.green : const Color(0xFF222222))), child: Row(children: [
+            Checkbox(value: reconciliada, activeColor: Colors.green, onChanged: (v) async { await _firestore.collection('transacciones').doc(doc.id).update({'reconciliada': v ?? false}); if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(v == true ? '✅ Reconciliada' : '↩️ Desmarcada'), backgroundColor: v == true ? Colors.green : Colors.grey)); }),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(data['concepto'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), Text('${data['categoria'] ?? ''} • ${data['fecha'] ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 12))])),
+            Text('\$${(data['monto'] ?? 0).toStringAsFixed(2)}', style: TextStyle(color: data['tipo'] == 'Ingreso' ? Colors.green : Colors.red, fontWeight: FontWeight.bold)),
+          ]));
+        });
+      }))]));
   }
 
   void _mostrarInformesEditables() {
-    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: const Color(0xFF111111), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))), builder: (ctx) => Container(padding: const EdgeInsets.all(20), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [const Icon(Icons.analytics, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text('📊 Informes', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]), const SizedBox(height: 16), Expanded(child: ListView(children: [GestureDetector(onTap: () { Navigator.pop(ctx); _tabController.animateTo(7); }, child: Container(margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)), child: Row(children: [const Icon(Icons.show_chart, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('📈 Ingresos/Gastos', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), Text('Resumen por periodo', style: TextStyle(color: Colors.grey, fontSize: 12))])), const Icon(Icons.chevron_right, color: Colors.grey)]))), GestureDetector(onTap: () { Navigator.pop(ctx); _tabController.animateTo(2); }, child: Container(margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)), child: Row(children: [const Icon(Icons.dashboard_customize, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('📊 Dashboard KPIs', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), Text('Indicadores clave', style: TextStyle(color: Colors.grey, fontSize: 12))])), const Icon(Icons.chevron_right, color: Colors.grey)])))]))])));
+    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: const Color(0xFF111111), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))), builder: (ctx) => Container(padding: const EdgeInsets.all(20), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [const Icon(Icons.analytics, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text('📊 Informes', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
+      const SizedBox(height: 16),
+      Expanded(child: ListView(children: [
+        GestureDetector(onTap: () { Navigator.pop(ctx); _tabController.animateTo(7); }, child: Container(margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)), child: Row(children: [const Icon(Icons.show_chart, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('📈 Ingresos/Gastos', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), Text('Resumen por periodo', style: TextStyle(color: Colors.grey, fontSize: 12))])), const Icon(Icons.chevron_right, color: Colors.grey)]))),
+        GestureDetector(onTap: () { Navigator.pop(ctx); _tabController.animateTo(2); }, child: Container(margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)), child: Row(children: [const Icon(Icons.dashboard_customize, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('📊 Dashboard KPIs', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), Text('Indicadores clave', style: TextStyle(color: Colors.grey, fontSize: 12))])), const Icon(Icons.chevron_right, color: Colors.grey)]))),
+      ]))]));
   }
 
   Future<void> _importarCSV() async {
@@ -1491,7 +1344,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   }
 
   Future<void> _cargarDatosEjemplo() async {
-    final confirm = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(backgroundColor: const Color(0xFF1A1A1A), title: const Text('Cargar ejemplo', style: TextStyle(color: Colors.white)), content: const Text('¿Agregar transacciones de ejemplo?', style: TextStyle(color: Colors.grey)), actions: [TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))), TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Cargar', style: TextStyle(color: Color(0xFF0066FF))))]));
+    final confirm = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(backgroundColor: const Color(0xFF1A1A1A), title: const Text('Cargar ejemplo', style: TextStyle(color: Colors.white)), content: const Text('¿Agregar transacciones de ejemplo editables?', style: TextStyle(color: Colors.grey)), actions: [TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))), TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Cargar', style: TextStyle(color: Color(0xFF0066FF))))]));
     if (confirm != true) return;
     final ejemplos = [
       {'concepto': 'Comisión venta terreno', 'monto': 25000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso', 'cuenta': 'Banco', 'subcuenta': 'Proyectos', 'negocio': 'Proyectos', 'fecha': '2026-10-02', 'reconciliada': true, 'tags': ['#cliente', '#negocio']},
@@ -1530,126 +1383,38 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Icon(transaccion == null ? Icons.add_circle : Icons.edit, color: const Color(0xFF0066FF), size: 28),
-                    const SizedBox(width: 12),
-                    Expanded(child: Text(transaccion == null ? 'Nueva Transacción' : 'Editar', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
-                    IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx)),
-                  ],
-                ),
+                Row(children: [Icon(transaccion == null ? Icons.add_circle : Icons.edit, color: const Color(0xFF0066FF), size: 28), const SizedBox(width: 12), Expanded(child: Text(transaccion == null ? 'Nueva Transacción' : 'Editar', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
                 const SizedBox(height: 20),
                 TextField(controller: conceptoCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Concepto *', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder())),
                 const SizedBox(height: 12),
                 TextField(controller: montoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder())),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(child: RadioListTile<String>(title: const Text('Ingreso', style: TextStyle(color: Colors.white)), value: 'Ingreso', groupValue: tipo, activeColor: Colors.green, onChanged: (v) => setSheetState(() => tipo = v!))),
-                    Expanded(child: RadioListTile<String>(title: const Text('Gasto', style: TextStyle(color: Colors.white)), value: 'Gasto', groupValue: tipo, activeColor: Colors.red, onChanged: (v) => setSheetState(() => tipo = v!))),
-                  ],
-                ),
+                Row(children: [Expanded(child: RadioListTile<String>(title: const Text('Ingreso', style: TextStyle(color: Colors.white)), value: 'Ingreso', groupValue: tipo, activeColor: Colors.green, onChanged: (v) => setSheetState(() => tipo = v!))), Expanded(child: RadioListTile<String>(title: const Text('Gasto', style: TextStyle(color: Colors.white)), value: 'Gasto', groupValue: tipo, activeColor: Colors.red, onChanged: (v) => setSheetState(() => tipo = v!)))]),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: categoriaCtrl.text,
-                  decoration: const InputDecoration(labelText: 'Categoría', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()),
-                  dropdownColor: const Color(0xFF1A1A1A),
-                  style: const TextStyle(color: Colors.white),
-                  items: (tipo == 'Ingreso' ? _categoriasIngreso : _categoriasGasto).map((c) => DropdownMenuItem(value: c['nombre'] as String, child: Text(c['nombre'] as String))).toList(),
-                  onChanged: (v) => categoriaCtrl.text = v ?? '',
-                ),
+                DropdownButtonFormField<String>(value: categoriaCtrl.text, decoration: const InputDecoration(labelText: 'Categoría', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: (tipo == 'Ingreso' ? _categoriasIngreso : _categoriasGasto).map((c) => DropdownMenuItem(value: c['nombre'] as String, child: Text(c['nombre'] as String))).toList(), onChanged: (v) => categoriaCtrl.text = v ?? ''),
                 const SizedBox(height: 12),
                 TextField(controller: fechaCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Fecha', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder())),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: cuenta,
-                  decoration: const InputDecoration(labelText: 'Cuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()),
-                  dropdownColor: const Color(0xFF1A1A1A),
-                  style: const TextStyle(color: Colors.white),
-                  items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                  onChanged: (v) => setSheetState(() => cuenta = v!),
-                ),
+                DropdownButtonFormField<String>(value: cuenta, decoration: const InputDecoration(labelText: 'Cuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => setSheetState(() => cuenta = v!)),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: subcuenta,
-                  decoration: const InputDecoration(labelText: 'Subcuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()),
-                  dropdownColor: const Color(0xFF1A1A1A),
-                  style: const TextStyle(color: Colors.white),
-                  items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
-                  onChanged: (v) => setSheetState(() => subcuenta = v!),
-                ),
+                DropdownButtonFormField<String>(value: subcuenta, decoration: const InputDecoration(labelText: 'Subcuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(), onChanged: (v) => setSheetState(() => subcuenta = v!)),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: negocio,
-                  decoration: const InputDecoration(labelText: 'Negocio', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()),
-                  dropdownColor: const Color(0xFF1A1A1A),
-                  style: const TextStyle(color: Colors.white),
-                  items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((n) => DropdownMenuItem(value: n, child: Text(n))).toList(),
-                  onChanged: (v) => setSheetState(() => negocio = v!),
-                ),
+                DropdownButtonFormField<String>(value: negocio, decoration: const InputDecoration(labelText: 'Negocio', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((n) => DropdownMenuItem(value: n, child: Text(n))).toList(), onChanged: (v) => setSheetState(() => negocio = v!)),
                 const SizedBox(height: 12),
                 const Text('🏷️ Etiquetas', style: TextStyle(color: Color(0xFF0066FF), fontSize: 14, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _tagsDisponibles.map((tag) {
-                    final seleccionado = tagsActuales.contains(tag);
-                    return FilterChip(
-                      label: Text(tag, style: TextStyle(color: seleccionado ? Colors.white : Colors.grey, fontSize: 12)),
-                      selected: seleccionado,
-                      backgroundColor: const Color(0xFF1A1A1A),
-                      selectedColor: const Color(0xFF0066FF),
-                      onSelected: (v) {
-                        setSheetState(() {
-                          if (v) tagsActuales.add(tag); else tagsActuales.remove(tag);
-                        });
-                      },
-                    );
-                  }).toList(),
-                ),
+                Wrap(spacing: 8, runSpacing: 8, children: _tagsDisponibles.map((tag) { final seleccionado = tagsActuales.contains(tag); return FilterChip(label: Text(tag, style: TextStyle(color: seleccionado ? Colors.white : Colors.grey, fontSize: 12)), selected: seleccionado, backgroundColor: const Color(0xFF1A1A1A), selectedColor: const Color(0xFF0066FF), onSelected: (v) { setSheetState(() { if (v) tagsActuales.add(tag); else tagsActuales.remove(tag); }); }); }).toList()),
                 const SizedBox(height: 12),
-                CheckboxListTile(
-                  title: const Text('Reconciliada', style: TextStyle(color: Colors.white)),
-                  value: reconciliada,
-                  activeColor: Colors.green,
-                  onChanged: (v) => setSheetState(() => reconciliada = v ?? false),
-                  contentPadding: EdgeInsets.zero,
-                ),
+                CheckboxListTile(title: const Text('Reconciliada', style: TextStyle(color: Colors.white)), value: reconciliada, activeColor: Colors.green, onChanged: (v) => setSheetState(() => reconciliada = v ?? false), contentPadding: EdgeInsets.zero),
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton.icon(
                     onPressed: () async {
-                      if (conceptoCtrl.text.trim().isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ Concepto obligatorio'), backgroundColor: Colors.orange));
-                        return;
-                      }
-                      final data = {
-                        'concepto': conceptoCtrl.text.trim(),
-                        'monto': double.tryParse(montoCtrl.text) ?? 0,
-                        'categoria': categoriaCtrl.text.trim(),
-                        'fecha': fechaCtrl.text.trim(),
-                        'tipo': tipo,
-                        'cuenta': cuenta,
-                        'subcuenta': subcuenta,
-                        'negocio': negocio,
-                        'reconciliada': reconciliada,
-                        'tags': tagsActuales.toList(),
-                        'descripcion': '',
-                        'metodo_pago': 'Efectivo',
-                        'referencia': '',
-                        'acreedor': '',
-                        'beneficiario': '',
-                        'num_cheque': '',
-                      };
-                      if (docId == null) {
-                        data['created_at'] = FieldValue.serverTimestamp();
-                        await _firestore.collection('transacciones').add(data);
-                      } else {
-                        await _firestore.collection('transacciones').doc(docId).update(data);
-                      }
+                      if (conceptoCtrl.text.trim().isEmpty) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ Concepto obligatorio'), backgroundColor: Colors.orange)); return; }
+                      final data = {'concepto': conceptoCtrl.text.trim(), 'monto': double.tryParse(montoCtrl.text) ?? 0, 'categoria': categoriaCtrl.text.trim(), 'fecha': fechaCtrl.text.trim(), 'tipo': tipo, 'cuenta': cuenta, 'subcuenta': subcuenta, 'negocio': negocio, 'reconciliada': reconciliada, 'tags': tagsActuales.toList(), 'descripcion': '', 'metodo_pago': 'Efectivo', 'referencia': '', 'acreedor': '', 'beneficiario': '', 'num_cheque': ''};
+                      if (docId == null) { data['created_at'] = FieldValue.serverTimestamp(); await _firestore.collection('transacciones').add(data); } else { await _firestore.collection('transacciones').doc(docId).update(data); }
                       Navigator.pop(ctx);
                       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(docId == null ? '✅ Creada' : '✅ Actualizada'), backgroundColor: Colors.green));
                     },
@@ -1687,56 +1452,21 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.swap_horiz, color: Color(0xFF0066FF), size: 28),
-                  const SizedBox(width: 12),
-                  const Expanded(child: Text('💱 Transferir', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
-                  IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx)),
-                ],
-              ),
+              Row(children: [const Icon(Icons.swap_horiz, color: Color(0xFF0066FF), size: 28), const SizedBox(width: 12), const Expanded(child: Text('💱 Transferir', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))), IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx))]),
               const SizedBox(height: 16),
               const Text('Cuenta Origen', style: TextStyle(color: Color(0xFF0066FF), fontSize: 14, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: cuentaOrigen,
-                decoration: const InputDecoration(labelText: 'Cuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()),
-                dropdownColor: const Color(0xFF1A1A1A),
-                style: const TextStyle(color: Colors.white),
-                items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                onChanged: (v) => setSheetState(() => cuentaOrigen = v!),
-              ),
+              DropdownButtonFormField<String>(value: cuentaOrigen, decoration: const InputDecoration(labelText: 'Cuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => setSheetState(() => cuentaOrigen = v!)),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: subcuentaOrigen,
-                decoration: const InputDecoration(labelText: 'Subcuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()),
-                dropdownColor: const Color(0xFF1A1A1A),
-                style: const TextStyle(color: Colors.white),
-                items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
-                onChanged: (v) => setSheetState(() => subcuentaOrigen = v!),
-              ),
+              DropdownButtonFormField<String>(value: subcuentaOrigen, decoration: const InputDecoration(labelText: 'Subcuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(), onChanged: (v) => setSheetState(() => subcuentaOrigen = v!)),
               const SizedBox(height: 16),
               const Icon(Icons.arrow_downward, color: Colors.white, size: 32),
               const SizedBox(height: 16),
               const Text('Cuenta Destino', style: TextStyle(color: Color(0xFF0066FF), fontSize: 14, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: cuentaDestino,
-                decoration: const InputDecoration(labelText: 'Cuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()),
-                dropdownColor: const Color(0xFF1A1A1A),
-                style: const TextStyle(color: Colors.white),
-                items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                onChanged: (v) => setSheetState(() => cuentaDestino = v!),
-              ),
+              DropdownButtonFormField<String>(value: cuentaDestino, decoration: const InputDecoration(labelText: 'Cuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => setSheetState(() => cuentaDestino = v!)),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: subcuentaDestino,
-                decoration: const InputDecoration(labelText: 'Subcuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()),
-                dropdownColor: const Color(0xFF1A1A1A),
-                style: const TextStyle(color: Colors.white),
-                items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
-                onChanged: (v) => setSheetState(() => subcuentaDestino = v!),
-              ),
+              DropdownButtonFormField<String>(value: subcuentaDestino, decoration: const InputDecoration(labelText: 'Subcuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder()), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(), onChanged: (v) => setSheetState(() => subcuentaDestino = v!)),
               const SizedBox(height: 16),
               TextField(controller: montoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder())),
               const SizedBox(height: 12),
@@ -1747,14 +1477,24 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 child: ElevatedButton.icon(
                   onPressed: () async {
                     final monto = double.tryParse(montoCtrl.text);
-                    if (monto == null || monto <= 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ Monto inválido'), backgroundColor: Colors.orange));
-                      return;
-                    }
-                    if (cuentaOrigen == cuentaDestino) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ Cuentas deben ser diferentes'), backgroundColor: Colors.orange));
-                      return;
-                    }
+                    if (monto == null || monto <= 0) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ Monto inválido'), backgroundColor: Colors.orange)); return; }
+                    if (cuentaOrigen == cuentaDestino) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ Cuentas deben ser diferentes'), backgroundColor: Colors.orange)); return; }
                     final fecha = DateTime.now().toIso8601String().split('T')[0];
                     final concepto = conceptoCtrl.text.trim().isEmpty ? 'Transferencia de $cuentaOrigen a $cuentaDestino' : conceptoCtrl.text.trim();
-                    await _fire
+                    await _firestore.collection('transacciones').add({'concepto': '$concepto (salida)', 'monto': monto, 'categoria': 'Transferencia', 'tipo': 'Gasto', 'cuenta': cuentaOrigen, 'subcuenta': subcuentaOrigen, 'negocio': 'Proyectos', 'fecha': fecha, 'descripcion': 'Transferencia a $cuentaDestino', 'reconciliada': true, 'es_transferencia': true, 'cuenta_relacionada': cuentaDestino, 'created_at': FieldValue.serverTimestamp()});
+                    await _firestore.collection('transacciones').add({'concepto': '$concepto (entrada)', 'monto': monto, 'categoria': 'Transferencia', 'tipo': 'Ingreso', 'cuenta': cuentaDestino, 'subcuenta': subcuentaDestino, 'negocio': 'Proyectos', 'fecha': fecha, 'descripcion': 'Transferencia desde $cuentaOrigen', 'reconciliada': true, 'es_transferencia': true, 'cuenta_relacionada': cuentaOrigen, 'created_at': FieldValue.serverTimestamp()});
+                    Navigator.pop(ctx);
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ Transferencia de \$${monto.toStringAsFixed(2)}'), backgroundColor: Colors.green));
+                  },
+                  icon: const Icon(Icons.swap_horiz, color: Colors.white),
+                  label: const Text('Transferir', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF), padding: const EdgeInsets.symmetric(vertical: 16)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
