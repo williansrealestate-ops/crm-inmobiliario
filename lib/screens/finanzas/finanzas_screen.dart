@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class FinanzasScreen extends StatefulWidget {
   const FinanzasScreen({super.key});
@@ -18,11 +19,16 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   String _negocioFiltro = 'Todos';
   bool _soloPendientes = false;
   bool _soloReconciliadas = false;
+  int _vistaReporte = 0;
 
   final List<String> _categorias = ['Todas', 'Proyecto', 'Servicios', 'Personal', 'Transporte', 'Alquiler', 'Mobiliario', 'Deudas', 'Otros'];
   final List<String> _cuentasLista = ['Todas', 'Efectivo', 'Banco', 'Tarjeta', 'Inversión'];
   final List<String> _negocios = ['Todos', 'Minerales', 'Combustible', 'Agropecuario', 'Proyectos'];
   final List<String> _meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  final List<Color> _coloresGrafico = [
+    Colors.green, Colors.blue, Colors.orange, Colors.purple, 
+    Colors.red, Colors.teal, Colors.amber, Colors.cyan, Colors.pink
+  ];
 
   @override
   void initState() {
@@ -82,8 +88,8 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
           _buildListaTransacciones('Ingreso'),
           _buildListaTransacciones('Gasto'),
           _buildCuentas(),
-          _buildCalendario(), // ✅ PESTAÑA CALENDARIO ACTIVA
-          _buildPlaceholder('Reportes'),
+          _buildCalendario(),
+          _buildReportes(), // ✅ PESTAÑA REPORTES ACTIVA
           _buildPlaceholder('Presupuestos'),
           _buildPlaceholder('Metas'),
           _buildPlaceholder('Deudas'),
@@ -93,7 +99,322 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   }
 
   // ==========================================
-  // ✅ PESTAÑA "CALENDARIO" (AGRUPADO POR DÍA)
+  // ✅ PESTAÑA "REPORTES" CON GRÁFICAS
+  // ==========================================
+  Widget _buildReportes() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('📊 Reportes Financieros', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            
+            // Selector de tipo de reporte
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => setState(() => _vistaReporte = 0),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _vistaReporte == 0 ? const Color(0xFF0066FF) : const Color(0xFF1A1A1A),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Por Categoría'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => setState(() => _vistaReporte = 1),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _vistaReporte == 1 ? const Color(0xFF0066FF) : const Color(0xFF1A1A1A),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Por Negocio'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            
+            // Contenido del reporte
+            StreamBuilder<QuerySnapshot>(
+              stream: _firestore.collection('transacciones').snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                
+                final docs = snapshot.data!.docs;
+                double totalIngresos = 0, totalGastos = 0;
+                Map<String, double> ingresosPorCategoria = {};
+                Map<String, double> gastosPorCategoria = {};
+                Map<String, double> porNegocio = {};
+
+                for (var doc in docs) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final monto = (data['monto'] ?? 0).toDouble();
+                  final tipo = data['tipo'] ?? '';
+                  final categoria = data['categoria'] ?? 'General';
+                  final negocio = data['negocio'] ?? 'Otros';
+
+                  if (tipo == 'Ingreso') {
+                    totalIngresos += monto;
+                    ingresosPorCategoria[categoria] = (ingresosPorCategoria[categoria] ?? 0) + monto;
+                  } else {
+                    totalGastos += monto;
+                    gastosPorCategoria[categoria] = (gastosPorCategoria[categoria] ?? 0) + monto;
+                  }
+                  porNegocio[negocio] = (porNegocio[negocio] ?? 0) + (tipo == 'Ingreso' ? monto : -monto);
+                }
+
+                final balance = totalIngresos - totalGastos;
+
+                return Column(
+                  children: [
+                    // Resumen general
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF111111),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Column(children: [const Text('Ingresos', style: TextStyle(color: Colors.grey, fontSize: 12)), Text('\$${totalIngresos.toStringAsFixed(0)}', style: const TextStyle(color: Colors.green, fontSize: 18, fontWeight: FontWeight.bold))]),
+                          Column(children: [const Text('Gastos', style: TextStyle(color: Colors.grey, fontSize: 12)), Text('\$${totalGastos.toStringAsFixed(0)}', style: const TextStyle(color: Colors.red, fontSize: 18, fontWeight: FontWeight.bold))]),
+                          Column(children: [const Text('Balance', style: TextStyle(color: Colors.grey, fontSize: 12)), Text('\$${balance.toStringAsFixed(0)}', style: TextStyle(color: balance >= 0 ? Colors.green : Colors.red, fontSize: 18, fontWeight: FontWeight.bold))]),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Gráfico según vista seleccionada
+                    if (_vistaReporte == 0) ...[
+                      const Text('Distribución por Categoría', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 16),
+                      Container(
+                        height: 300,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12)),
+                        child: _buildGraficoCategorias(ingresosPorCategoria, gastosPorCategoria),
+                      ),
+                      const SizedBox(height: 24),
+                      _buildListaCategorias(ingresosPorCategoria, gastosPorCategoria),
+                    ] else ...[
+                      const Text('Rendimiento por Negocio', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 16),
+                      Container(
+                        height: 300,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12)),
+                        child: _buildGraficoNegocios(porNegocio),
+                      ),
+                      const SizedBox(height: 24),
+                      _buildListaNegocios(porNegocio),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGraficoCategorias(Map<String, double> ingresos, Map<String, double> gastos) {
+    final todasCategorias = {...ingresos.keys, ...gastos.keys}.toList();
+    if (todasCategorias.isEmpty) {
+      return const Center(child: Text('Sin datos', style: TextStyle(color: Colors.grey)));
+    }
+
+    final secciones = todasCategorias.asMap().entries.map((entry) {
+      final idx = entry.key;
+      final cat = entry.value;
+      final valorIngreso = ingresos[cat] ?? 0;
+      final valorGasto = gastos[cat] ?? 0;
+      final total = valorIngreso + valorGasto;
+      return PieChartSectionData(
+        value: total,
+        title: cat.length > 8 ? '${cat.substring(0, 8)}..' : cat,
+        color: _coloresGrafico[idx % _coloresGrafico.length],
+        radius: 100,
+        titleStyle: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+      );
+    }).toList();
+
+    return PieChart(
+      PieChartData(
+        sections: secciones,
+        sectionsSpace: 2,
+        centerSpaceRadius: 40,
+        startDegreeOffset: 270,
+      ),
+    );
+  }
+
+  Widget _buildGraficoNegocios(Map<String, double> porNegocio) {
+    if (porNegocio.isEmpty) {
+      return const Center(child: Text('Sin datos', style: TextStyle(color: Colors.grey)));
+    }
+
+    final maxValor = porNegocio.values.fold<double>(0, (max, val) => val.abs() > max ? val.abs() : max);
+
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: maxValor * 1.2,
+        minY: -maxValor * 0.3,
+        barTouchData: BarTouchData(enabled: false),
+        titlesData: FlTitlesData(
+          show: true,
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                final negocios = porNegocio.keys.toList();
+                if (value.toInt() >= 0 && value.toInt() < negocios.length) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      negocios[value.toInt()].length > 6 ? '${negocios[value.toInt()].substring(0, 6)}..' : negocios[value.toInt()],
+                      style: const TextStyle(color: Colors.grey, fontSize: 10),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        borderData: FlBorderData(show: false),
+        barGroups: porNegocio.entries.toList().asMap().entries.map((entry) {
+          final idx = entry.key;
+          final negocio = entry.value.key;
+          final valor = entry.value.value;
+          return BarChartGroupData(
+            x: idx,
+            barRods: [
+              BarChartRodData(
+                toY: valor,
+                color: valor >= 0 ? Colors.green : Colors.red,
+                width: 20,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(4),
+                  topRight: Radius.circular(4),
+                ),
+              ),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildListaCategorias(Map<String, double> ingresos, Map<String, double> gastos) {
+    final todasCategorias = {...ingresos.keys, ...gastos.keys}.toList();
+    todasCategorias.sort((a, b) {
+      final totalA = (ingresos[a] ?? 0) + (gastos[a] ?? 0);
+      final totalB = (ingresos[b] ?? 0) + (gastos[b] ?? 0);
+      return totalB.compareTo(totalA);
+    });
+
+    return Column(
+      children: todasCategorias.map((cat) {
+        final ing = ingresos[cat] ?? 0;
+        final gas = gastos[cat] ?? 0;
+        final total = ing + gas;
+        final idx = todasCategorias.indexOf(cat);
+        final color = _coloresGrafico[idx % _coloresGrafico.length];
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Container(width: 12, height: 12, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(cat, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        if (ing > 0) Text('In: \$${ing.toStringAsFixed(0)}', style: const TextStyle(color: Colors.green, fontSize: 11)),
+                        if (ing > 0 && gas > 0) const SizedBox(width: 8),
+                        if (gas > 0) Text('Gas: \$${gas.toStringAsFixed(0)}', style: const TextStyle(color: Colors.red, fontSize: 11)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Text('\$${total.toStringAsFixed(0)}', style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildListaNegocios(Map<String, double> porNegocio) {
+    final negociosOrdenados = porNegocio.entries.toList()..sort((a, b) => b.value.abs().compareTo(a.value.abs()));
+
+    return Column(
+      children: negociosOrdenados.map((entry) {
+        final negocio = entry.key;
+        final valor = entry.value;
+        final maxValor = porNegocio.values.fold<double>(0, (max, val) => val.abs() > max ? val.abs() : max);
+        final porcentaje = maxValor > 0 ? (valor.abs() / maxValor * 100) : 0;
+        final color = valor >= 0 ? Colors.green : Colors.red;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(child: Text(negocio, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                  Text('\$${valor.toStringAsFixed(0)}', style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 8),
+                  Text('${porcentaje.toStringAsFixed(1)}%', style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: porcentaje / 100,
+                  backgroundColor: Colors.grey.shade800,
+                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                  minHeight: 6,
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // ==========================================
+  // ✅ PESTAÑA "CALENDARIO"
   // ==========================================
   Widget _buildCalendario() {
     DateTime mesSeleccionado = DateTime.now();
@@ -105,7 +426,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Navegación de Mes
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -132,7 +452,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 ],
               ),
               const SizedBox(height: 16),
-              // Lista de Días con Transacciones
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).snapshots(),
@@ -140,8 +459,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                     if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
                     
                     final docs = snapshot.data!.docs;
-                    
-                    // Filtrar transacciones del mes seleccionado
                     final transaccionesDelMes = docs.where((doc) {
                       final data = doc.data() as Map<String, dynamic>;
                       final fechaStr = data['fecha'] as String? ?? '';
@@ -169,7 +486,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                       );
                     }
 
-                    // Agrupar por día
                     Map<String, List<Map<String, dynamic>>> porDia = {};
                     for (var doc in transaccionesDelMes) {
                       final data = doc.data() as Map<String, dynamic>;
@@ -183,7 +499,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                       }
                     }
 
-                    // Ordenar días de mayor a menor
                     final diasOrdenados = porDia.keys.toList()..sort((a, b) => b.compareTo(a));
 
                     return ListView.builder(
@@ -192,7 +507,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                         final dia = diasOrdenados[index];
                         final transacciones = porDia[dia]!;
                         
-                        // Calcular total del día
                         double totalDia = 0;
                         for (var t in transacciones) {
                           final monto = (t['monto'] ?? 0).toDouble();
@@ -300,7 +614,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   }
 
   // ==========================================
-  // ✅ PESTAÑA "CUENTAS" (SALDOS EN TIEMPO REAL)
+  // ✅ PESTAÑA "CUENTAS"
   // ==========================================
   Widget _buildCuentas() {
     return Container(
@@ -386,7 +700,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   }
 
   // ==========================================
-  // ✅ PESTAÑAS INGRESOS Y GASTOS (LISTA FILTRABLE)
+  // ✅ PESTAÑAS INGRESOS Y GASTOS
   // ==========================================
   Widget _buildListaTransacciones(String tipo) {
     final colorPrincipal = tipo == 'Ingreso' ? Colors.green : Colors.red;
@@ -695,7 +1009,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
     if (confirm == true) {
       await _firestore.collection('transacciones').doc(id).delete();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🗑️ Eliminado'), backgroundColor: Colors.red));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('️ Eliminado'), backgroundColor: Colors.red));
     }
   }
 
@@ -1003,7 +1317,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   }
 
   // ==========================================
-  // ✅ PESTAÑA "DASHBOARD" COMPACTO
+  // ✅ PESTAÑA "DASHBOARD"
   // ==========================================
   Widget _buildDashboard() {
     return Container(
