@@ -20,7 +20,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   bool _soloReconciliadas = false;
 
   final List<String> _categorias = ['Todas', 'Proyecto', 'Servicios', 'Personal', 'Transporte', 'Alquiler', 'Mobiliario', 'Deudas', 'Otros'];
-  final List<String> _cuentas = ['Todas', 'Efectivo', 'Banco', 'Tarjeta', 'Inversión'];
+  final List<String> _cuentasLista = ['Todas', 'Efectivo', 'Banco', 'Tarjeta', 'Inversión'];
   final List<String> _negocios = ['Todos', 'Minerales', 'Combustible', 'Agropecuario', 'Proyectos'];
 
   @override
@@ -80,12 +80,98 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
           _buildDashboard(),
           _buildListaTransacciones('Ingreso'),
           _buildListaTransacciones('Gasto'),
-          _buildPlaceholder('Cuentas'),
+          _buildCuentas(), // ✅ PESTAÑA CUENTAS ACTIVA
           _buildPlaceholder('Calendario'),
           _buildPlaceholder('Reportes'),
           _buildPlaceholder('Presupuestos'),
           _buildPlaceholder('Metas'),
           _buildPlaceholder('Deudas'),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // ✅ PESTAÑA "CUENTAS" (SALDOS EN TIEMPO REAL)
+  // ==========================================
+  Widget _buildCuentas() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('💳 Mis Cuentas', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          const Text('Saldos calculados automáticamente', style: TextStyle(color: Colors.grey, fontSize: 12)),
+          const SizedBox(height: 16),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _firestore.collection('transacciones').snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                final docs = snapshot.data!.docs;
+                
+                final cuentas = [
+                  {'nombre': 'Efectivo', 'icon': Icons.money, 'color': Colors.green},
+                  {'nombre': 'Banco', 'icon': Icons.account_balance, 'color': Colors.blue},
+                  {'nombre': 'Tarjeta', 'icon': Icons.credit_card, 'color': Colors.orange},
+                  {'nombre': 'Inversión', 'icon': Icons.trending_up, 'color': Colors.purple},
+                ];
+
+                return ListView.builder(
+                  itemCount: cuentas.length,
+                  itemBuilder: (context, index) {
+                    final cuenta = cuentas[index];
+                    double balance = 0;
+                    int numTransacciones = 0;
+                    
+                    for (var doc in docs) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      if (data['cuenta'] == cuenta['nombre']) {
+                        final monto = (data['monto'] ?? 0).toDouble();
+                        if (data['tipo'] == 'Ingreso') balance += monto;
+                        if (data['tipo'] == 'Gasto') balance -= monto;
+                        numTransacciones++;
+                      }
+                    }
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF111111),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF222222)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 50, height: 50,
+                            decoration: BoxDecoration(color: (cuenta['color'] as Color).withOpacity(0.2), shape: BoxShape.circle),
+                            child: Icon(cuenta['icon'] as IconData, color: cuenta['color'] as Color, size: 28),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(cuenta['nombre'] as String, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                Text('$numTransacciones transacciones', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            '\$${balance.toStringAsFixed(2)}',
+                            style: TextStyle(color: balance >= 0 ? Colors.green : Colors.red, fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
@@ -101,7 +187,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     return Container(
       child: Column(
         children: [
-          // Panel de Filtros
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
@@ -149,7 +234,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                         ),
                         dropdownColor: const Color(0xFF1A1A1A),
                         style: const TextStyle(color: Colors.white),
-                        items: _cuentas.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                        items: _cuentasLista.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                         onChanged: (v) => setState(() => _cuentaFiltro = v!),
                       ),
                     ),
@@ -195,7 +280,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               ],
             ),
           ),
-          // Lista de Transacciones
           Expanded(
             child: Container(
               width: double.infinity,
@@ -245,7 +329,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
 
                   return Column(
                     children: [
-                      // Total
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
@@ -263,7 +346,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                           ],
                         ),
                       ),
-                      // Lista
                       Expanded(
                         child: ListView.builder(
                           itemCount: filtrados.length,
@@ -405,7 +487,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
     if (confirm == true) {
       await _firestore.collection('transacciones').doc(id).delete();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('️ Eliminado'), backgroundColor: Colors.red));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🗑️ Eliminado'), backgroundColor: Colors.red));
     }
   }
 
@@ -990,7 +1072,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       if (conceptoCtrl.text.trim().isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ Concepto obligatorio'), backgroundColor: Colors.orange));
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('️ Concepto obligatorio'), backgroundColor: Colors.orange));
                         return;
                       }
                       final hoy = DateTime.now();
