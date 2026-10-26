@@ -17,6 +17,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   String _search = '', _categoriaFiltro = 'Todas', _cuentaFiltro = 'Todas', _negocioFiltro = 'Todos';
   bool _soloPendientes = false, _soloReconciliadas = false;
   int _vistaReporte = 0;
+  String _filtroDeudas = 'todas'; // 'todas', 'yo_debo', 'me_deben'
   List<Map<String, dynamic>> _presupuestos = [];
 
   final List<String> _categorias = ['Todas', 'Proyecto', 'Servicios', 'Personal', 'Transporte', 'Alquiler', 'Mobiliario', 'Deudas', 'Otros'];
@@ -98,14 +99,14 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         controller: _tabController,
         children: [
           _buildVistaHoy(), _buildResumen(), _buildDashboard(), _buildListaTransacciones('Ingreso'), _buildListaTransacciones('Gasto'),
-          _buildCuentas(), _buildCalendario(), _buildReportes(), _buildPresupuestos(), _buildMetas(), _buildDeudas(), // <-- DEUDAS ACTUALIZADO
+          _buildCuentas(), _buildCalendario(), _buildReportes(), _buildPresupuestos(), _buildMetas(), _buildDeudas(),
         ],
       ),
     );
   }
 
   // ==========================================
-  // ✅ PESTAÑA DEUDAS (NUEVA Y FUNCIONAL)
+  // ✅ PESTAÑA DEUDAS (COMPLETA: YO DEBO / ME DEBEN)
   // ==========================================
   Widget _buildDeudas() {
     return Container(
@@ -120,18 +121,125 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               ElevatedButton.icon(
                 onPressed: () => _dialogoNuevaDeuda(),
                 icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text('Nueva Deuda', style: TextStyle(color: Colors.white)),
+                label: const Text('Nueva', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
               ),
             ],
           ),
           const SizedBox(height: 16),
+          
+          // Filtros de tipo
+          Row(
+            children: [
+              Expanded(
+                child: FilterChip(
+                  label: const Text('Todas', style: TextStyle(color: Colors.white, fontSize: 12)),
+                  selected: _filtroDeudas == 'todas',
+                  selectedColor: const Color(0xFF0066FF),
+                  backgroundColor: const Color(0xFF1A1A1A),
+                  onSelected: (v) => setState(() => _filtroDeudas = 'todas'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilterChip(
+                  label: const Text('Yo debo', style: TextStyle(color: Colors.white, fontSize: 12)),
+                  selected: _filtroDeudas == 'yo_debo',
+                  selectedColor: Colors.red,
+                  backgroundColor: const Color(0xFF1A1A1A),
+                  onSelected: (v) => setState(() => _filtroDeudas = 'yo_debo'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilterChip(
+                  label: const Text('Me deben', style: TextStyle(color: Colors.white, fontSize: 12)),
+                  selected: _filtroDeudas == 'me_deben',
+                  selectedColor: Colors.green,
+                  backgroundColor: const Color(0xFF1A1A1A),
+                  onSelected: (v) => setState(() => _filtroDeudas = 'me_deben'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          
+          // Balance General
+          StreamBuilder<QuerySnapshot>(
+            stream: _firestore.collection('deudas').snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const SizedBox.shrink();
+              final docs = snapshot.data!.docs;
+              double totalYoDebo = 0, totalMeDeben = 0;
+              for (var doc in docs) {
+                final data = doc.data() as Map<String, dynamic>;
+                final monto = (data['montoPendiente'] ?? 0).toDouble();
+                final tipo = data['tipo'] ?? 'yo_debo';
+                final estado = data['estado'] ?? 'pendiente';
+                if (estado != 'pagada') {
+                  if (tipo == 'yo_debo') totalYoDebo += monto;
+                  else totalMeDeben += monto;
+                }
+              }
+              final balance = totalMeDeben - totalYoDebo;
+              
+              return Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF111111),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF222222)),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Column(
+                          children: [
+                            const Text('Yo debo', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                            Text('\$${totalYoDebo.toStringAsFixed(2)}', style: const TextStyle(color: Colors.red, fontSize: 18, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                        Container(width: 1, height: 40, color: Colors.grey.shade800),
+                        Column(
+                          children: [
+                            const Text('Me deben', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                            Text('\$${totalMeDeben.toStringAsFixed(2)}', style: const TextStyle(color: Colors.green, fontSize: 18, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                        Container(width: 1, height: 40, color: Colors.grey.shade800),
+                        Column(
+                          children: [
+                            const Text('Balance', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                            Text('\$${balance.toStringAsFixed(2)}', style: TextStyle(color: balance >= 0 ? Colors.green : Colors.red, fontSize: 18, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          
+          // Lista de deudas
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: _firestore.collection('deudas').orderBy('fechaVencimiento', descending: false).snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                final docs = snapshot.data!.docs;
+                var docs = snapshot.data!.docs;
+                
+                // Aplicar filtro
+                if (_filtroDeudas != 'todas') {
+                  docs = docs.where((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    return (data['tipo'] ?? 'yo_debo') == _filtroDeudas;
+                  }).toList();
+                }
+                
                 if (docs.isEmpty) {
                   return Center(
                     child: Column(
@@ -139,12 +247,12 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                       children: [
                         Icon(Icons.money_off, color: Colors.grey.shade700, size: 64),
                         const SizedBox(height: 16),
-                        const Text('No tienes deudas registradas', style: TextStyle(color: Colors.grey, fontSize: 16)),
-                        const Text('¡Excelente noticia! 🎉', style: TextStyle(color: Colors.green, fontSize: 14)),
+                        const Text('No hay deudas registradas', style: TextStyle(color: Colors.grey, fontSize: 16)),
                       ],
                     ),
                   );
                 }
+                
                 return ListView.builder(
                   itemCount: docs.length,
                   itemBuilder: (context, index) {
@@ -156,6 +264,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                     final tasaInteres = (data['tasaInteres'] ?? 0).toDouble();
                     final fechaVencimiento = (data['fechaVencimiento'] as Timestamp).toDate();
                     final cuentaOrigen = data['cuentaOrigen'] ?? 'Efectivo';
+                    final tipo = data['tipo'] ?? 'yo_debo';
                     final estado = data['estado'] ?? 'pendiente';
 
                     final hoy = DateTime.now();
@@ -166,13 +275,17 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                     double interesEstimado = 0;
                     if (estaVencida) {
                       diasVencido = hoy.difference(fechaVencimiento).inDays;
-                      // Interés simple mensual: (monto * tasa% * meses)
                       final mesesVencido = diasVencido / 30.0;
                       interesEstimado = montoPendiente * (tasaInteres / 100) * mesesVencido;
                     }
 
+                    // Colores según tipo y estado
+                    Color colorTipo = tipo == 'yo_debo' ? Colors.red : Colors.green;
                     Color colorEstado = Colors.yellow;
                     String textoEstado = 'Pendiente';
+                    IconData iconoTipo = tipo == 'yo_debo' ? Icons.arrow_downward : Icons.arrow_upward;
+                    String textoTipo = tipo == 'yo_debo' ? 'Yo debo' : 'Me deben';
+                    
                     if (estaPagada) {
                       colorEstado = Colors.green;
                       textoEstado = 'Pagada';
@@ -194,14 +307,32 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.account_balance, color: colorEstado, size: 28),
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: colorTipo.withOpacity(0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(iconoTipo, color: colorTipo, size: 20),
+                              ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                                    Text('$cuentaOrigen • Vence: ${DateFormat('dd/MM/yyyy').format(fechaVencimiento)}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                                    Row(
+                                      children: [
+                                        Text('$cuentaOrigen • Vence: ${DateFormat('dd/MM/yyyy').format(fechaVencimiento)}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(color: colorTipo.withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
+                                          child: Text(textoTipo, style: TextStyle(color: colorTipo, fontSize: 10, fontWeight: FontWeight.bold)),
+                                        ),
+                                      ],
+                                    ),
                                   ],
                                 ),
                               ),
@@ -257,9 +388,9 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                             children: [
                               if (!estaPagada)
                                 TextButton.icon(
-                                  onPressed: () => _dialogoAbonarDeuda(doc.id, nombre, montoPendiente, cuentaOrigen, tasaInteres),
-                                  icon: const Icon(Icons.payment, color: Colors.green, size: 18),
-                                  label: const Text('Abonar', style: TextStyle(color: Colors.green)),
+                                  onPressed: () => _dialogoAbonarDeuda(doc.id, nombre, montoPendiente, cuentaOrigen, tasaInteres, tipo),
+                                  icon: Icon(tipo == 'yo_debo' ? Icons.payment : Icons.attach_money, color: Colors.green, size: 18),
+                                  label: Text(tipo == 'yo_debo' ? 'Abonar' : 'Cobrar', style: const TextStyle(color: Colors.green)),
                                 ),
                               IconButton(icon: const Icon(Icons.delete, color: Colors.red, size: 20), onPressed: () => _eliminarDeuda(doc.id)),
                             ],
@@ -280,8 +411,9 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   void _dialogoNuevaDeuda() {
     final nombreCtrl = TextEditingController();
     final montoCtrl = TextEditingController();
-    final tasaCtrl = TextEditingController(text: '5'); // 5% por defecto
+    final tasaCtrl = TextEditingController(text: '5');
     final cuentaCtrl = TextEditingController(text: 'Efectivo');
+    String tipoDeuda = 'yo_debo';
     DateTime fechaVenc = DateTime.now().add(const Duration(days: 30));
 
     showDialog(
@@ -294,13 +426,37 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(controller: nombreCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Acreedor / Concepto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+                // Selector de tipo
+                Row(
+                  children: [
+                    Expanded(
+                      child: RadioListTile<String>(
+                        title: const Text('Yo debo', style: TextStyle(color: Colors.white, fontSize: 12)),
+                        value: 'yo_debo',
+                        groupValue: tipoDeuda,
+                        activeColor: Colors.red,
+                        onChanged: (v) => setDialogState(() => tipoDeuda = v!),
+                      ),
+                    ),
+                    Expanded(
+                      child: RadioListTile<String>(
+                        title: const Text('Me deben', style: TextStyle(color: Colors.white, fontSize: 12)),
+                        value: 'me_deben',
+                        groupValue: tipoDeuda,
+                        activeColor: Colors.green,
+                        onChanged: (v) => setDialogState(() => tipoDeuda = v!),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextField(controller: nombreCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Persona / Concepto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
                 const SizedBox(height: 12),
                 TextField(controller: montoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto Total (\$)', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
                 const SizedBox(height: 12),
                 TextField(controller: tasaCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Tasa de Interés (% mensual)', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
                 const SizedBox(height: 12),
-                TextField(controller: cuentaCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Cuenta a pagar', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+                TextField(controller: cuentaCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Cuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
                 const SizedBox(height: 12),
                 InkWell(
                   onTap: () async {
@@ -323,6 +479,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 Navigator.pop(dialogCtx);
                 _firestore.collection('deudas').add({
                   'nombre': nombreCtrl.text.trim(),
+                  'tipo': tipoDeuda,
                   'montoOriginal': double.tryParse(montoCtrl.text) ?? 0,
                   'montoPendiente': double.tryParse(montoCtrl.text) ?? 0,
                   'tasaInteres': double.tryParse(tasaCtrl.text) ?? 0,
@@ -342,28 +499,28 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
-  void _dialogoAbonarDeuda(String docId, String nombre, double montoPendiente, String cuentaOrigen, double tasaInteres) {
+  void _dialogoAbonarDeuda(String docId, String nombre, double montoPendiente, String cuentaOrigen, double tasaInteres, String tipo) {
     final montoAbonoCtrl = TextEditingController();
-    bool registrarComoGasto = true;
+    bool registrarEnFinanzas = true;
 
     showDialog(
       context: context,
       builder: (dialogCtx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: const Color(0xFF1A1A1A),
-          title: Text('Abonar a: $nombre', style: const TextStyle(color: Colors.white)),
+          title: Text(tipo == 'yo_debo' ? 'Abonar a: $nombre' : 'Cobrar a: $nombre', style: const TextStyle(color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('Pendiente actual: \$${montoPendiente.toStringAsFixed(2)}', style: const TextStyle(color: Colors.grey)),
               const SizedBox(height: 16),
-              TextField(controller: montoAbonoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto del abono (\$)', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+              TextField(controller: montoAbonoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: 'Monto del ${tipo == 'yo_debo' ? 'abono' : 'cobro'} (\$)', labelStyle: const TextStyle(color: Colors.grey), filled: true, fillColor: const Color(0xFF111111), border: const OutlineInputBorder())),
               const SizedBox(height: 16),
               CheckboxListTile(
-                title: const Text('Registrar como Gasto en Finanzas', style: TextStyle(color: Colors.white, fontSize: 12)),
-                value: registrarComoGasto,
+                title: Text('Registrar en Finanzas como ${tipo == 'yo_debo' ? 'Gasto' : 'Ingreso'}', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                value: registrarEnFinanzas,
                 activeColor: Colors.green,
-                onChanged: (v) => setDialogState(() => registrarComoGasto = v ?? true),
+                onChanged: (v) => setDialogState(() => registrarEnFinanzas = v ?? true),
                 contentPadding: EdgeInsets.zero,
               ),
             ],
@@ -384,13 +541,13 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                   'estado': nuevoEstado,
                 });
 
-                // Opcionalmente registrar el gasto en el historial
-                if (registrarComoGasto) {
+                // Opcionalmente registrar en el historial de finanzas
+                if (registrarEnFinanzas) {
                   await _firestore.collection('transacciones').add({
-                    'concepto': 'Pago deuda: $nombre',
+                    'concepto': '${tipo == 'yo_debo' ? 'Pago deuda' : 'Cobro deuda'}: $nombre',
                     'monto': abono,
                     'categoria': 'Deudas',
-                    'tipo': 'Gasto',
+                    'tipo': tipo == 'yo_debo' ? 'Gasto' : 'Ingreso',
                     'cuenta': cuentaOrigen,
                     'negocio': 'Proyectos',
                     'fecha': DateTime.now().toIso8601String().split('T')[0],
@@ -402,12 +559,12 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 Navigator.pop(dialogCtx);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('✅ Abono de \$${abono.toStringAsFixed(2)} registrado'), backgroundColor: Colors.green),
+                    SnackBar(content: Text('✅ ${tipo == 'yo_debo' ? 'Abono' : 'Cobro'} de \$${abono.toStringAsFixed(2)} registrado'), backgroundColor: Colors.green),
                   );
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              child: const Text('Abonar', style: TextStyle(color: Colors.white)),
+              child: Text(tipo == 'yo_debo' ? 'Abonar' : 'Cobrar', style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -729,7 +886,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
             onPressed: () {
               Navigator.pop(dialogCtx);
               _firestore.collection('metas').doc(docId).delete();
-              if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🗑️ Meta eliminada'), backgroundColor: Colors.red));
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('️ Meta eliminada'), backgroundColor: Colors.red));
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
@@ -1655,7 +1812,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       if (conceptoCtrl.text.trim().isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('⚠️ Concepto obligatorio'), backgroundColor: Colors.orange));
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('️ Concepto obligatorio'), backgroundColor: Colors.orange));
                         return;
                       }
                       final hoy = DateTime.now();
