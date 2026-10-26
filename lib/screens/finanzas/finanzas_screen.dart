@@ -59,11 +59,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     {'nombre': 'Otros', 'icon': Icons.more_horiz},
   ];
 
-  final OutlineInputBorder _inputBorder = const OutlineInputBorder(
-    borderRadius: BorderRadius.all(Radius.circular(8)),
-    borderSide: BorderSide.none,
-  );
-
   @override
   void initState() {
     super.initState();
@@ -114,6 +109,21 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     await _cargarPresupuestosPersonalizados();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Presupuesto creado'), backgroundColor: Colors.green));
+    }
+  }
+
+  Future<void> _editarPresupuestoPersonalizado(String id, String nombre, double monto, double gastado, String icono, String cuenta, String subcuenta) async {
+    await _firestore.collection('presupuestos_personalizados').doc(id).update({
+      'nombre': nombre,
+      'icon': icono,
+      'presupuesto': monto,
+      'gastado': gastado,
+      'cuenta': cuenta,
+      'subcuenta': subcuenta,
+    });
+    await _cargarPresupuestosPersonalizados();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Presupuesto actualizado'), backgroundColor: Colors.green));
     }
   }
 
@@ -373,10 +383,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 children: [
                   const Text('📅 Vista del Día', style: TextStyle(color: Colors.white70, fontSize: 14)),
                   const SizedBox(height: 8),
-                  Text(
-                    '${hoy.day} de ${['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][hoy.month - 1]} ${hoy.year}',
-                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
+                  Text('${hoy.day} de ${['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][hoy.month - 1]} ${hoy.year}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -630,11 +637,8 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
           final monto = (data['monto'] ?? 0).toDouble();
           if (fecha.length >= 7) {
             final mes = fecha.substring(0, 7);
-            if (data['tipo'] == 'Ingreso') {
-              ingresosPorMes[mes] = (ingresosPorMes[mes] ?? 0) + monto;
-            } else {
-              gastosPorMes[mes] = (gastosPorMes[mes] ?? 0) + monto;
-            }
+            if (data['tipo'] == 'Ingreso') ingresosPorMes[mes] = (ingresosPorMes[mes] ?? 0) + monto;
+            else gastosPorMes[mes] = (gastosPorMes[mes] ?? 0) + monto;
           }
         }
         final meses = ingresosPorMes.keys.toList()..sort();
@@ -749,12 +753,12 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
             child: Column(
               children: [
                 TextField(
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: 'Buscar...',
-                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                    prefixIcon: Icon(Icons.search, color: Colors.grey),
                     filled: true,
-                    fillColor: const Color(0xFF1A1A1A),
-                    border: _inputBorder,
+                    fillColor: Color(0xFF1A1A1A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
                   ),
                   style: const TextStyle(color: Colors.white),
                   onChanged: (v) => setState(() => _search = v.toLowerCase()),
@@ -769,7 +773,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                           labelText: 'Categoría',
                           filled: true,
                           fillColor: Color(0xFF1A1A1A),
-                          border: _inputBorder,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
                         ),
                         dropdownColor: const Color(0xFF1A1A1A),
                         style: const TextStyle(color: Colors.white),
@@ -787,7 +791,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                           labelText: 'Cuenta',
                           filled: true,
                           fillColor: Color(0xFF1A1A1A),
-                          border: _inputBorder,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
                         ),
                         dropdownColor: const Color(0xFF1A1A1A),
                         style: const TextStyle(color: Colors.white),
@@ -804,7 +808,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                     labelText: 'Negocio',
                     filled: true,
                     fillColor: Color(0xFF1A1A1A),
-                    border: _inputBorder,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
                   ),
                   dropdownColor: const Color(0xFF1A1A1A),
                   style: const TextStyle(color: Colors.white),
@@ -1146,7 +1150,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                         labelStyle: TextStyle(color: Colors.grey),
                         filled: true,
                         fillColor: Color(0xFF1A1A1A),
-                        border: _inputBorder,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
                       ),
                     ),
                   ),
@@ -1161,7 +1165,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                         labelStyle: TextStyle(color: Colors.grey),
                         filled: true,
                         fillColor: Color(0xFF1A1A1A),
-                        border: _inputBorder,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
                       ),
                     ),
                   ),
@@ -2007,7 +2011,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                                     const SizedBox(width: 8),
                                     IconButton(
                                       icon: const Icon(Icons.edit, color: Color(0xFF0066FF), size: 20),
-                                      onPressed: () => _editarPresupuestoDialog(cat),
+                                      onPressed: () => _editarPresupuestoPersonalizado(cat['id'], cat['nombre'], presupuesto, cat['gastado'], cat['icon'], cat['cuenta'], cat['subcuenta']),
                                       tooltip: 'Editar',
                                     ),
                                     IconButton(
@@ -2083,26 +2087,50 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               TextField(
                 controller: nombreCtrl,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Nombre', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Nombre',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF111111),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: montoCtrl,
                 keyboardType: TextInputType.number,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Monto',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF111111),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: gastadoCtrl,
                 keyboardType: TextInputType.number,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Monto actual gastado', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Monto actual gastado',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF111111),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: cuenta,
-                decoration: const InputDecoration(labelText: 'Cuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Cuenta',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF111111),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
                 dropdownColor: const Color(0xFF1A1A1A),
                 style: const TextStyle(color: Colors.white),
                 items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
@@ -2111,7 +2139,13 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: subcuenta,
-                decoration: const InputDecoration(labelText: 'Subcuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Subcuenta',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF111111),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
                 dropdownColor: const Color(0xFF1A1A1A),
                 style: const TextStyle(color: Colors.white),
                 items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
@@ -2157,26 +2191,50 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               TextField(
                 controller: nombreCtrl,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Nombre', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Nombre',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF111111),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: montoCtrl,
                 keyboardType: TextInputType.number,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Monto',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF111111),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: gastadoCtrl,
                 keyboardType: TextInputType.number,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Monto actual gastado', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Monto actual gastado',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF111111),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: cuenta,
-                decoration: const InputDecoration(labelText: 'Cuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Cuenta',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF111111),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
                 dropdownColor: const Color(0xFF1A1A1A),
                 style: const TextStyle(color: Colors.white),
                 items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
@@ -2185,7 +2243,13 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: subcuenta,
-                decoration: const InputDecoration(labelText: 'Subcuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Subcuenta',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF111111),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
                 dropdownColor: const Color(0xFF1A1A1A),
                 style: const TextStyle(color: Colors.white),
                 items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
@@ -2203,7 +2267,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               final gastado = double.tryParse(gastadoCtrl.text) ?? 0;
               if (monto == null) return;
               Navigator.pop(dialogCtx);
-              _agregarPresupuestoPersonalizado(nombreCtrl.text.trim(), monto, gastado, 'category', cuenta, subcuenta);
+              _editarPresupuestoPersonalizado(presupuesto['id'], nombreCtrl.text.trim(), monto, gastado, presupuesto['icon'], cuenta, subcuenta);
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
             child: const Text('Guardar', style: TextStyle(color: Colors.white)),
@@ -2287,12 +2351,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                               ),
                               IconButton(
                                 icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                                onPressed: () {
-                                  _firestore.collection('metas').doc(docs[index].id).delete();
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🗑️ Meta eliminada'), backgroundColor: Colors.red));
-                                  }
-                                },
+                                onPressed: () => _firestore.collection('metas').doc(docs[index].id).delete(),
                               ),
                             ],
                           ),
@@ -2381,28 +2440,52 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               TextField(
                 controller: nombreCtrl,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Nombre', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Nombre',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF111111),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: objetivoCtrl,
                 keyboardType: TextInputType.number,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Objetivo', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Objetivo',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF111111),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: actualCtrl,
                 keyboardType: TextInputType.number,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Actual', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Actual',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF111111),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: mesesCtrl,
                 keyboardType: TextInputType.number,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Meses', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Meses',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF111111),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
               ),
             ],
           ),
@@ -2454,28 +2537,52 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               TextField(
                 controller: nombreCtrl,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Nombre', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Nombre',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF111111),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: objetivoCtrl,
                 keyboardType: TextInputType.number,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Objetivo', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Objetivo',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF111111),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: actualCtrl,
                 keyboardType: TextInputType.number,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Actual', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Actual',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF111111),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: mesesCtrl,
                 keyboardType: TextInputType.number,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Meses', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Meses',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF111111),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
               ),
             ],
           ),
@@ -2838,14 +2945,26 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 TextField(
                   controller: conceptoCtrl,
                   style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: 'Concepto *', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: _inputBorder),
+                  decoration: const InputDecoration(
+                    labelText: 'Concepto *',
+                    labelStyle: TextStyle(color: Colors.grey),
+                    filled: true,
+                    fillColor: Color(0xFF1A1A1A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: montoCtrl,
                   keyboardType: TextInputType.number,
                   style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: _inputBorder),
+                  decoration: const InputDecoration(
+                    labelText: 'Monto',
+                    labelStyle: TextStyle(color: Colors.grey),
+                    filled: true,
+                    fillColor: Color(0xFF1A1A1A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -2873,7 +2992,13 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: categoriaCtrl.text,
-                  decoration: const InputDecoration(labelText: 'Categoría', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: _inputBorder),
+                  decoration: const InputDecoration(
+                    labelText: 'Categoría',
+                    labelStyle: TextStyle(color: Colors.grey),
+                    filled: true,
+                    fillColor: Color(0xFF1A1A1A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                  ),
                   dropdownColor: const Color(0xFF1A1A1A),
                   style: const TextStyle(color: Colors.white),
                   items: (tipo == 'Ingreso' ? _categoriasIngreso : _categoriasGasto)
@@ -2885,12 +3010,24 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 TextField(
                   controller: fechaCtrl,
                   style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: 'Fecha', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: _inputBorder),
+                  decoration: const InputDecoration(
+                    labelText: 'Fecha',
+                    labelStyle: TextStyle(color: Colors.grey),
+                    filled: true,
+                    fillColor: Color(0xFF1A1A1A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: cuenta,
-                  decoration: const InputDecoration(labelText: 'Cuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: _inputBorder),
+                  decoration: const InputDecoration(
+                    labelText: 'Cuenta',
+                    labelStyle: TextStyle(color: Colors.grey),
+                    filled: true,
+                    fillColor: Color(0xFF1A1A1A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                  ),
                   dropdownColor: const Color(0xFF1A1A1A),
                   style: const TextStyle(color: Colors.white),
                   items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
@@ -2899,7 +3036,13 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: subcuenta,
-                  decoration: const InputDecoration(labelText: 'Subcuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: _inputBorder),
+                  decoration: const InputDecoration(
+                    labelText: 'Subcuenta',
+                    labelStyle: TextStyle(color: Colors.grey),
+                    filled: true,
+                    fillColor: Color(0xFF1A1A1A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                  ),
                   dropdownColor: const Color(0xFF1A1A1A),
                   style: const TextStyle(color: Colors.white),
                   items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
@@ -2908,7 +3051,13 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: negocio,
-                  decoration: const InputDecoration(labelText: 'Negocio', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: _inputBorder),
+                  decoration: const InputDecoration(
+                    labelText: 'Negocio',
+                    labelStyle: TextStyle(color: Colors.grey),
+                    filled: true,
+                    fillColor: Color(0xFF1A1A1A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                  ),
                   dropdownColor: const Color(0xFF1A1A1A),
                   style: const TextStyle(color: Colors.white),
                   items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((n) => DropdownMenuItem(value: n, child: Text(n))).toList(),
@@ -3041,7 +3190,13 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: cuentaOrigen,
-                decoration: const InputDecoration(labelText: 'Cuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Cuenta',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF1A1A1A),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
                 dropdownColor: const Color(0xFF1A1A1A),
                 style: const TextStyle(color: Colors.white),
                 items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
@@ -3050,7 +3205,13 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: subcuentaOrigen,
-                decoration: const InputDecoration(labelText: 'Subcuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Subcuenta',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF1A1A1A),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
                 dropdownColor: const Color(0xFF1A1A1A),
                 style: const TextStyle(color: Colors.white),
                 items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
@@ -3063,7 +3224,13 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: cuentaDestino,
-                decoration: const InputDecoration(labelText: 'Cuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Cuenta',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF1A1A1A),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
                 dropdownColor: const Color(0xFF1A1A1A),
                 style: const TextStyle(color: Colors.white),
                 items: ['Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
@@ -3072,7 +3239,13 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: subcuentaDestino,
-                decoration: const InputDecoration(labelText: 'Subcuenta', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Subcuenta',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF1A1A1A),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
                 dropdownColor: const Color(0xFF1A1A1A),
                 style: const TextStyle(color: Colors.white),
                 items: ['Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
@@ -3083,13 +3256,25 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 controller: montoCtrl,
                 keyboardType: TextInputType.number,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Monto',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF1A1A1A),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: conceptoCtrl,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Concepto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: _inputBorder),
+                decoration: const InputDecoration(
+                  labelText: 'Concepto',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Color(0xFF1A1A1A),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                ),
               ),
               const SizedBox(height: 16),
               SizedBox(
