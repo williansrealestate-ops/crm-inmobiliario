@@ -621,26 +621,114 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   Widget _buildListaTransacciones(String tipo) {
     final colorPrincipal = tipo == 'Ingreso' ? Colors.green : Colors.red;
     final iconoPrincipal = tipo == 'Ingreso' ? Icons.arrow_upward : Icons.arrow_downward;
-    return Container(child: Column(children: [
-      Container(width: double.infinity, padding: const EdgeInsets.all(16), color: const Color(0xFF111111), child: Column(children: [
-        TextField(decoration: InputDecoration(hintText: 'Buscar...', prefixIcon: const Icon(Icons.search, color: Colors.grey), filled: true, fillColor: const Color(0xFF1A1A1A), border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none)), style: const TextStyle(color: Colors.white), onChanged: (v) => setState(() => _search = v.toLowerCase())),
-        const SizedBox(height: 12),
-        Row(children: [Expanded(child: DropdownButtonFormField<String>(value: _categoriaFiltro, decoration: const InputDecoration(labelText: 'Categoría', filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: _categorias.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => setState(() => _categoriaFiltro = v!))), const SizedBox(width: 12), Expanded(child: DropdownButtonFormField<String>(value: _cuentaFiltro, decoration: const InputDecoration(labelText: 'Cuenta', filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: _cuentasLista.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => setState(() => _cuentaFiltro = v!)))]),
-        const SizedBox(height: 12),
-        DropdownButtonFormField<String>(value: _negocioFiltro, decoration: const InputDecoration(labelText: 'Negocio', filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: _negocios.map((n) => DropdownMenuItem(value: n, child: Text(n))).toList(), onChanged: (v) => setState(() => _negocioFiltro = v!)),
-        const SizedBox(height: 12),
-        Row(children: [Expanded(child: CheckboxListTile(title: const Text('Solo pendientes', style: TextStyle(color: Colors.white, fontSize: 12)), value: _soloPendientes, activeColor: const Color(0xFF0066FF), onChanged: (v) => setState(() => _soloPendientes = v ?? false), contentPadding: EdgeInsets.zero)), Expanded(child: CheckboxListTile(title: const Text('Solo reconciliadas', style: TextStyle(color: Colors.white, fontSize: 12)), value: _soloReconciliadas, activeColor: Colors.green, onChanged: (v) => setState(() => _soloReconciliadas = v ?? false), contentPadding: EdgeInsets.zero))]),
-      ])),
-      Expanded(child: Container(width: double.infinity, padding: const EdgeInsets.all(16), child: StreamBuilder<QuerySnapshot>(stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).snapshots(), builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: Color(0xFF0066FF)));
-        if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
-        final transacciones = snapshot.data?.docs ?? [];
-        final filtrados = transacciones.where((doc) { final data = doc.data() as Map<String, dynamic>; final concepto = (data['concepto'] ?? '').toString().toLowerCase(); final categoria = data['categoria'] ?? 'General'; final cuenta = data['cuenta'] ?? 'Efectivo'; final negocio = data['negocio'] ?? 'Minerales'; final reconciliada = data['reconciliada'] ?? false; return data['tipo'] == tipo && (_search.isEmpty || concepto.contains(_search)) && (_categoriaFiltro == 'Todas' || categoria == _categoriaFiltro) && (_cuentaFiltro == 'Todas' || cuenta == _cuentaFiltro) && (_negocioFiltro == 'Todos' || negocio == _negocioFiltro) && (!_soloPendientes || !reconciliada) && (!_soloReconciliadas || reconciliada); }).toList();
-        if (filtrados.isEmpty) return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(iconoPrincipal, color: Colors.grey, size: 64), const SizedBox(height: 16), Text('No hay ${tipo.toLowerCase()}s registrados', style: const TextStyle(color: Colors.grey, fontSize: 16))]));
-        final total = filtrados.fold<double>(0, (sum, doc) => sum + ((doc.data() as Map<String, dynamic>)['monto'] ?? 0).toDouble());
-        return Column(children: [Container(width: double.infinity, padding: const EdgeInsets.all(12), margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: colorPrincipal.withOpacity(0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: colorPrincipal)), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Total:', style: TextStyle(color: colorPrincipal, fontSize: 16, fontWeight: FontWeight.bold)), Text('\$${total.toStringAsFixed(2)}', style: TextStyle(color: colorPrincipal, fontSize: 20, fontWeight: FontWeight.bold))])), Expanded(child: ListView.builder(itemCount: filtrados.length, itemBuilder: (context, index) { final doc = filtrados[index]; final data = doc.data() as Map<String, dynamic>; final acreedor = data['acreedor'] ?? ''; final reconciliada = data['reconciliada'] ?? false; final tags = List<String>.from(data['tags'] ?? []); return Container(margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(8), border: Border.all(color: reconciliada ? Colors.green : const Color(0xFF222222))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [Container(width: 45, height: 45, decoration: BoxDecoration(color: colorPrincipal.withOpacity(0.2), shape: BoxShape.circle), child: Icon(iconoPrincipal, color: colorPrincipal, size: 22)), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [Expanded(child: Text(data['concepto'] ?? 'Sin concepto', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))), if (reconciliada) const Icon(Icons.check_circle, color: Colors.green, size: 16)]), const SizedBox(height: 4), Text('${data['categoria'] ?? 'General'} • ${data['cuenta'] ?? 'Efectivo'} • ${data['negocio'] ?? 'Sin negocio'}', style: const TextStyle(color: Colors.grey, fontSize: 12)), if (acreedor.isNotEmpty) Text('Acreedor: $acreedor', style: const TextStyle(color: Colors.orange, fontSize: 11)), if (tags.isNotEmpty) ...[const SizedBox(height: 4), Wrap(spacing: 4, children: tags.map((t) => Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: const Color(0xFF0066FF).withOpacity(0.2), borderRadius: BorderRadius.circular(4)), child: Text(t, style: const TextStyle(color: Color(0xFF0066FF), fontSize: 10)))).toList())]])), Text('\$${(data['monto'] ?? 0).toStringAsFixed(2)}', style: TextStyle(color: colorPrincipal, fontSize: 16, fontWeight: FontWeight.bold))]), const SizedBox(height: 8), Row(mainAxisAlignment: MainAxisAlignment.end, children: [IconButton(icon: const Icon(Icons.copy, color: Colors.blue, size: 18), onPressed: () => _duplicarTransaccion(data), tooltip: 'Duplicar'), IconButton(icon: const Icon(Icons.edit, color: Colors.orange, size: 18), onPressed: () => _mostrarFormularioTransaccion(transaccion: data, docId: doc.id), tooltip: 'Editar'), IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18), onPressed: () => _confirmarEliminar(doc.id, data['concepto'] ?? ''), tooltip: 'Eliminar')])]))); })))]);
-      }))),
-    ]));
+    return Container(
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            color: const Color(0xFF111111),
+            child: Column(
+              children: [
+                TextField(decoration: InputDecoration(hintText: 'Buscar...', prefixIcon: const Icon(Icons.search, color: Colors.grey), filled: true, fillColor: const Color(0xFF1A1A1A), border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none)), style: const TextStyle(color: Colors.white), onChanged: (v) => setState(() => _search = v.toLowerCase())),
+                const SizedBox(height: 12),
+                Row(children: [Expanded(child: DropdownButtonFormField<String>(value: _categoriaFiltro, decoration: const InputDecoration(labelText: 'Categoría', filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: _categorias.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => setState(() => _categoriaFiltro = v!))), const SizedBox(width: 12), Expanded(child: DropdownButtonFormField<String>(value: _cuentaFiltro, decoration: const InputDecoration(labelText: 'Cuenta', filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: _cuentasLista.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => setState(() => _cuentaFiltro = v!)))]),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(value: _negocioFiltro, decoration: const InputDecoration(labelText: 'Negocio', filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none)), dropdownColor: const Color(0xFF1A1A1A), style: const TextStyle(color: Colors.white), items: _negocios.map((n) => DropdownMenuItem(value: n, child: Text(n))).toList(), onChanged: (v) => setState(() => _negocioFiltro = v!)),
+                const SizedBox(height: 12),
+                Row(children: [Expanded(child: CheckboxListTile(title: const Text('Solo pendientes', style: TextStyle(color: Colors.white, fontSize: 12)), value: _soloPendientes, activeColor: const Color(0xFF0066FF), onChanged: (v) => setState(() => _soloPendientes = v ?? false), contentPadding: EdgeInsets.zero)), Expanded(child: CheckboxListTile(title: const Text('Solo reconciliadas', style: TextStyle(color: Colors.white, fontSize: 12)), value: _soloReconciliadas, activeColor: Colors.green, onChanged: (v) => setState(() => _soloReconciliadas = v ?? false), contentPadding: EdgeInsets.zero))]),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: Color(0xFF0066FF)));
+                  if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
+                  final transacciones = snapshot.data?.docs ?? [];
+                  final filtrados = transacciones.where((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final concepto = (data['concepto'] ?? '').toString().toLowerCase();
+                    final categoria = data['categoria'] ?? 'General';
+                    final cuenta = data['cuenta'] ?? 'Efectivo';
+                    final negocio = data['negocio'] ?? 'Minerales';
+                    final reconciliada = data['reconciliada'] ?? false;
+                    return data['tipo'] == tipo && (_search.isEmpty || concepto.contains(_search)) && (_categoriaFiltro == 'Todas' || categoria == _categoriaFiltro) && (_cuentaFiltro == 'Todas' || cuenta == _cuentaFiltro) && (_negocioFiltro == 'Todos' || negocio == _negocioFiltro) && (!_soloPendientes || !reconciliada) && (!_soloReconciliadas || reconciliada);
+                  }).toList();
+                  if (filtrados.isEmpty) return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(iconoPrincipal, color: Colors.grey, size: 64), const SizedBox(height: 16), Text('No hay ${tipo.toLowerCase()}s registrados', style: const TextStyle(color: Colors.grey, fontSize: 16))]));
+                  final total = filtrados.fold<double>(0, (sum, doc) => sum + ((doc.data() as Map<String, dynamic>)['monto'] ?? 0).toDouble());
+                  return Column(
+                    children: [
+                      Container(width: double.infinity, padding: const EdgeInsets.all(12), margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: colorPrincipal.withOpacity(0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: colorPrincipal)), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Total:', style: TextStyle(color: colorPrincipal, fontSize: 16, fontWeight: FontWeight.bold)), Text('\$${total.toStringAsFixed(2)}', style: TextStyle(color: colorPrincipal, fontSize: 20, fontWeight: FontWeight.bold))])),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: filtrados.length,
+                          itemBuilder: (context, index) {
+                            final doc = filtrados[index];
+                            final data = doc.data() as Map<String, dynamic>;
+                            final acreedor = data['acreedor'] ?? '';
+                            final reconciliada = data['reconciliada'] ?? false;
+                            final tags = List<String>.from(data['tags'] ?? []);
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(8), border: Border.all(color: reconciliada ? Colors.green : const Color(0xFF222222))),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(width: 45, height: 45, decoration: BoxDecoration(color: colorPrincipal.withOpacity(0.2), shape: BoxShape.circle), child: Icon(iconoPrincipal, color: colorPrincipal, size: 22)),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(children: [Expanded(child: Text(data['concepto'] ?? 'Sin concepto', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))), if (reconciliada) const Icon(Icons.check_circle, color: Colors.green, size: 16)]),
+                                            const SizedBox(height: 4),
+                                            Text('${data['categoria'] ?? 'General'} • ${data['cuenta'] ?? 'Efectivo'} • ${data['negocio'] ?? 'Sin negocio'}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                                            if (acreedor.isNotEmpty) Text('Acreedor: $acreedor', style: const TextStyle(color: Colors.orange, fontSize: 11)),
+                                            if (tags.isNotEmpty) ...[
+                                              const SizedBox(height: 4),
+                                              Wrap(
+                                                spacing: 4,
+                                                children: tags.map((t) => Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: const Color(0xFF0066FF).withOpacity(0.2), borderRadius: BorderRadius.circular(4)), child: Text(t, style: const TextStyle(color: Color(0xFF0066FF), fontSize: 10)))).toList()
+                                              )
+                                            ]
+                                          ],
+                                        ),
+                                      ),
+                                      Text('\$${(data['monto'] ?? 0).toStringAsFixed(2)}', style: TextStyle(color: colorPrincipal, fontSize: 16, fontWeight: FontWeight.bold))
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      IconButton(icon: const Icon(Icons.copy, color: Colors.blue, size: 18), onPressed: () => _duplicarTransaccion(data), tooltip: 'Duplicar'),
+                                      IconButton(icon: const Icon(Icons.edit, color: Colors.orange, size: 18), onPressed: () => _mostrarFormularioTransaccion(transaccion: data, docId: doc.id), tooltip: 'Editar'),
+                                      IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18), onPressed: () => _confirmarEliminar(doc.id, data['concepto'] ?? ''), tooltip: 'Eliminar')
+                                    ],
+                                  )
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _duplicarTransaccion(Map<String, dynamic> data) async {
