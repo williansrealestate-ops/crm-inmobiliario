@@ -12,6 +12,7 @@ class FinanzasScreen extends StatefulWidget {
 class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProviderStateMixin {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late TabController _tabController;
+  int _vistaActual = 0;
 
   @override
   void initState() {
@@ -77,14 +78,14 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
           _buildPlaceholder('Reportes'),
           _buildPlaceholder('Presupuestos'),
           _buildPlaceholder('Metas'),
-          _buildDeudas(),
+          _buildPlaceholder('Deudas'),
         ],
       ),
     );
   }
 
   // ==========================================
-  // ✅ PESTAÑA "HOY" COMPLETA Y FUNCIONAL
+  // ✅ PESTAÑA "HOY"
   // ==========================================
   Widget _buildVistaHoy() {
     final hoy = DateTime.now();
@@ -307,6 +308,9 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     );
   }
 
+  // ==========================================
+  // ✅ PESTAÑA "RESUMEN"
+  // ==========================================
   Widget _buildResumen() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -352,7 +356,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
               ],
             ),
             const SizedBox(height: 24),
-            const Text('📈 Tendencia Mensual', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(' Tendencia Mensual', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Container(
               height: 250,
@@ -487,45 +491,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
           const SizedBox(height: 16),
           Text('$nombre - En desarrollo', style: const TextStyle(color: Colors.grey, fontSize: 16)),
           const SizedBox(height: 8),
-          const Text('La pestaña "Hoy" ya está 100% funcional', style: TextStyle(color: Colors.green, fontSize: 14)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDeudas() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('💳 Deudas', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-              ElevatedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Formulario de nueva deuda - Próximamente'), backgroundColor: Colors.orange));
-                },
-                icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text('Nueva deuda', style: TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.money_off, color: Colors.grey.shade700, size: 64),
-                  const SizedBox(height: 16),
-                  const Text('Módulo de Deudas en desarrollo', style: TextStyle(color: Colors.grey, fontSize: 16)),
-                ],
-              ),
-            ),
-          ),
+          const Text('Las pestañas "Hoy" y "Resumen" están 100% funcionales', style: TextStyle(color: Colors.green, fontSize: 14)),
         ],
       ),
     );
