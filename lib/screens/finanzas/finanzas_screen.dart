@@ -98,6 +98,162 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     }
   }
 
+  Future<void> _generarDatosEjemplo() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        title: const Text('⚠️ Generar Datos de Ejemplo', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'Esto creará:\n\n'
+          '• 80 transacciones (10 ingresos + 10 gastos por cada negocio)\n'
+          '• 4 presupuestos\n'
+          '• 3 metas\n\n'
+          '¿Continuar?',
+          style: TextStyle(color: Colors.grey),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)), child: const Text('Sí, Generar', style: TextStyle(color: Colors.white))),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    final now = DateTime.now();
+    int contador = 0;
+
+    // Datos de ejemplo por negocio
+    final Map<String, List<Map<String, dynamic>>> datosPorNegocio = {
+      'Minerales': [
+        // 5 Ingresos
+        {'concepto': 'Venta de mineral de cobre', 'monto': 45000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso'},
+        {'concepto': 'Venta de oro refinado', 'monto': 78000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso'},
+        {'concepto': 'Extracción de plata', 'monto': 32000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso'},
+        {'concepto': 'Venta de zinc', 'monto': 28000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso'},
+        {'concepto': 'Consultoría minera', 'monto': 15000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
+        // 5 Gastos
+        {'concepto': 'Maquinaria minera', 'monto': 25000.0, 'categoria': 'Mobiliario', 'tipo': 'Gasto'},
+        {'concepto': 'Combustible para equipos', 'monto': 8500.0, 'categoria': 'Transporte', 'tipo': 'Gasto'},
+        {'concepto': 'Salario personal mina', 'monto': 15000.0, 'categoria': 'Personal', 'tipo': 'Gasto'},
+        {'concepto': 'Permiso ambiental', 'monto': 5000.0, 'categoria': 'Otros', 'tipo': 'Gasto'},
+        {'concepto': 'Mantenimiento equipos', 'monto': 12000.0, 'categoria': 'Otros', 'tipo': 'Gasto'},
+      ],
+      'Combustible': [
+        // 5 Ingresos
+        {'concepto': 'Venta de gasolina', 'monto': 52000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
+        {'concepto': 'Venta de diesel', 'monto': 68000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
+        {'concepto': 'Venta de lubricantes', 'monto': 15000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
+        {'concepto': 'Venta de aditivos', 'monto': 8500.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
+        {'concepto': 'Servicio de carga', 'monto': 12000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
+        // 5 Gastos
+        {'concepto': 'Compra de combustible', 'monto': 85000.0, 'categoria': 'Otros', 'tipo': 'Gasto'},
+        {'concepto': 'Transporte de combustible', 'monto': 6500.0, 'categoria': 'Transporte', 'tipo': 'Gasto'},
+        {'concepto': 'Alquiler de tanques', 'monto': 4000.0, 'categoria': 'Alquiler', 'tipo': 'Gasto'},
+        {'concepto': 'Mantenimiento de bombas', 'monto': 3200.0, 'categoria': 'Otros', 'tipo': 'Gasto'},
+        {'concepto': 'Personal de estación', 'monto': 9000.0, 'categoria': 'Personal', 'tipo': 'Gasto'},
+      ],
+      'Agropecuario': [
+        // 5 Ingresos
+        {'concepto': 'Venta de cosecha de maíz', 'monto': 35000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso'},
+        {'concepto': 'Venta de ganado', 'monto': 42000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso'},
+        {'concepto': 'Venta de leche', 'monto': 18000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
+        {'concepto': 'Venta de hortalizas', 'monto': 22000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso'},
+        {'concepto': 'Subsidio agrícola', 'monto': 8000.0, 'categoria': 'Otros', 'tipo': 'Ingreso'},
+        // 5 Gastos
+        {'concepto': 'Fertilizantes', 'monto': 8500.0, 'categoria': 'Otros', 'tipo': 'Gasto'},
+        {'concepto': 'Alimento para ganado', 'monto': 12000.0, 'categoria': 'Otros', 'tipo': 'Gasto'},
+        {'concepto': 'Riego y agua', 'monto': 3500.0, 'categoria': 'Otros', 'tipo': 'Gasto'},
+        {'concepto': 'Maquinaria agrícola', 'monto': 25000.0, 'categoria': 'Mobiliario', 'tipo': 'Gasto'},
+        {'concepto': 'Personal de campo', 'monto': 7500.0, 'categoria': 'Personal', 'tipo': 'Gasto'},
+      ],
+      'Proyectos': [
+        // 5 Ingresos
+        {'concepto': 'Consultoría empresarial', 'monto': 25000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
+        {'concepto': 'Desarrollo de software', 'monto': 45000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
+        {'concepto': 'Capacitación corporativa', 'monto': 18000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
+        {'concepto': 'Proyecto especial cliente A', 'monto': 35000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso'},
+        {'concepto': 'Asesoría financiera', 'monto': 12000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
+        // 5 Gastos
+        {'concepto': 'Alquiler de oficina', 'monto': 5000.0, 'categoria': 'Alquiler', 'tipo': 'Gasto'},
+        {'concepto': 'Equipos de cómputo', 'monto': 15000.0, 'categoria': 'Mobiliario', 'tipo': 'Gasto'},
+        {'concepto': 'Software y licencias', 'monto': 4500.0, 'categoria': 'Otros', 'tipo': 'Gasto'},
+        {'concepto': 'Marketing digital', 'monto': 6000.0, 'categoria': 'Otros', 'tipo': 'Gasto'},
+        {'concepto': 'Personal administrativo', 'monto': 12000.0, 'categoria': 'Personal', 'tipo': 'Gasto'},
+      ],
+    };
+
+    // Generar 80 transacciones
+    for (var negocio in _negocios) {
+      final datos = datosPorNegocio[negocio] ?? [];
+      for (int i = 0; i < datos.length; i++) {
+        final dato = datos[i];
+        final fecha = now.subtract(Duration(days: i * 3 + _negocios.indexOf(negocio) * 10));
+        
+        await _firestore.collection('transacciones').add({
+          'concepto': dato['concepto'],
+          'monto': dato['monto'],
+          'categoria': dato['categoria'],
+          'tipo': dato['tipo'],
+          'cuenta': i % 2 == 0 ? 'Banco' : 'Efectivo',
+          'subcuenta': negocio,
+          'negocio': negocio,
+          'fecha': '${fecha.year}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}',
+          'descripcion': 'Transacción de ejemplo - $negocio',
+          'reconciliada': i % 3 != 0,
+          'tags': i % 2 == 0 ? ['#negocio', '#${negocio.toLowerCase()}'] : [],
+          'created_at': FieldValue.serverTimestamp(),
+        });
+        contador++;
+      }
+    }
+
+    // Generar 4 presupuestos
+    final presupuestos = [
+      {'nombre': 'Personal', 'presupuesto': 50000.0, 'gastado': 43500.0, 'cuenta': 'Banco', 'subcuenta': 'Todos'},
+      {'nombre': 'Transporte', 'presupuesto': 15000.0, 'gastado': 15000.0, 'cuenta': 'Efectivo', 'subcuenta': 'Todos'},
+      {'nombre': 'Mobiliario', 'presupuesto': 30000.0, 'gastado': 25000.0, 'cuenta': 'Banco', 'subcuenta': 'Todos'},
+      {'nombre': 'Alquiler', 'presupuesto': 20000.0, 'gastado': 9000.0, 'cuenta': 'Banco', 'subcuenta': 'Todos'},
+    ];
+
+    for (var pres in presupuestos) {
+      await _firestore.collection('presupuestos_personalizados').add({
+        'nombre': pres['nombre'],
+        'presupuesto': pres['presupuesto'],
+        'gastado': pres['gastado'],
+        'cuenta': pres['cuenta'],
+        'subcuenta': pres['subcuenta'],
+        'aplicado': false,
+        'created_at': FieldValue.serverTimestamp(),
+      });
+    }
+
+    // Generar 3 metas
+    final metas = [
+      {'nombre': 'Fondo de emergencia', 'objetivo': 100000.0, 'actual': 25000.0, 'meses': 12},
+      {'nombre': 'Expansión de negocio', 'objetivo': 250000.0, 'actual': 50000.0, 'meses': 18},
+      {'nombre': 'Nueva maquinaria', 'objetivo': 150000.0, 'actual': 30000.0, 'meses': 12},
+    ];
+
+    for (var meta in metas) {
+      await _firestore.collection('metas').add({
+        'nombre': meta['nombre'],
+        'objetivo': meta['objetivo'],
+        'actual': meta['actual'],
+        'meses': meta['meses'],
+        'created_at': FieldValue.serverTimestamp(),
+      });
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('✅ Se crearon $contador transacciones, 4 presupuestos y 3 metas'), backgroundColor: Colors.green),
+      );
+      await _cargarPresupuestosPersonalizados();
+    }
+  }
+
   Future<void> _agregarPresupuestoPersonalizado(String nombre, double monto, double gastado, String cuenta, String subcuenta) async {
     await _firestore.collection('presupuestos_personalizados').add({
       'nombre': nombre,
@@ -165,7 +321,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     await _firestore.collection('presupuestos_personalizados').doc(id).delete();
     await _cargarPresupuestosPersonalizados();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🗑️ Eliminado'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('️ Eliminado'), backgroundColor: Colors.red));
     }
   }
 
@@ -205,147 +361,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     await _cargarPresupuestosPersonalizados();
   }
 
-  Future<void> _generarDatosEjemplo() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        title: const Text('Generar Datos de Ejemplo', style: TextStyle(color: Colors.white)),
-        content: const Text('¿Generar 80 transacciones, 4 presupuestos y 3 metas de ejemplo?', style: TextStyle(color: Colors.grey)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)), child: const Text('Generar', style: TextStyle(color: Colors.white))),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    final batch = _firestore.batch();
-    final now = DateTime.now();
-
-    final Map<String, List<Map<String, dynamic>>> datosPorNegocio = {
-      'Minerales': [
-        {'concepto': 'Venta de mineral de cobre', 'monto': 45000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso'},
-        {'concepto': 'Venta de oro refinado', 'monto': 78000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso'},
-        {'concepto': 'Extracción de plata', 'monto': 32000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso'},
-        {'concepto': 'Venta de zinc', 'monto': 28000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso'},
-        {'concepto': 'Consultoría minera', 'monto': 15000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
-        {'concepto': 'Maquinaria minera', 'monto': 25000.0, 'categoria': 'Mobiliario', 'tipo': 'Gasto'},
-        {'concepto': 'Combustible para equipos', 'monto': 8500.0, 'categoria': 'Transporte', 'tipo': 'Gasto'},
-        {'concepto': 'Salario personal mina', 'monto': 15000.0, 'categoria': 'Personal', 'tipo': 'Gasto'},
-        {'concepto': 'Permiso ambiental', 'monto': 5000.0, 'categoria': 'Otros', 'tipo': 'Gasto'},
-        {'concepto': 'Mantenimiento equipos', 'monto': 12000.0, 'categoria': 'Otros', 'tipo': 'Gasto'},
-      ],
-      'Combustible': [
-        {'concepto': 'Venta de gasolina', 'monto': 52000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
-        {'concepto': 'Venta de diesel', 'monto': 68000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
-        {'concepto': 'Venta de lubricantes', 'monto': 15000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
-        {'concepto': 'Venta de aditivos', 'monto': 8500.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
-        {'concepto': 'Servicio de carga', 'monto': 12000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
-        {'concepto': 'Compra de combustible', 'monto': 85000.0, 'categoria': 'Otros', 'tipo': 'Gasto'},
-        {'concepto': 'Transporte de combustible', 'monto': 6500.0, 'categoria': 'Transporte', 'tipo': 'Gasto'},
-        {'concepto': 'Alquiler de tanques', 'monto': 4000.0, 'categoria': 'Alquiler', 'tipo': 'Gasto'},
-        {'concepto': 'Mantenimiento de bombas', 'monto': 3200.0, 'categoria': 'Otros', 'tipo': 'Gasto'},
-        {'concepto': 'Personal de estación', 'monto': 9000.0, 'categoria': 'Personal', 'tipo': 'Gasto'},
-      ],
-      'Agropecuario': [
-        {'concepto': 'Venta de cosecha de maíz', 'monto': 35000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso'},
-        {'concepto': 'Venta de ganado', 'monto': 42000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso'},
-        {'concepto': 'Venta de leche', 'monto': 18000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
-        {'concepto': 'Venta de hortalizas', 'monto': 22000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso'},
-        {'concepto': 'Subsidio agrícola', 'monto': 8000.0, 'categoria': 'Otros', 'tipo': 'Ingreso'},
-        {'concepto': 'Fertilizantes', 'monto': 8500.0, 'categoria': 'Otros', 'tipo': 'Gasto'},
-        {'concepto': 'Alimento para ganado', 'monto': 12000.0, 'categoria': 'Otros', 'tipo': 'Gasto'},
-        {'concepto': 'Riego y agua', 'monto': 3500.0, 'categoria': 'Otros', 'tipo': 'Gasto'},
-        {'concepto': 'Maquinaria agrícola', 'monto': 25000.0, 'categoria': 'Mobiliario', 'tipo': 'Gasto'},
-        {'concepto': 'Personal de campo', 'monto': 7500.0, 'categoria': 'Personal', 'tipo': 'Gasto'},
-      ],
-      'Proyectos': [
-        {'concepto': 'Consultoría empresarial', 'monto': 25000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
-        {'concepto': 'Desarrollo de software', 'monto': 45000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
-        {'concepto': 'Capacitación corporativa', 'monto': 18000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
-        {'concepto': 'Proyecto especial cliente A', 'monto': 35000.0, 'categoria': 'Proyecto', 'tipo': 'Ingreso'},
-        {'concepto': 'Asesoría financiera', 'monto': 12000.0, 'categoria': 'Servicios', 'tipo': 'Ingreso'},
-        {'concepto': 'Alquiler de oficina', 'monto': 5000.0, 'categoria': 'Alquiler', 'tipo': 'Gasto'},
-        {'concepto': 'Equipos de cómputo', 'monto': 15000.0, 'categoria': 'Mobiliario', 'tipo': 'Gasto'},
-        {'concepto': 'Software y licencias', 'monto': 4500.0, 'categoria': 'Otros', 'tipo': 'Gasto'},
-        {'concepto': 'Marketing digital', 'monto': 6000.0, 'categoria': 'Otros', 'tipo': 'Gasto'},
-        {'concepto': 'Personal administrativo', 'monto': 12000.0, 'categoria': 'Personal', 'tipo': 'Gasto'},
-      ],
-    };
-
-    for (var negocio in _negocios) {
-      final datos = datosPorNegocio[negocio] ?? [];
-      for (int i = 0; i < datos.length; i++) {
-        final dato = datos[i];
-        final fecha = now.subtract(Duration(days: i * 3 + _negocios.indexOf(negocio) * 10));
-        final docRef = _firestore.collection('transacciones').doc();
-        
-        batch.set(docRef, {
-          'concepto': dato['concepto'],
-          'monto': dato['monto'],
-          'categoria': dato['categoria'],
-          'tipo': dato['tipo'],
-          'cuenta': i % 2 == 0 ? 'Banco' : 'Efectivo',
-          'subcuenta': negocio,
-          'negocio': negocio,
-          'fecha': '${fecha.year}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}',
-          'descripcion': 'Transacción de ejemplo - $negocio',
-          'reconciliada': i % 3 != 0,
-          'tags': i % 2 == 0 ? ['#negocio', '#${negocio.toLowerCase()}'] : [],
-          'created_at': FieldValue.serverTimestamp(),
-        });
-      }
-    }
-
-    final presupuestos = [
-      {'nombre': 'Personal', 'presupuesto': 50000.0, 'gastado': 0.0, 'cuenta': 'Banco', 'subcuenta': 'Todos'},
-      {'nombre': 'Transporte', 'presupuesto': 15000.0, 'gastado': 0.0, 'cuenta': 'Efectivo', 'subcuenta': 'Todos'},
-      {'nombre': 'Mobiliario', 'presupuesto': 30000.0, 'gastado': 0.0, 'cuenta': 'Banco', 'subcuenta': 'Todos'},
-      {'nombre': 'Alquiler', 'presupuesto': 20000.0, 'gastado': 0.0, 'cuenta': 'Banco', 'subcuenta': 'Todos'},
-    ];
-
-    for (var pres in presupuestos) {
-      final docRef = _firestore.collection('presupuestos_personalizados').doc();
-      batch.set(docRef, {
-        'nombre': pres['nombre'],
-        'presupuesto': pres['presupuesto'],
-        'gastado': pres['gastado'],
-        'cuenta': pres['cuenta'],
-        'subcuenta': pres['subcuenta'],
-        'aplicado': false,
-        'created_at': FieldValue.serverTimestamp(),
-      });
-    }
-
-    final metas = [
-      {'nombre': 'Fondo de emergencia', 'objetivo': 100000.0, 'actual': 25000.0, 'meses': 12},
-      {'nombre': 'Expansión de negocio', 'objetivo': 250000.0, 'actual': 50000.0, 'meses': 18},
-      {'nombre': 'Nueva maquinaria', 'objetivo': 150000.0, 'actual': 30000.0, 'meses': 12},
-    ];
-
-    for (var meta in metas) {
-      final docRef = _firestore.collection('metas').doc();
-      batch.set(docRef, {
-        'nombre': meta['nombre'],
-        'objetivo': meta['objetivo'],
-        'actual': meta['actual'],
-        'meses': meta['meses'],
-        'created_at': FieldValue.serverTimestamp(),
-      });
-    }
-
-    await batch.commit();
-    
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('✅ 80 transacciones, 4 presupuestos y 3 metas creadas'), backgroundColor: Colors.green),
-      );
-      await _cargarPresupuestosPersonalizados();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -355,7 +370,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         title: const Row(children: [Icon(Icons.account_balance_wallet, color: Colors.white), SizedBox(width: 8), Text('Finanzas Pro', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))]),
         actions: [
           IconButton(icon: const Icon(Icons.add, color: Colors.white, size: 28), onPressed: () => _mostrarFormularioTransaccion()),
-          IconButton(icon: const Icon(Icons.cloud_upload, color: Colors.white), onPressed: _generarDatosEjemplo, tooltip: 'Generar Datos'),
+          IconButton(icon: const Icon(Icons.cloud_upload, color: Colors.white), onPressed: _generarDatosEjemplo, tooltip: 'Generar 80 transacciones'),
           IconButton(icon: const Icon(Icons.swap_horiz, color: Colors.white), onPressed: () => _mostrarTransferenciaEntreCuentas(), tooltip: 'Transferir'),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert, color: Colors.white),
@@ -472,7 +487,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                         SizedBox(height: 16),
                         Text('No hay transacciones para hoy', style: TextStyle(color: Colors.grey, fontSize: 16)),
                         SizedBox(height: 8),
-                        Text('Toca + para agregar una', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                        Text('Toca el ícono de nube ☁️ para generar 80 transacciones de ejemplo', style: TextStyle(color: Colors.grey, fontSize: 14)),
                       ],
                     ),
                   );
@@ -603,7 +618,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(' Dashboard Ejecutivo', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('📊 Dashboard Ejecutivo', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             const Text('Indicadores clave de rendimiento', style: TextStyle(color: Colors.grey, fontSize: 11)),
             const SizedBox(height: 12),
@@ -1721,7 +1736,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                                   const SizedBox(height: 8),
                                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [_buildPlanItem('Mensual', ahorroMensual), _buildPlanItem('Semanal', ahorroSemanal), _buildPlanItem('Diario', ahorroDiario)]),
                                   const SizedBox(height: 8),
-                                  Text(' Fecha estimada: ${DateTime.now().add(Duration(days: meses * 30)).toIso8601String().split('T')[0]}', style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                                  Text('📅 Fecha estimada: ${DateTime.now().add(Duration(days: meses * 30)).toIso8601String().split('T')[0]}', style: const TextStyle(color: Colors.grey, fontSize: 11)),
                                 ],
                               ),
                             ),
