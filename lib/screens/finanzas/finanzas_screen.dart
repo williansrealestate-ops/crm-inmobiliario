@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 
 class FinanzasScreen extends StatefulWidget {
   const FinanzasScreen({super.key});
@@ -97,12 +98,350 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         controller: _tabController,
         children: [
           _buildVistaHoy(), _buildResumen(), _buildDashboard(), _buildListaTransacciones('Ingreso'), _buildListaTransacciones('Gasto'),
-          _buildCuentas(), _buildCalendario(), _buildReportes(), _buildPresupuestos(), _buildMetas(), _buildPlaceholder('Deudas'),
+          _buildCuentas(), _buildCalendario(), _buildReportes(), _buildPresupuestos(), _buildMetas(), _buildDeudas(), // <-- DEUDAS ACTUALIZADO
         ],
       ),
     );
   }
-    Widget _buildMetas() {
+
+  // ==========================================
+  // ✅ PESTAÑA DEUDAS (NUEVA Y FUNCIONAL)
+  // ==========================================
+  Widget _buildDeudas() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('💳 Mis Deudas', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+              ElevatedButton.icon(
+                onPressed: () => _dialogoNuevaDeuda(),
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: const Text('Nueva Deuda', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _firestore.collection('deudas').orderBy('fechaVencimiento', descending: false).snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                final docs = snapshot.data!.docs;
+                if (docs.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.money_off, color: Colors.grey.shade700, size: 64),
+                        const SizedBox(height: 16),
+                        const Text('No tienes deudas registradas', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                        const Text('¡Excelente noticia! 🎉', style: TextStyle(color: Colors.green, fontSize: 14)),
+                      ],
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  itemCount: docs.length,
+                  itemBuilder: (context, index) {
+                    final doc = docs[index];
+                    final data = doc.data() as Map<String, dynamic>;
+                    final nombre = data['nombre'] ?? 'Sin nombre';
+                    final montoOriginal = (data['montoOriginal'] ?? 0).toDouble();
+                    final montoPendiente = (data['montoPendiente'] ?? 0).toDouble();
+                    final tasaInteres = (data['tasaInteres'] ?? 0).toDouble();
+                    final fechaVencimiento = (data['fechaVencimiento'] as Timestamp).toDate();
+                    final cuentaOrigen = data['cuentaOrigen'] ?? 'Efectivo';
+                    final estado = data['estado'] ?? 'pendiente';
+
+                    final hoy = DateTime.now();
+                    final estaVencida = hoy.isAfter(fechaVencimiento) && montoPendiente > 0;
+                    final estaPagada = montoPendiente <= 0 || estado == 'pagada';
+                    
+                    int diasVencido = 0;
+                    double interesEstimado = 0;
+                    if (estaVencida) {
+                      diasVencido = hoy.difference(fechaVencimiento).inDays;
+                      // Interés simple mensual: (monto * tasa% * meses)
+                      final mesesVencido = diasVencido / 30.0;
+                      interesEstimado = montoPendiente * (tasaInteres / 100) * mesesVencido;
+                    }
+
+                    Color colorEstado = Colors.yellow;
+                    String textoEstado = 'Pendiente';
+                    if (estaPagada) {
+                      colorEstado = Colors.green;
+                      textoEstado = 'Pagada';
+                    } else if (estaVencida) {
+                      colorEstado = Colors.red;
+                      textoEstado = 'Vencida';
+                    }
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A1A1A),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: colorEstado.withOpacity(0.5)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.account_balance, color: colorEstado, size: 28),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                    Text('$cuentaOrigen • Vence: ${DateFormat('dd/MM/yyyy').format(fechaVencimiento)}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(color: colorEstado.withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
+                                child: Text(textoEstado, style: TextStyle(color: colorEstado, fontSize: 11, fontWeight: FontWeight.bold)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Pendiente', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                                  Text('\$${montoPendiente.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  const Text('Tasa Interés', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                                  Text('${tasaInteres.toStringAsFixed(1)}% mensual', style: const TextStyle(color: Colors.white, fontSize: 14)),
+                                ],
+                              ),
+                            ],
+                          ),
+                          if (estaVencida) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.warning, color: Colors.red, size: 16),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      '$diasVencido días de atraso • Interés estimado: \$${interesEstimado.toStringAsFixed(2)}',
+                                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              if (!estaPagada)
+                                TextButton.icon(
+                                  onPressed: () => _dialogoAbonarDeuda(doc.id, nombre, montoPendiente, cuentaOrigen, tasaInteres),
+                                  icon: const Icon(Icons.payment, color: Colors.green, size: 18),
+                                  label: const Text('Abonar', style: TextStyle(color: Colors.green)),
+                                ),
+                              IconButton(icon: const Icon(Icons.delete, color: Colors.red, size: 20), onPressed: () => _eliminarDeuda(doc.id)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _dialogoNuevaDeuda() {
+    final nombreCtrl = TextEditingController();
+    final montoCtrl = TextEditingController();
+    final tasaCtrl = TextEditingController(text: '5'); // 5% por defecto
+    final cuentaCtrl = TextEditingController(text: 'Efectivo');
+    DateTime fechaVenc = DateTime.now().add(const Duration(days: 30));
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          title: const Text('Nueva Deuda', style: TextStyle(color: Colors.white)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: nombreCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Acreedor / Concepto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+                const SizedBox(height: 12),
+                TextField(controller: montoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto Total (\$)', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+                const SizedBox(height: 12),
+                TextField(controller: tasaCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Tasa de Interés (% mensual)', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+                const SizedBox(height: 12),
+                TextField(controller: cuentaCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Cuenta a pagar', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () async {
+                    final picked = await showDatePicker(context: context, initialDate: fechaVenc, firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 365 * 5)));
+                    if (picked != null) setDialogState(() => fechaVenc = picked);
+                  },
+                  child: InputDecorator(
+                    decoration: const InputDecoration(labelText: 'Fecha de Vencimiento', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder()),
+                    child: Text(DateFormat('dd/MM/yyyy').format(fechaVenc), style: const TextStyle(color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
+            ElevatedButton(
+              onPressed: () {
+                if (nombreCtrl.text.isEmpty || montoCtrl.text.isEmpty) return;
+                Navigator.pop(dialogCtx);
+                _firestore.collection('deudas').add({
+                  'nombre': nombreCtrl.text.trim(),
+                  'montoOriginal': double.tryParse(montoCtrl.text) ?? 0,
+                  'montoPendiente': double.tryParse(montoCtrl.text) ?? 0,
+                  'tasaInteres': double.tryParse(tasaCtrl.text) ?? 0,
+                  'fechaVencimiento': Timestamp.fromDate(fechaVenc),
+                  'cuentaOrigen': cuentaCtrl.text.trim(),
+                  'estado': 'pendiente',
+                  'created_at': FieldValue.serverTimestamp(),
+                });
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Deuda registrada'), backgroundColor: Colors.green));
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0066FF)),
+              child: const Text('Guardar', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _dialogoAbonarDeuda(String docId, String nombre, double montoPendiente, String cuentaOrigen, double tasaInteres) {
+    final montoAbonoCtrl = TextEditingController();
+    bool registrarComoGasto = true;
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          title: Text('Abonar a: $nombre', style: const TextStyle(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Pendiente actual: \$${montoPendiente.toStringAsFixed(2)}', style: const TextStyle(color: Colors.grey)),
+              const SizedBox(height: 16),
+              TextField(controller: montoAbonoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto del abono (\$)', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+              const SizedBox(height: 16),
+              CheckboxListTile(
+                title: const Text('Registrar como Gasto en Finanzas', style: TextStyle(color: Colors.white, fontSize: 12)),
+                value: registrarComoGasto,
+                activeColor: Colors.green,
+                onChanged: (v) => setDialogState(() => registrarComoGasto = v ?? true),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
+            ElevatedButton(
+              onPressed: () async {
+                final abono = double.tryParse(montoAbonoCtrl.text);
+                if (abono == null || abono <= 0) return;
+                
+                final nuevoPendiente = (montoPendiente - abono).clamp(0, double.infinity);
+                final nuevoEstado = nuevoPendiente <= 0 ? 'pagada' : 'pendiente';
+
+                // Actualizar deuda
+                await _firestore.collection('deudas').doc(docId).update({
+                  'montoPendiente': nuevoPendiente,
+                  'estado': nuevoEstado,
+                });
+
+                // Opcionalmente registrar el gasto en el historial
+                if (registrarComoGasto) {
+                  await _firestore.collection('transacciones').add({
+                    'concepto': 'Pago deuda: $nombre',
+                    'monto': abono,
+                    'categoria': 'Deudas',
+                    'tipo': 'Gasto',
+                    'cuenta': cuentaOrigen,
+                    'negocio': 'Proyectos',
+                    'fecha': DateTime.now().toIso8601String().split('T')[0],
+                    'reconciliada': true,
+                    'created_at': FieldValue.serverTimestamp(),
+                  });
+                }
+
+                Navigator.pop(dialogCtx);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('✅ Abono de \$${abono.toStringAsFixed(2)} registrado'), backgroundColor: Colors.green),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: const Text('Abonar', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _eliminarDeuda(String docId) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        title: const Text('Eliminar Deuda', style: TextStyle(color: Colors.white)),
+        content: const Text('¿Estás seguro de eliminar este registro de deuda?', style: TextStyle(color: Colors.grey)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogCtx);
+              _firestore.collection('deudas').doc(docId).delete();
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('🗑️ Deuda eliminada'), backgroundColor: Colors.red));
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // RESTO DE MÉTODOS (Metas, Presupuestos, Reportes, etc.)
+  // ==========================================
+  Widget _buildMetas() {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
