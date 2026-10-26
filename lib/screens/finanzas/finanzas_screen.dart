@@ -29,6 +29,22 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
     '#urgente', '#deducible', '#cliente', '#personal', '#negocio', '#importante', '#revisar'
   };
 
+  List<Map<String, dynamic>> _datosIngresosEjemplo = [
+    {'categoria': 'SERVICIOS', 'monto': 19000.00, 'color': Colors.green},
+    {'categoria': 'COMISIONES', 'monto': 100000.00, 'color': Colors.teal},
+    {'categoria': 'TRANSFERENCIA', 'monto': 5000.00, 'color': Colors.amber},
+    {'categoria': 'RENTA', 'monto': 8000.00, 'color': Colors.blue},
+    {'categoria': 'PROYECTO', 'monto': 15000.00, 'color': Colors.purple},
+  ];
+
+  List<Map<String, dynamic>> _datosGastosEjemplo = [
+    {'categoria': 'TRANSPORTE', 'monto': 13.00, 'color': Colors.green},
+    {'categoria': 'PERSONAL', 'monto': 15000.00, 'color': Colors.teal},
+    {'categoria': 'ALIMENTOS', 'monto': 5000.00, 'color': Colors.amber},
+    {'categoria': 'MOBILIARIO', 'monto': 45000.00, 'color': Colors.red},
+    {'categoria': 'ALQUILER', 'monto': 8000.00, 'color': Colors.orange},
+  ];
+
   final List<Map<String, dynamic>> _cuentas = [
     {'nombre': 'Efectivo', 'icon': Icons.money, 'color': Colors.green},
     {'nombre': 'Banco', 'icon': Icons.account_balance, 'color': Colors.blue},
@@ -650,7 +666,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
             child: Column(
               children: [
                 TextField(
-                  decoration: const InputDecoration(hintText: 'Buscar...', prefixIcon: Icon(Icons.search, color: Colors.grey), filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)),
+                  decoration: InputDecoration(hintText: 'Buscar...', prefixIcon: const Icon(Icons.search, color: Colors.grey), filled: true, fillColor: const Color(0xFF1A1A1A), border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none)),
                   style: const TextStyle(color: Colors.white),
                   onChanged: (v) => setState(() => _search = v.toLowerCase()),
                 ),
@@ -660,7 +676,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         value: _categoriaFiltro,
-                        decoration: const InputDecoration(labelText: 'Categoría', filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)),
+                        decoration: const InputDecoration(labelText: 'Categoría', filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none)),
                         dropdownColor: const Color(0xFF1A1A1A),
                         style: const TextStyle(color: Colors.white),
                         items: ['Todas', 'Proyecto', 'Deslinde', 'Comisiones', 'Renta', 'Servicios', 'Préstamos', 'Personal', 'Adair', 'Capacitación', 'Deudas', 'Mobiliario', 'Alquiler', 'Transporte', 'Insumos de Oficina', 'Recarga', 'Uber', 'Propina', 'Otros', 'Transferencia'].map((cat) => DropdownMenuItem(value: cat, child: Text(cat))).toList(),
@@ -671,7 +687,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         value: _cuentaFiltro,
-                        decoration: const InputDecoration(labelText: 'Cuenta', filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)),
+                        decoration: const InputDecoration(labelText: 'Cuenta', filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none)),
                         dropdownColor: const Color(0xFF1A1A1A),
                         style: const TextStyle(color: Colors.white),
                         items: ['Todas', 'Efectivo', 'Banco', 'Tarjeta', 'Inversión'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
@@ -683,7 +699,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: _negocioFiltro,
-                  decoration: const InputDecoration(labelText: 'Negocio', filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)),
+                  decoration: const InputDecoration(labelText: 'Negocio', filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none)),
                   dropdownColor: const Color(0xFF1A1A1A),
                   style: const TextStyle(color: Colors.white),
                   items: ['Todos', 'Minerales', 'Combustible', 'Agropecuario', 'Proyectos'].map((n) => DropdownMenuItem(value: n, child: Text(n))).toList(),
@@ -708,7 +724,6 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: Color(0xFF0066FF)));
                   if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
-                  
                   final transacciones = snapshot.data?.docs ?? [];
                   final filtrados = transacciones.where((doc) {
                     final data = doc.data() as Map<String, dynamic>;
@@ -1503,7 +1518,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
             children: [
               TextField(controller: nombreCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Nombre', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
               const SizedBox(height: 12),
-              TextField(controller: montoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto presupuesto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
+              TextField(controller: montoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
               const SizedBox(height: 12),
               TextField(controller: gastadoCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Monto actual gastado', labelStyle: TextStyle(color: Colors.grey), filled: true, fillColor: Color(0xFF111111), border: OutlineInputBorder())),
               const SizedBox(height: 12),
