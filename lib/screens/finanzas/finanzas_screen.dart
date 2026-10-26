@@ -22,6 +22,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   final List<String> _categorias = ['Todas', 'Proyecto', 'Servicios', 'Personal', 'Transporte', 'Alquiler', 'Mobiliario', 'Deudas', 'Otros'];
   final List<String> _cuentasLista = ['Todas', 'Efectivo', 'Banco', 'Tarjeta', 'Inversión'];
   final List<String> _negocios = ['Todos', 'Minerales', 'Combustible', 'Agropecuario', 'Proyectos'];
+  final List<String> _meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
   @override
   void initState() {
@@ -80,14 +81,221 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
           _buildDashboard(),
           _buildListaTransacciones('Ingreso'),
           _buildListaTransacciones('Gasto'),
-          _buildCuentas(), // ✅ PESTAÑA CUENTAS ACTIVA
-          _buildPlaceholder('Calendario'),
+          _buildCuentas(),
+          _buildCalendario(), // ✅ PESTAÑA CALENDARIO ACTIVA
           _buildPlaceholder('Reportes'),
           _buildPlaceholder('Presupuestos'),
           _buildPlaceholder('Metas'),
           _buildPlaceholder('Deudas'),
         ],
       ),
+    );
+  }
+
+  // ==========================================
+  // ✅ PESTAÑA "CALENDARIO" (AGRUPADO POR DÍA)
+  // ==========================================
+  Widget _buildCalendario() {
+    DateTime mesSeleccionado = DateTime.now();
+
+    return StatefulBuilder(
+      builder: (context, setEstado) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Navegación de Mes
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left, color: Colors.white),
+                    onPressed: () {
+                      setEstado(() {
+                        mesSeleccionado = DateTime(mesSeleccionado.year, mesSeleccionado.month - 1);
+                      });
+                    },
+                  ),
+                  Text(
+                    '${_meses[mesSeleccionado.month - 1]} ${mesSeleccionado.year}',
+                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.chevron_right, color: Colors.white),
+                    onPressed: () {
+                      setEstado(() {
+                        mesSeleccionado = DateTime(mesSeleccionado.year, mesSeleccionado.month + 1);
+                      });
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Lista de Días con Transacciones
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                    
+                    final docs = snapshot.data!.docs;
+                    
+                    // Filtrar transacciones del mes seleccionado
+                    final transaccionesDelMes = docs.where((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final fechaStr = data['fecha'] as String? ?? '';
+                      if (fechaStr.length >= 7) {
+                        final partes = fechaStr.split('-');
+                        if (partes.length >= 2) {
+                          final anio = int.tryParse(partes[0]);
+                          final mes = int.tryParse(partes[1]);
+                          return anio == mesSeleccionado.year && mes == mesSeleccionado.month;
+                        }
+                      }
+                      return false;
+                    }).toList();
+
+                    if (transaccionesDelMes.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.calendar_today, color: Colors.grey.shade700, size: 64),
+                            const SizedBox(height: 16),
+                            Text('No hay transacciones en ${_meses[mesSeleccionado.month - 1]}', style: const TextStyle(color: Colors.grey, fontSize: 16)),
+                          ],
+                        ),
+                      );
+                    }
+
+                    // Agrupar por día
+                    Map<String, List<Map<String, dynamic>>> porDia = {};
+                    for (var doc in transaccionesDelMes) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final fechaStr = data['fecha'] as String? ?? '';
+                      if (fechaStr.length >= 10) {
+                        final dia = fechaStr.substring(8, 10);
+                        if (!porDia.containsKey(dia)) {
+                          porDia[dia] = [];
+                        }
+                        porDia[dia]!.add(data);
+                      }
+                    }
+
+                    // Ordenar días de mayor a menor
+                    final diasOrdenados = porDia.keys.toList()..sort((a, b) => b.compareTo(a));
+
+                    return ListView.builder(
+                      itemCount: diasOrdenados.length,
+                      itemBuilder: (context, index) {
+                        final dia = diasOrdenados[index];
+                        final transacciones = porDia[dia]!;
+                        
+                        // Calcular total del día
+                        double totalDia = 0;
+                        for (var t in transacciones) {
+                          final monto = (t['monto'] ?? 0).toDouble();
+                          if (t['tipo'] == 'Ingreso') {
+                            totalDia += monto;
+                          } else {
+                            totalDia -= monto;
+                          }
+                        }
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF111111),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFF222222)),
+                          ),
+                          child: ExpansionTile(
+                            backgroundColor: const Color(0xFF111111),
+                            collapsedBackgroundColor: const Color(0xFF111111),
+                            iconColor: Colors.white,
+                            collapsedIconColor: Colors.white,
+                            title: Row(
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF0066FF).withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      dia,
+                                      style: const TextStyle(color: Color(0xFF0066FF), fontWeight: FontWeight.bold, fontSize: 14),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Día $dia • ${transacciones.length} transacciones',
+                                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${_meses[mesSeleccionado.month - 1]} ${mesSeleccionado.year}',
+                                        style: const TextStyle(color: Colors.grey, fontSize: 11),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  '\$${totalDia.toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    color: totalDia >= 0 ? Colors.green : Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            children: [
+                              const Divider(color: Color(0xFF222222)),
+                              ...transacciones.map((t) {
+                                final esIngreso = t['tipo'] == 'Ingreso';
+                                return ListTile(
+                                  leading: Container(
+                                    width: 35,
+                                    height: 35,
+                                    decoration: BoxDecoration(
+                                      color: esIngreso ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      esIngreso ? Icons.arrow_upward : Icons.arrow_downward,
+                                      color: esIngreso ? Colors.green : Colors.red,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  title: Text(t['concepto'] ?? 'Sin concepto', style: const TextStyle(color: Colors.white, fontSize: 14)),
+                                  subtitle: Text('${t['categoria'] ?? 'General'} • ${t['negocio'] ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                                  trailing: Text(
+                                    '${esIngreso ? "+" : "-"}\$${(t['monto'] ?? 0).toStringAsFixed(2)}',
+                                    style: TextStyle(color: esIngreso ? Colors.green : Colors.red, fontWeight: FontWeight.bold),
+                                  ),
+                                );
+                              }).toList(),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -519,7 +727,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '${hoy.day} de ${['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][hoy.month - 1]} ${hoy.year}',
+                          '${hoy.day} de ${_meses[hoy.month - 1]} ${hoy.year}',
                           style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                       ),
