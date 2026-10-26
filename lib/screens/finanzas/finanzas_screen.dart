@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class FinanzasScreen extends StatefulWidget {
   const FinanzasScreen({super.key});
@@ -77,7 +78,7 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
         controller: _tabController,
         children: [
           _buildVistaHoy(),
-          _buildPlaceholder('Resumen'),
+          _buildResumen(),
           _buildPlaceholder('Dashboard'),
           _buildPlaceholder('Ingresos'),
           _buildPlaceholder('Gastos'),
@@ -98,7 +99,176 @@ class _FinanzasScreenState extends State<FinanzasScreen> with SingleTickerProvid
   Widget _buildVistaHoy() {
     final hoy = DateTime.now();
     final fechaHoy = '${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}';
+  // ==========================================
+  // ✅ PESTAÑA "RESUMEN" COMPLETA
+  // ==========================================
+  Widget _buildResumen() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Tarjeta Balance Total
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFF0066FF), Color(0xFF0044AA)]),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Balance Total', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  const SizedBox(height: 8),
+                  StreamBuilder<QuerySnapshot>(
+                    stream: _firestore.collection('transacciones').snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return const Text('\$0.00', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold));
+                      double ingresos = 0, gastos = 0;
+                      for (var doc in snapshot.data!.docs) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        final monto = (data['monto'] ?? 0).toDouble();
+                        if (data['tipo'] == 'Ingreso') ingresos += monto;
+                        if (data['tipo'] == 'Gasto') gastos += monto;
+                      }
+                      return Text('\$${(ingresos - gastos).toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold));
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            // 2. Tarjetas Ingresos y Gastos
+            Row(
+              children: [
+                Expanded(child: _tarjetaResumen('Ingresos', Colors.green, Icons.arrow_upward)),
+                const SizedBox(width: 12),
+                Expanded(child: _tarjetaResumen('Gastos', Colors.red, Icons.arrow_downward)),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // 3. Gráfico de Tendencia
+            const Text(' Tendencia Mensual', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            Container(
+              height: 250,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))),
+              child: _buildGraficoLineas(),
+            ),
+            const SizedBox(height: 24),
+            // 4. Últimas Transacciones
+            const Text('🕐 Últimas Transacciones', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            _buildUltimasTransacciones(),
+          ],
+        ),
+      ),
+    );
+  }
 
+  Widget _tarjetaResumen(String titulo, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF222222))),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [Icon(icon, color: color, size: 20), const SizedBox(width: 8), Text(titulo, style: TextStyle(color: color, fontWeight: FontWeight.bold))]),
+          const SizedBox(height: 8),
+          StreamBuilder<QuerySnapshot>(
+            stream: _firestore.collection('transacciones').snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const Text('\$0', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold));
+              double total = 0;
+              for (var doc in snapshot.data!.docs) {
+                final data = doc.data() as Map<String, dynamic>;
+                if (data['tipo'] == titulo) total += (data['monto'] ?? 0).toDouble();
+              }
+              return Text('\$${total.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold));
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGraficoLineas() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore.collection('transacciones').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        Map<String, double> ingresosPorMes = {}, gastosPorMes = {};
+        for (var doc in snapshot.data!.docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          final fecha = data['fecha'] as String? ?? '';
+          final monto = (data['monto'] ?? 0).toDouble();
+          if (fecha.length >= 7) {
+            final mes = fecha.substring(0, 7);
+            if (data['tipo'] == 'Ingreso') ingresosPorMes[mes] = (ingresosPorMes[mes] ?? 0) + monto;
+            else gastosPorMes[mes] = (gastosPorMes[mes] ?? 0) + monto;
+          }
+        }
+        final meses = ingresosPorMes.keys.toList()..sort();
+        if (meses.isEmpty) return const Center(child: Text('Sin datos', style: TextStyle(color: Colors.grey)));
+        
+        return LineChart(
+          LineChartData(
+            gridData: const FlGridData(show: false),
+            titlesData: FlTitlesData(
+              bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (value, meta) {
+                final idx = value.toInt();
+                if (idx >= 0 && idx < meses.length) return Text(meses[idx].substring(5), style: const TextStyle(color: Colors.grey, fontSize: 10));
+                return const Text('');
+              })),
+              leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            ),
+            borderData: FlBorderData(show: false),
+            lineBarsData: [
+              LineChartBarData(spots: List.generate(meses.length, (i) => FlSpot(i.toDouble(), ingresosPorMes[meses[i]] ?? 0)), isCurved: true, color: Colors.green, barWidth: 3, dotData: const FlDotData(show: false)),
+              LineChartBarData(spots: List.generate(meses.length, (i) => FlSpot(i.toDouble(), gastosPorMes[meses[i]] ?? 0)), isCurved: true, color: Colors.red, barWidth: 3, dotData: const FlDotData(show: false)),
+            ],
+            minX: 0,
+            maxX: (meses.length - 1).toDouble(),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildUltimasTransacciones() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore.collection('transacciones').orderBy('created_at', descending: true).limit(5).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final docs = snapshot.data!.docs;
+        if (docs.isEmpty) return const Text('No hay transacciones', style: TextStyle(color: Colors.grey));
+        return Column(
+          children: docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final esIngreso = data['tipo'] == 'Ingreso';
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: const Color(0xFF111111), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF222222))),
+              child: Row(
+                children: [
+                  Container(width: 40, height: 40, decoration: BoxDecoration(color: esIngreso ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2), shape: BoxShape.circle), child: Icon(esIngreso ? Icons.arrow_upward : Icons.arrow_downward, color: esIngreso ? Colors.green : Colors.red, size: 20)),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(data['concepto'] ?? 'Sin concepto', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), Text('${data['categoria'] ?? 'General'} • ${data['fecha'] ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 12))])),
+                  Text('${esIngreso ? "+" : "-"}\$${data['monto'] ?? '0'}', style: TextStyle(color: esIngreso ? Colors.green : Colors.red, fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
     return Container(
       padding: const EdgeInsets.all(16),
       child: SingleChildScrollView(
